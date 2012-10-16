@@ -13,14 +13,18 @@
   <property name="windowTitle">
    <string>ERCP2v2</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>data/n2t.jpg</normaloff>data/n2t.jpg</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="OpenglPanel" name="widget" native="true">
     <property name="geometry">
      <rect>
       <x>30</x>
       <y>20</y>
-      <width>750</width>
-      <height>750</height>
+      <width>754</width>
+      <height>754</height>
      </rect>
     </property>
    </widget>
@@ -723,6 +727,74 @@
      </property>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="groupBox_7">
+    <property name="geometry">
+     <rect>
+      <x>1190</x>
+      <y>560</y>
+      <width>161</width>
+      <height>181</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Ultilities</string>
+    </property>
+    <widget class="QPushButton" name="pushButtonCalibration">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>141</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Camera Calibration</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spinBoxNpointsCalibration">
+     <property name="geometry">
+      <rect>
+       <x>91</x>
+       <y>50</y>
+       <width>51</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="minimum">
+      <number>5</number>
+     </property>
+     <property name="singleStep">
+      <number>10</number>
+     </property>
+     <property name="value">
+      <number>10</number>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_18">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>50</y>
+       <width>46</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>N Points</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QTextEdit" name="textEditCommand">
+    <property name="geometry">
+     <rect>
+      <x>1140</x>
+      <y>30</y>
+      <width>211</width>
+      <height>231</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -753,6 +825,7 @@
    <container>1</container>
    <slots>
     <signal>cameraChanged()</signal>
+    <slot>startManualCalibration()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -805,6 +878,22 @@
     <hint type="destinationlabel">
      <x>1291</x>
      <y>840</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonCalibration</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>startManualCalibration()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1258</x>
+     <y>620</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>774</x>
+     <y>567</y>
     </hint>
    </hints>
   </connection>

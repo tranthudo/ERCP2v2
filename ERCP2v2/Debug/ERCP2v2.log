@@ -1,12 +1,12 @@
-﻿Build started 10/16/2012 9:11:07 AM.
+﻿Build started 10/16/2012 10:12:46 PM.
      1>Project "C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\ERCP2v2\ERCP2v2.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "Debug\ERCP2v2.unsuccessfulbuild" because "AlwaysCreate" was specified.
        CustomBuild:
          All outputs are up-to-date.
        ClCompile:
-         c:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I.\GeneratedFiles /I. /IC:\Qt\4.8.3\include /I.\GeneratedFiles\Debug /IC:\Qt\4.8.3\include\QtCore /IC:\Qt\4.8.3\include\QtGui /IC:\Qt\4.8.3\include\QtOpenGL /Zi /nologo /W1 /WX- /Od /Oy- /D UNICODE /D WIN32 /D QT_LARGEFILE_SUPPORT /D QT_DLL /D QT_CORE_LIB /D QT_GUI_LIB /D QT_OPENGL_LIB /Gm- /EHsc /MDd /GS /fp:precise /Zc:wchar_t- /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt modelgl.cpp
-         modelgl.cpp
+         c:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I.\GeneratedFiles /I. /IC:\Qt\4.8.3\include /I.\GeneratedFiles\Debug /IC:\Qt\4.8.3\include\QtCore /IC:\Qt\4.8.3\include\QtGui /IC:\Qt\4.8.3\include\QtOpenGL /Zi /nologo /W1 /WX- /Od /Oy- /D UNICODE /D WIN32 /D QT_LARGEFILE_SUPPORT /D QT_DLL /D QT_CORE_LIB /D QT_GUI_LIB /D QT_OPENGL_LIB /Gm- /EHsc /MDd /GS /fp:precise /Zc:wchar_t- /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt openglpanel.cpp
+         openglpanel.cpp
      1>c:\Program Files\Microsoft Visual Studio 10.0\VC\include\xutility(2227): warning C4996: 'std::_Copy_impl': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
                  c:\Program Files\Microsoft Visual Studio 10.0\VC\include\xutility(2212) : see declaration of 'std::_Copy_impl'
                  c:\users\nguyen tien thinh\git\ercp2v2\ercp2v2\DataStruct.h(428) : see reference to function template instantiation '_OutIt std::copy<const double*,double*>(_InIt,_InIt,_OutIt)' being compiled
@@ -54,4 +54,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.05
+Time Elapsed 00:00:04.18

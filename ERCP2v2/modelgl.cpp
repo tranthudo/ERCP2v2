@@ -21,11 +21,17 @@ ModelGL::ModelGL(QObject *parent)
 	updateModelViewMatrix();
 	updateRotationMatrix();
 
-	setViewMatrix(glm::vec3(-42, 146, 87),glm::vec3(-6.455791, 13.588928, -20.027432));
+	//setViewMatrix(glm::vec3(-42, 146, 87),glm::vec3(-6.455791, 13.588928, -20.027432));// close pose
+	setViewMatrix(glm::vec3(-42,151,60),glm::vec3(4.40673, 15.67409, -17.81709));  // not close pose
 	objPosition  = glm::vec3(0,0,0);
 	objAngles = glm::vec3(0,0,0);
 	//setModelMatrix(glm::vec3(10,25,3), glm::vec3(5,5,5));
-	textureImage = cv::imread("data/n2t.jpg");
+	
+	//textureImage = cv::imread("data/n2t.jpg");
+
+	cv::Mat inputImage = cv::imread("data/ref01.png");
+	//textureImage = inputImage;
+	textureImage = inputImage(cv::Rect(228,50,376,376));
 	cv::imshow("N2T Corporation", textureImage);
 
 	m_Obj=NULL;
@@ -42,7 +48,7 @@ ModelGL::~ModelGL()
 void ModelGL::initCamera()
 {
 	glShadeModel(GL_SMOOTH);			 	
-	glPixelStorei(GL_UNPACK_ALIGNMENT,8); // 8 byte pixel aligmnent
+	glPixelStorei(GL_UNPACK_ALIGNMENT,4); // 8 byte pixel aligmnent
 
 	// Enable/disable features
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT,GL_NICEST);
@@ -558,7 +564,7 @@ void ModelGL::drawModel()
 
 void ModelGL::zoomCamera( float delta )   // Change the camera Position but not orientation
 {
-	cameraPosition -= 0.05f*delta*cameraDirection;		
+	cameraPosition -= 0.01f*delta*cameraDirection;		
 	setViewMatrix(cameraAngles,cameraPosition);
 	emit camPositionChanged(cameraPosition);
 }
@@ -801,7 +807,7 @@ void ModelGL::drawSub1()
 	glLoadMatrixf(glm::value_ptr(modelViewMatrix));
 	//drawModel();
 	setUpDraw();	
-	vec3d color(.85,0.5,0.21);
+	vec3d color(.8,0.5,0.7);
 	m_Obj->DrawObject(false, color);
 	glPopMatrix();
 	glPopAttrib();
@@ -817,7 +823,7 @@ void ModelGL::drawSub2()
 	glPushMatrix();
 	drawGrabbedFrame(0, 0, windowWidth/2-1, windowHeight/2-1);	
 	glLoadMatrixf(glm::value_ptr(viewMatrix));	
-	drawGrid(10, 1);	
+	//drawGrid(10, 1);	
 
 	glLoadMatrixf(glm::value_ptr(modelViewMatrix));
 	//drawModel();	
@@ -862,7 +868,9 @@ void ModelGL::drawSub3()
 	/*drawTeapot();*/
 
 	//drawModel();	
-	vec3d color(1,0,0);
+	//setUpDraw();
+	//glDisable(GL_Mat)
+	vec3d color(.8,0.5,0.7);
 	m_Obj->DrawObject(false, color);
 	glPopMatrix();
 
@@ -875,7 +883,7 @@ void ModelGL::drawSub3()
 	glRotatef(cameraAngles.z,0, 0, 1);
 	glRotatef(cameraAngles.y, 0, 1, 0);	
 	glRotatef(cameraAngles.x,1,0,0);
-	drawCamera();
+	//drawCamera();
 	drawFrustum(cameraFovy,(float)windowWidth/windowHeight, cameraNear, cameraFar);	
 	drawAxis(2);	
 	glPopMatrix();
@@ -962,7 +970,7 @@ void ModelGL::setUpDraw()
 	glPolygonMode(GL_FRONT, GL_FILL);
 	float shininess = 15.0f;
 	float diffuseColor[3] = {0.929524f, 0.796542f, 0.178823f};
-	float specularColor[4] = {1.00000f, 0.980392f, 0.549020f, 1.0f};
+	float specularColor[4] = {1.00000f, 0.580392f, 0.549020f, 1.0f};
 
 	// set specular and shiniess using glMaterial (gold-yellow)
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess); // range 0 ~ 128
@@ -971,6 +979,16 @@ void ModelGL::setUpDraw()
 	// set ambient and diffuse color using glColorMaterial (gold-yellow)
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glColor3fv(diffuseColor);
+}
+
+float* ModelGL::getModelViewMatrixPtr()
+{
+	return glm::value_ptr(modelViewMatrix);
+}
+
+float* ModelGL::getProjectionMatrixPtr()
+{
+	return glm::value_ptr(projectionMatrix);
 }
 
 

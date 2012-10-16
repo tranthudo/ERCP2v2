@@ -56,6 +56,10 @@ public:
 	glm::mat3 extractRotationMatrix(glm::mat4 a_modelView);
 	glm::mat4 getViewMatrix(){return viewMatrix;}
 	glm::mat4 getCameraModelViewMatrix(){return modelViewMatrix;}
+	glm::mat4 getCameraProjectionMatrix(){return projectionMatrix;}
+
+	float* getModelViewMatrixPtr();
+	float* getProjectionMatrixPtr();
 
 	void setViewMatrix(glm::vec3 angles, glm::vec3 positions);  // calculate modelview matrix by euler angels
 	void setModelViewMatrix(float* matrix);						// update modelview matrix by a pointer

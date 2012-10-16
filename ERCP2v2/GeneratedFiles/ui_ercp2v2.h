@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'ercp2v2.ui'
 **
-** Created: Tue Oct 16 08:49:13 2012
+** Created: Tue Oct 16 12:10:38 2012
 **      by: Qt User Interface Compiler version 4.8.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -23,6 +23,7 @@
 #include <QtGui/QPushButton>
 #include <QtGui/QSpinBox>
 #include <QtGui/QStatusBar>
+#include <QtGui/QTextEdit>
 #include <QtGui/QToolBar>
 #include <QtGui/QWidget>
 #include "openglpanel.h"
@@ -82,6 +83,11 @@ public:
     QPushButton *pushButtonReference;
     QSpinBox *spinBox;
     QPushButton *pushButtonResetTracking;
+    QGroupBox *groupBox_7;
+    QPushButton *pushButtonCalibration;
+    QSpinBox *spinBoxNpointsCalibration;
+    QLabel *label_18;
+    QTextEdit *textEditCommand;
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
@@ -91,11 +97,14 @@ public:
         if (ERCP2v2Class->objectName().isEmpty())
             ERCP2v2Class->setObjectName(QString::fromUtf8("ERCP2v2Class"));
         ERCP2v2Class->resize(1387, 881);
+        QIcon icon;
+        icon.addFile(QString::fromUtf8("data/n2t.jpg"), QSize(), QIcon::Normal, QIcon::Off);
+        ERCP2v2Class->setWindowIcon(icon);
         centralWidget = new QWidget(ERCP2v2Class);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         widget = new OpenglPanel(centralWidget);
         widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(30, 20, 750, 750));
+        widget->setGeometry(QRect(30, 20, 754, 754));
         groupBox = new QGroupBox(centralWidget);
         groupBox->setObjectName(QString::fromUtf8("groupBox"));
         groupBox->setGeometry(QRect(820, 30, 171, 241));
@@ -283,6 +292,24 @@ public:
         pushButtonResetTracking = new QPushButton(groupBox_6);
         pushButtonResetTracking->setObjectName(QString::fromUtf8("pushButtonResetTracking"));
         pushButtonResetTracking->setGeometry(QRect(10, 150, 121, 23));
+        groupBox_7 = new QGroupBox(centralWidget);
+        groupBox_7->setObjectName(QString::fromUtf8("groupBox_7"));
+        groupBox_7->setGeometry(QRect(1190, 560, 161, 181));
+        pushButtonCalibration = new QPushButton(groupBox_7);
+        pushButtonCalibration->setObjectName(QString::fromUtf8("pushButtonCalibration"));
+        pushButtonCalibration->setGeometry(QRect(10, 20, 141, 23));
+        spinBoxNpointsCalibration = new QSpinBox(groupBox_7);
+        spinBoxNpointsCalibration->setObjectName(QString::fromUtf8("spinBoxNpointsCalibration"));
+        spinBoxNpointsCalibration->setGeometry(QRect(91, 50, 51, 22));
+        spinBoxNpointsCalibration->setMinimum(5);
+        spinBoxNpointsCalibration->setSingleStep(10);
+        spinBoxNpointsCalibration->setValue(10);
+        label_18 = new QLabel(groupBox_7);
+        label_18->setObjectName(QString::fromUtf8("label_18"));
+        label_18->setGeometry(QRect(20, 50, 46, 13));
+        textEditCommand = new QTextEdit(centralWidget);
+        textEditCommand->setObjectName(QString::fromUtf8("textEditCommand"));
+        textEditCommand->setGeometry(QRect(1140, 30, 211, 231));
         ERCP2v2Class->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(ERCP2v2Class);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
@@ -299,6 +326,7 @@ public:
         QObject::connect(pushButtonResetCamera, SIGNAL(clicked()), ERCP2v2Class, SLOT(resetCamera()));
         QObject::connect(pushButtonResetModelMatrix, SIGNAL(clicked()), ERCP2v2Class, SLOT(resetModel()));
         QObject::connect(pushButton, SIGNAL(clicked()), ERCP2v2Class, SLOT(close()));
+        QObject::connect(pushButtonCalibration, SIGNAL(clicked()), widget, SLOT(startManualCalibration()));
 
         QMetaObject::connectSlotsByName(ERCP2v2Class);
     } // setupUi
@@ -336,6 +364,9 @@ public:
         pushButtonStartTracking->setText(QApplication::translate("ERCP2v2Class", "Start Tracking", 0, QApplication::UnicodeUTF8));
         pushButtonReference->setText(QApplication::translate("ERCP2v2Class", "Reference", 0, QApplication::UnicodeUTF8));
         pushButtonResetTracking->setText(QApplication::translate("ERCP2v2Class", "Reset Tracking", 0, QApplication::UnicodeUTF8));
+        groupBox_7->setTitle(QApplication::translate("ERCP2v2Class", "Ultilities", 0, QApplication::UnicodeUTF8));
+        pushButtonCalibration->setText(QApplication::translate("ERCP2v2Class", "Camera Calibration", 0, QApplication::UnicodeUTF8));
+        label_18->setText(QApplication::translate("ERCP2v2Class", "N Points", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

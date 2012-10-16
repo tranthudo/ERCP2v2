@@ -49,6 +49,8 @@ ERCP2v2::ERCP2v2(QWidget *parent, Qt::WFlags flags)
 	QObject::connect(ui.spinBoxWidth, SIGNAL(valueChanged(int)), model, SLOT(setWidth(int)));
 	QObject::connect(ui.spinBoxHeight, SIGNAL(valueChanged(int)), model, SLOT(setHeight(int)));
 
+	// Connect Camera Calibration	
+
 }
 
 ERCP2v2::~ERCP2v2()
