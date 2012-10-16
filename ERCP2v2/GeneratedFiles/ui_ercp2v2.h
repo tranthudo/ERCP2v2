@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'ercp2v2.ui'
 **
-** Created: Fri Oct 12 04:31:39 2012
+** Created: Tue Oct 16 08:49:13 2012
 **      by: Qt User Interface Compiler version 4.8.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -76,7 +76,6 @@ public:
     QPushButton *pushButtonResetCamera;
     QGroupBox *groupBox_5;
     QPushButton *pushButtonResetModelMatrix;
-    QPushButton *pushButtonObjOrigin;
     QGroupBox *groupBox_6;
     QPushButton *pushButtonInitialization;
     QPushButton *pushButtonStartTracking;
@@ -264,9 +263,6 @@ public:
         pushButtonResetModelMatrix = new QPushButton(groupBox_5);
         pushButtonResetModelMatrix->setObjectName(QString::fromUtf8("pushButtonResetModelMatrix"));
         pushButtonResetModelMatrix->setGeometry(QRect(10, 20, 75, 23));
-        pushButtonObjOrigin = new QPushButton(groupBox_5);
-        pushButtonObjOrigin->setObjectName(QString::fromUtf8("pushButtonObjOrigin"));
-        pushButtonObjOrigin->setGeometry(QRect(10, 50, 75, 23));
         groupBox_6 = new QGroupBox(centralWidget);
         groupBox_6->setObjectName(QString::fromUtf8("groupBox_6"));
         groupBox_6->setGeometry(QRect(1020, 550, 151, 191));
@@ -302,6 +298,7 @@ public:
         retranslateUi(ERCP2v2Class);
         QObject::connect(pushButtonResetCamera, SIGNAL(clicked()), ERCP2v2Class, SLOT(resetCamera()));
         QObject::connect(pushButtonResetModelMatrix, SIGNAL(clicked()), ERCP2v2Class, SLOT(resetModel()));
+        QObject::connect(pushButton, SIGNAL(clicked()), ERCP2v2Class, SLOT(close()));
 
         QMetaObject::connectSlotsByName(ERCP2v2Class);
     } // setupUi
@@ -334,10 +331,6 @@ public:
         pushButtonResetCamera->setText(QApplication::translate("ERCP2v2Class", "Reset Camera", 0, QApplication::UnicodeUTF8));
         groupBox_5->setTitle(QApplication::translate("ERCP2v2Class", "Object Control", 0, QApplication::UnicodeUTF8));
         pushButtonResetModelMatrix->setText(QApplication::translate("ERCP2v2Class", "Reset Model", 0, QApplication::UnicodeUTF8));
-#ifndef QT_NO_WHATSTHIS
-        pushButtonObjOrigin->setWhatsThis(QString());
-#endif // QT_NO_WHATSTHIS
-        pushButtonObjOrigin->setText(QApplication::translate("ERCP2v2Class", "ObjOrigin", 0, QApplication::UnicodeUTF8));
         groupBox_6->setTitle(QApplication::translate("ERCP2v2Class", "Main Control", 0, QApplication::UnicodeUTF8));
         pushButtonInitialization->setText(QApplication::translate("ERCP2v2Class", "Initialization", 0, QApplication::UnicodeUTF8));
         pushButtonStartTracking->setText(QApplication::translate("ERCP2v2Class", "Start Tracking", 0, QApplication::UnicodeUTF8));

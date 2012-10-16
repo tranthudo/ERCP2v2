@@ -1,4 +1,6 @@
 #include "ercp2v2.h"
+#include "geometry.h"
+
 
 ERCP2v2::ERCP2v2(QWidget *parent, Qt::WFlags flags)
 	: QMainWindow(parent, flags)
@@ -101,20 +103,57 @@ void ERCP2v2::updateUICamPosition( glm::vec3 camPos )
 	QObject::connect(ui.doubleSpinBoxCamPosZ, SIGNAL(valueChanged(double)),model,SLOT(setCameraPositionZ(double)));
 }
 
+void ERCP2v2::updateUICamAngles(glm::vec3 ang)
+{
+	QObject::disconnect(ui.doubleSpinBoxCamAngX, SIGNAL(valueChanged(double)),model,SLOT(setCameraAngleX(double)));
+	QObject::disconnect(ui.doubleSpinBoxCamAngY, SIGNAL(valueChanged(double)),model,SLOT(setCameraAngleY(double)));
+	QObject::disconnect(ui.doubleSpinBoxCamAngZ, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleZ(double)));
+
+	ui.doubleSpinBoxCamAngX->setValue(ang.x);
+	ui.doubleSpinBoxCamAngY->setValue(ang.y);
+	ui.doubleSpinBoxCamAngZ->setValue(ang.z);
+
+	QObject::connect(ui.doubleSpinBoxCamAngX, SIGNAL(valueChanged(double)),model,SLOT(setCameraAngleX(double)));
+	QObject::connect(ui.doubleSpinBoxCamAngY, SIGNAL(valueChanged(double)),model,SLOT(setCameraAngleY(double)));
+	QObject::connect(ui.doubleSpinBoxCamAngZ, SIGNAL(valueChanged(double)),model,SLOT(setCameraAngleZ(double)));
+}
+
+	
 void ERCP2v2::updateUIObjAngles( glm::vec3 ang )
 {
-	QObject::connect(ui.doubleSpinBoxObjAngX, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleX(double)));
-	QObject::connect(ui.doubleSpinBoxCamAngY, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleY(double)));
-	QObject::connect(ui.doubleSpinBoxObjAngZ, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleZ(double)));
+	QObject::disconnect(ui.doubleSpinBoxObjAngX, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleX(double)));
+	QObject::disconnect(ui.doubleSpinBoxObjAngY, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleY(double)));
+	QObject::disconnect(ui.doubleSpinBoxObjAngZ, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleZ(double)));
 
 	ui.doubleSpinBoxObjAngX->setValue(ang.x);
 	ui.doubleSpinBoxObjAngY->setValue(ang.y);
 	ui.doubleSpinBoxObjAngZ->setValue(ang.z);
 
 	QObject::connect(ui.doubleSpinBoxObjAngX, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleX(double)));
-	QObject::connect(ui.doubleSpinBoxCamAngY, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleY(double)));
+	QObject::connect(ui.doubleSpinBoxObjAngY, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleY(double)));
 	QObject::connect(ui.doubleSpinBoxObjAngZ, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleZ(double)));
 }
+
+void ERCP2v2::updateUIObjPosition( glm::vec3 objPos )
+{
+	// disconnect to prevent update cam
+	QObject::disconnect(ui.doubleSpinBoxObjPosX, SIGNAL(valueChanged(double)),model,SLOT(setObjPositionX(double)));
+	QObject::disconnect(ui.doubleSpinBoxObjPosY, SIGNAL(valueChanged(double)),model,SLOT(setObjPositionY(double)));
+	QObject::disconnect(ui.doubleSpinBoxCamPosZ, SIGNAL(valueChanged(double)),model,SLOT(setObjPositionZ(double)));
+
+	// Update UI information
+
+
+	ui.doubleSpinBoxObjPosX->setValue(objPos.x);
+	ui.doubleSpinBoxObjPosY->setValue(objPos.y);
+	ui.doubleSpinBoxObjPosZ->setValue(objPos.z);
+
+	// reconnect stuffs
+	QObject::connect(ui.doubleSpinBoxObjPosX, SIGNAL(valueChanged(double)),model,SLOT(setObjPositionX(double)));
+	QObject::connect(ui.doubleSpinBoxObjPosY, SIGNAL(valueChanged(double)),model,SLOT(setObjPositionY(double)));
+	QObject::connect(ui.doubleSpinBoxObjPosZ, SIGNAL(valueChanged(double)),model,SLOT(setObjPositionZ(double)));
+}
+
 
 void ERCP2v2::resetCamera()
 {
@@ -138,4 +177,20 @@ void ERCP2v2::resetModel()
 	ui.doubleSpinBoxObjAngZ->setValue(originalObjAngles.z);
 
 }
+
+void ERCP2v2::objOrigin()
+{
+	// This still have some error that I can't fix now!!!!!!!!!!!! please don't use
+
+	// Extract position of the camera corresponding to when the obj is moved to the origin
+	glm::vec3 camPos = model->extractCameraPos(model->getCameraModelViewMatrix());
+	glm::vec3 camAng = getEulerFromRotationMatrix(glm::mat3(model->getCameraModelViewMatrix()),model->getCameraAngles());	
+
+	updateUICamPosition(camPos);
+	updateUICamAngles(camAng);
+	resetModel();  // with origin obj position and orientation = (0,0,0) and (0,0,0)
+	return;
+}
+
+
 

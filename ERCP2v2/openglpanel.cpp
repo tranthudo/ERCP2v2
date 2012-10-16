@@ -29,6 +29,7 @@ void OpenglPanel::resizeGL( int w,int h )
 	if (model)
 	{
 		model->setWindowSize(w/2-1,h/2-1);
+		model->setWindowSize(w,h);
 	}
 }
 

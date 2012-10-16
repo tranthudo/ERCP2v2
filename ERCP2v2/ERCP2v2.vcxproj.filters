@@ -71,6 +71,9 @@
     <ClCompile Include="glmmodel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="geometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="ercp2v2.h">
@@ -97,6 +100,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cameraSimple.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="obj.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

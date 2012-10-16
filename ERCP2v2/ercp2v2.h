@@ -1,6 +1,7 @@
 #ifndef ERCP2V2_H
 #define ERCP2V2_H
 
+#pragma  once
 #include <QtGui/QMainWindow>
 #include "ui_ercp2v2.h"
 #include "modelgl.h"
@@ -21,13 +22,16 @@ private:
 	glm::vec3 originalObjPosition;
 	glm::vec3 originalObjAngles;
 	void updateCameraUI();
+
 	
 private slots:
 	void updateUICamPosition(glm::vec3 pos);
 	void updateUIObjAngles(glm::vec3 ang);
+	void updateUICamAngles(glm::vec3 pos);
+	void updateUIObjPosition(glm::vec3 ang);
 	void resetCamera();
 	void resetModel();
-
+	void objOrigin();
 };
 
 #endif // ERCP2V2_H

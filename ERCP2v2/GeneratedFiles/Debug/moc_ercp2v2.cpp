@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'ercp2v2.h'
 **
-** Created: Fri Oct 12 04:24:39 2012
+** Created: Tue Oct 16 08:49:13 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_ERCP2v2[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       4,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -33,8 +33,11 @@ static const uint qt_meta_data_ERCP2v2[] = {
  // slots: signature, parameters, type, tag, flags
       13,    9,    8,    8, 0x08,
       48,   44,    8,    8, 0x08,
-      77,    8,    8,    8, 0x08,
-      91,    8,    8,    8, 0x08,
+      77,    9,    8,    8, 0x08,
+     106,   44,    8,    8, 0x08,
+     137,    8,    8,    8, 0x08,
+     151,    8,    8,    8, 0x08,
+     164,    8,    8,    8, 0x08,
 
        0        // eod
 };
@@ -42,7 +45,9 @@ static const uint qt_meta_data_ERCP2v2[] = {
 static const char qt_meta_stringdata_ERCP2v2[] = {
     "ERCP2v2\0\0pos\0updateUICamPosition(glm::vec3)\0"
     "ang\0updateUIObjAngles(glm::vec3)\0"
-    "resetCamera()\0resetModel()\0"
+    "updateUICamAngles(glm::vec3)\0"
+    "updateUIObjPosition(glm::vec3)\0"
+    "resetCamera()\0resetModel()\0objOrigin()\0"
 };
 
 void ERCP2v2::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -53,8 +58,11 @@ void ERCP2v2::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, voi
         switch (_id) {
         case 0: _t->updateUICamPosition((*reinterpret_cast< glm::vec3(*)>(_a[1]))); break;
         case 1: _t->updateUIObjAngles((*reinterpret_cast< glm::vec3(*)>(_a[1]))); break;
-        case 2: _t->resetCamera(); break;
-        case 3: _t->resetModel(); break;
+        case 2: _t->updateUICamAngles((*reinterpret_cast< glm::vec3(*)>(_a[1]))); break;
+        case 3: _t->updateUIObjPosition((*reinterpret_cast< glm::vec3(*)>(_a[1]))); break;
+        case 4: _t->resetCamera(); break;
+        case 5: _t->resetModel(); break;
+        case 6: _t->objOrigin(); break;
         default: ;
         }
     }
@@ -92,9 +100,9 @@ int ERCP2v2::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 4)
+        if (_id < 7)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 4;
+        _id -= 7;
     }
     return _id;
 }

@@ -641,22 +641,6 @@
       <string>Reset Model</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButtonObjOrigin">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>50</y>
-       <width>75</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="whatsThis">
-      <string extracomment="Move Object to the origin without changing the view"/>
-     </property>
-     <property name="text">
-      <string>ObjOrigin</string>
-     </property>
-    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_6">
     <property name="geometry">
@@ -808,11 +792,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ERCP2v2Class</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1244</x>
+     <y>832</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1291</x>
+     <y>840</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>updateCameraUI()</slot>
   <slot>updateCameraPose()</slot>
   <slot>resetCamera()</slot>
   <slot>resetModel()</slot>
+  <slot>objOrigin()</slot>
  </slots>
 </ui>

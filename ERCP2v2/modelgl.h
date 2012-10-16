@@ -1,6 +1,6 @@
 #ifndef MODELGL_H
 #define MODELGL_H
-
+#pragma comment(lib,"d3d9.lib")
 #ifdef _WIN32
 #include <windows.h>    // include windows.h to avoid thousands of compile errors even though this class is not depending on Windows
 #endif
@@ -20,7 +20,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "glmmodel.h"
-
+#include <opencv2/opencv.hpp>
+#include "obj.h"
 
 class ModelGL : public QObject
 {
@@ -50,12 +51,24 @@ public:
 	float getCameraFovy(){return cameraFovy;}
 	int getCameraWidth(){return windowWidth;}
 	int getCameraHeight(){return windowHeight;}
-	
+
+	glm::vec3 extractCameraPos(glm::mat4 a_modelView);
+	glm::mat3 extractRotationMatrix(glm::mat4 a_modelView);
+	glm::mat4 getViewMatrix(){return viewMatrix;}
+	glm::mat4 getCameraModelViewMatrix(){return modelViewMatrix;}
+
 	void setViewMatrix(glm::vec3 angles, glm::vec3 positions);  // calculate modelview matrix by euler angels
 	void setModelViewMatrix(float* matrix);						// update modelview matrix by a pointer
 	void setModelMatrix(float* matrix);
 	void setModelMatrix(glm::vec3 angles, glm::vec3 positions);// calculate the model matrix 
 	void draw();
+	void drawSub1();
+	void drawSub2();
+	void drawSub3();
+	void drawSub4();
+	void drawAxis( float size );
+	void drawFrustum(float fovY, float aspectRatio, float nearPlane, float farPlane);
+	void drawGrid(float size, float step);
 	void zoomCamera(float delta);
 	void rotateModel(float angle, glm::vec3 rotAxis);
 	void trackingCamera(float deltaX, float deltaY);
@@ -88,6 +101,9 @@ public slots:
 
 
 private:
+	float thirdPersonDistance;
+	float thirdPersonAngleX;
+	float thirdPersonAngleY;
 	glm::vec3 cameraPosition;
 	glm::vec3 cameraUp;
 	glm::vec3 cameraDirection;
@@ -107,13 +123,22 @@ private:
 	int windowHeight;
 	float bgColor[3];
 	GLMmodel* object;
+	CObj* m_Obj;
+	// Image
+	GLuint textureID;								// texture ID
+	cv::Mat textureImage;
 	// Private functions
 	void initLights();
 	void setViewport(int x, int y, int width, int height);
 	void setViewportSub(int left, int bottom, int width, int height);	
-	glm::vec3 extractCameraPos(glm::mat4 a_modelView);
-	glm::mat3 extractRotationMatrix(glm::mat4 a_modelView);
+	void setThirViewportSub(int left, int bottom, int width, int height, float near, float far);
+	void getFrame2GLTexture(cv::Mat textureImage);	// get frame and convert to texture
+	void drawGrabbedFrame(int x, int y, int m_WindowWidth, int m_WindowHeight);
 	void drawModel();
+	void setUpDraw();
+	//void drawObj();
+	
+
 
 signals:
 	void widthChanged(int w);
