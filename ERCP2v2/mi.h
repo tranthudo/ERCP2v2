@@ -7,9 +7,9 @@
 #include <cutil.h>
 
 
-#include "..\cuda\cuda_basics.h"
-#include "..\cuda\cuda_hist.h"
-#include "..\cuda\cuda_mi.h"
+#include "cuda\cuda_basics.h"
+#include "cuda\cuda_hist.h"
+#include "cuda\cuda_mi.h"
 
 #pragma once
 

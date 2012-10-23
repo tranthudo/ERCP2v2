@@ -36,7 +36,7 @@
     <Filter Include="cuda">
       <UniqueIdentifier>{e00ce4b5-3379-4c32-a51c-78d55893521a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Numerical Recipes">
+    <Filter Include="Optimization">
       <UniqueIdentifier>{b2b79056-9a5d-4174-9222-0123b06e0950}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -142,13 +142,13 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\mins_ndim_n2t.h">
-      <Filter>Numerical Recipes</Filter>
+      <Filter>Optimization</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\nr3.h">
-      <Filter>Numerical Recipes</Filter>
+      <Filter>Optimization</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\mins.h">
-      <Filter>Numerical Recipes</Filter>
+      <Filter>Optimization</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -27,12 +27,12 @@ struct Linemethod {
 		Doub ax,xx,xmin;
 		n=p.size();
 		F1dim<T> f1dim(p,xi,func);
-		qDebug("Linemethod limin p = [%f,%f,%f,%f,%f,%f], xi=[%f,%f,%f,%f%f,%f]",p[0],p[1],p[2],p[3],p[4],p[5],xi[0],xi[1],xi[2],xi[3],xi[4],xi[5]);
+		//qDebug("Linemethod limin p = [%f,%f,%f,%f,%f,%f], xi=[%f,%f,%f,%f%f,%f]",p[0],p[1],p[2],p[3],p[4],p[5],xi[0],xi[1],xi[2],xi[3],xi[4],xi[5]);
 		ax=0.0;
 		xx=1.0;
 		Brent brent;
 		brent.bracket(ax,xx,f1dim);
-		qDebug("After bracket: ax = %f, bx = %f, cx = %f, fa =%f, fb = %f, fc = %f",brent.ax,brent.bx,brent.cx,brent.fa,brent.fb,brent.fc);
+		//qDebug("After bracket: ax = %f, bx = %f, cx = %f, fa =%f, fb = %f, fc = %f",brent.ax,brent.bx,brent.cx,brent.fa,brent.fb,brent.fc);
 
 		xmin=brent.minimize(f1dim);
 		for (Int j=0;j<n;j++) {
@@ -171,7 +171,7 @@ struct N2tPowell : Powell<T> {
 	VecDoub minimize(VecDoub_I &pp, MatDoub_IO &ximat, bool mode)
 	{
 		
-		const Int ITMAX=200;		// maximum allowed iterations
+		const Int ITMAX=100;		// maximum allowed iterations
 		const Doub TINY=1.0e-25;	// a small number
 		Doub fptt;					// temporary value of function
 		Int n=pp.size();
@@ -206,35 +206,23 @@ struct N2tPowell : Powell<T> {
 
 				switch(i)
 				{
-				case 0:
-					qDebug()<<" \nline minimize for tx"; 
-					qDebug("After search along tx (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+				case 0:					
+					qDebug("After search along tx (%f, %f, %f); rvec = (%f, %f, %f) fret = %f", p[0],p[1],p[3],p[4],p[5],p[2],fret);					
 					break;
-				case 1:
-					qDebug()<<" \nline minimize for ty"; 
-					qDebug("After search along ty (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+				case 1:					
+					qDebug("After search along ty (%f, %f, %f); rvec = (%f, %f, %f) fret = %f", p[0],p[1],p[3],p[4],p[5],p[2], fret);					
 					break;
-				case 2:
-					qDebug()<<" \nline minimize for rz"; 
-					qDebug("After search along rz (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+				case 2:					
+					qDebug("After search along rz (%f, %f, %f); rvec = (%f, %f, %f), fret = %f", p[0],p[1],p[3],p[4],p[5],p[2], fret);					
 					break;
 				case 3:
-					qDebug()<<" \nline minimize for tz"; 
-					qDebug("After search along tz (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug("After search along tz (%f, %f, %f); rvec = (%f, %f, %f) fret = %f", p[0],p[1],p[3],p[4],p[5],p[2], fret);
 					break;
 				case 4:
-					qDebug()<<" \nline minimize for rx"; 
-					qDebug("After search along rx (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug("After search along rx (%f, %f, %f); rvec = (%f, %f, %f) fret = %f", p[0],p[1],p[3],p[4],p[5],p[2], fret);
 					break;
 				case 5:
-					qDebug()<<" \nline minimize for ry"; 
-					qDebug("After search along ry (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug("After search along ry (%f, %f, %f); rvec = (%f, %f, %f) fret = %f", p[0],p[1],p[3],p[4],p[5],p[2], fret);
 					break;
 				default:
 					break;
@@ -242,7 +230,7 @@ struct N2tPowell : Powell<T> {
 				// End for debug only
 			}
 			if (2.0*(fp-fret) <= ftol*(abs(fp)+abs(fret))+TINY) { // check if the decrease rate is small -> end
-				qDebug()<<"FUCK!\n";
+				qDebug()<<"Optimization done!\n";
 				return p;
 			}
 			if (iter == ITMAX) throw("powell exceeding maximum iterations.");  

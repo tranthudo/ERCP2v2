@@ -484,7 +484,7 @@ void OpenglPanel::testOptimization()
 	const Doub p_d[NDIM] = {tvec.x,tvec.y,rvec.z,tvec.z,rvec.x,rvec.y};
 	int i,j,iter;
 	MIFunc func(this->model,this);
-	N2tPowell<MIFunc> powell(func);
+	N2tPowell<MIFunc> powell(func,FTOL);
 
 	Doub fret;
 	VecDoub p(NDIM,p_d);
@@ -494,12 +494,12 @@ void OpenglPanel::testOptimization()
 		for (j=0;j<NDIM;j++)
 			xi[i][j] = (i==j?1.0:0.0);
 	powell.minimize(p,true);
-	qDebug() << "Iterations: " << powell.iter;	
+	/*qDebug() << "Iterations: " << powell.iter;	
 	qDebug("Minimum found at tvec = (%f, %f, %f); rvec = (%f, %f, %f)", powell.p[0],powell.p[1],powell.p[3],powell.p[4],powell.p[5],powell.p[2]);
 	for (i=0;i<NDIM;i++) qDebug() << powell.p[i];
-	qDebug() << "\n\n" << "Minimum function value = ";
+	qDebug("Minimum function value =" ,powell.fret);
 	qDebug() << powell.fret;
-	qDebug() << "True minimum of function is at:" << endl;
+	qDebug() << "True minimum of function is at:" << endl;*/
 	qDebug() << "Real value    tvec = (-6.000000, 26.000000, -22.000000); rvec = (-42.000000, 151.000000, 60.000000);"<<endl;
 	
 	return;
@@ -532,7 +532,7 @@ Doub MIFunc::operator()( VecDoub &x )
 	cv::Mat fixedGray;
 	cv::cvtColor(model->fixedImage,fixedGray,CV_RGB2GRAY);
 	
-	cv::Mat fixedF = floatingGray(fixedGray);					//normalized image and convert to floating image
+	//cv::Mat fixedF = floatingGray(fixedGray);					//normalized image and convert to floating image
 	cv::Mat movingGray; 
 	//movingImage.convertTo(movingGray,CV_RGB2GRAY);
 	cv::cvtColor(movingImage,movingGray,CV_RGB2GRAY);
@@ -542,8 +542,16 @@ Doub MIFunc::operator()( VecDoub &x )
 
 	// pointer of data of other images	
 	float* buf1 = (float*)movingF.data;
-	float* buf2 = (float*)fixedF.data;
+	float* buf2 = (float*)model->fixedFloat.data;
+	cudaHistOptions *p_opt = 0;
+	if (opt.threads != 0)
+	{
+		p_opt = new cudaHistOptions;
+		p_opt->blocks = opt.blocks;
+		p_opt->threads = opt.threads;
+	}
 	mi_cpu = cpuMI(buf1, buf2, opt.len, opt.bins, opt.bins, t);
+	//mi_cpu = cudaMIa(buf1, buf2, opt.len, opt.bins, opt.bins, t, p_opt);
 //	cv::imwrite("data/getgl/linhTinhImage.jpg",panel->getCurrentOpenGLImage());
 	//qDebug("cpuMI (%dx%d bins): mi = %f, %.3f ms, %.1f MB/s\n", opt.bins, opt.bins, mi_cpu, t, opt.len * sizeof(float) / t*1e-3);
 	return -mi_cpu;

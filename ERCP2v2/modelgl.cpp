@@ -2,6 +2,7 @@
 #include "modelgl.h"
 #include "geometry.h"
 #include "cameraSimple.h"
+#include "img_process.h"
 const float DEG2RAD = 3.141593f / 180;
 
 ModelGL::ModelGL(QObject *parent)
@@ -37,6 +38,9 @@ ModelGL::ModelGL(QObject *parent)
 	//textureImage = inputImage;
 	textureImage = inputImage;//(cv::Rect(228,50,376,376));
 	textureImage.copyTo(fixedImage);
+	cv::Mat fixedGray;
+	cv::cvtColor(fixedImage,fixedGray,CV_RGB2GRAY);
+	fixedFloat = floatingGray(fixedGray);
 	cv::imshow("N2T Corporation", textureImage);
 
 	m_Obj=NULL;

@@ -172,7 +172,7 @@ struct Brent : Bracketmethod {
 					fv=fu;
 				}
 			}
-			qDebug("brent(%d): fu = %f, fv =%f, fw = %f, fx = %f",iter,fu,fv, fw, fx);
+			//qDebug("brent(%d): fu = %f, fv =%f, fw = %f, fx = %f",iter,fu,fv, fw, fx);
 		}
 		throw("Too many iterations in brent");
 	}
