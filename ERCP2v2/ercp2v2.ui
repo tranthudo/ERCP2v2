@@ -996,22 +996,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>ERCP2v2Class</sender>
-   <signal>saveOpenGLImage()</signal>
-   <receiver>widget</receiver>
-   <slot>repaint()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1269</x>
-     <y>403</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>779</x>
-     <y>387</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>pushButtonTestOptimization</sender>
    <signal>clicked()</signal>
    <receiver>widget</receiver>

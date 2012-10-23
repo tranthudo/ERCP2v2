@@ -81,6 +81,8 @@ public:
 	void setCameraPosition(glm::vec3 tvec);
 	void setCameraAngles(glm::vec3 rvec);
 	cv::Mat fixedImage;
+	cv::Mat fixedGray;
+	cv::Mat fixedFloat;
 public slots:
 	void setCameraAngleX(double rx);
 	void setCameraAngleY(double ry);

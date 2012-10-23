@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'ercp2v2.ui'
 **
-** Created: Tue Oct 23 20:18:51 2012
+** Created: Wed Oct 24 04:51:53 2012
 **      by: Qt User Interface Compiler version 4.8.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -340,7 +340,6 @@ public:
         QObject::connect(widget, SIGNAL(finishSelectingPoints()), ERCP2v2Class, SLOT(enableCaculateCalibration()));
         QObject::connect(pushButtonCalculateCalibration, SIGNAL(clicked()), ERCP2v2Class, SLOT(pushButtonCalculateCalibrationClicked()));
         QObject::connect(pushButtonCalculateCalibration, SIGNAL(clicked()), widget, SLOT(calculateCalibration()));
-        QObject::connect(ERCP2v2Class, SIGNAL(saveOpenGLImage()), widget, SLOT(repaint()));
         QObject::connect(pushButtonTestOptimization, SIGNAL(clicked()), widget, SLOT(testOptimization()));
 
         QMetaObject::connectSlotsByName(ERCP2v2Class);

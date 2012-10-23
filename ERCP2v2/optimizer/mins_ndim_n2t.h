@@ -27,12 +27,12 @@ struct Linemethod {
 		Doub ax,xx,xmin;
 		n=p.size();
 		F1dim<T> f1dim(p,xi,func);
-		qDebug("Linemethod limin p = [%f,%f,%f,%f,%f,%f], xi=[%f,%f,%f,%f%f,%f]",p[0],p[1],p[2],p[3],p[4],p[5],xi[0],xi[1],xi[2],xi[3],xi[4],xi[5]);
+		//qDebug("Linemethod limin p = [%f,%f,%f,%f,%f,%f], xi=[%f,%f,%f,%f%f,%f]",p[0],p[1],p[2],p[3],p[4],p[5],xi[0],xi[1],xi[2],xi[3],xi[4],xi[5]);
 		ax=0.0;
 		xx=1.0;
 		Brent brent;
 		brent.bracket(ax,xx,f1dim);
-		qDebug("After bracket: ax = %f, bx = %f, cx = %f, fa =%f, fb = %f, fc = %f",brent.ax,brent.bx,brent.cx,brent.fa,brent.fb,brent.fc);
+		//qDebug("After bracket: ax = %f, bx = %f, cx = %f, fa =%f, fb = %f, fc = %f",brent.ax,brent.bx,brent.cx,brent.fa,brent.fb,brent.fc);
 
 		xmin=brent.minimize(f1dim);
 		for (Int j=0;j<n;j++) {
@@ -159,7 +159,7 @@ struct Powell : Linemethod<T> {
 
 template <class T>
 struct N2tPowell : Powell<T> {
-	N2tPowell(T &func, const Doub ftoll=3.0e-8) : Powell<T>(func,ftoll){}
+	N2tPowell(T &func, const Doub ftoll=1.0e-5) : Powell<T>(func,ftoll){}
 
 	VecDoub minimize(VecDoub_I &pp, bool mode)
 	{
@@ -171,7 +171,7 @@ struct N2tPowell : Powell<T> {
 	VecDoub minimize(VecDoub_I &pp, MatDoub_IO &ximat, bool mode)
 	{
 		
-		const Int ITMAX=200;		// maximum allowed iterations
+		const Int ITMAX=100;		// maximum allowed iterations
 		const Doub TINY=1.0e-25;	// a small number
 		Doub fptt;					// temporary value of function
 		Int n=pp.size();
@@ -189,8 +189,8 @@ struct N2tPowell : Powell<T> {
 						ximat[j][i] = (j==i?1.0:0.0);
 				}
 			}
-			qDebug("Iteration %d",iter);
-			qDebug("Initial value tvec = (%f, %f, %f); rvec = (%f, %f, %f)\n", p[0],p[1],p[3],p[4],p[5],p[2]);
+			qDebug("\nIteration %d",iter);
+			qDebug("Initial value tvec = (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
 			Doub fp=fret;					// previous iteration result of function
 			Int ibig=0;
 			Doub del=0.0;					// Will be the biggest function decrease
@@ -207,40 +207,37 @@ struct N2tPowell : Powell<T> {
 				switch(i)
 				{
 				case 0:
-					qDebug()<<" \nline minimize for tx"; 
-					qDebug("After search along tx (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug(" \nline minimize for tx function value fret = %f",fret); 
+					//qDebug("After search along tx (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
+					
 					break;
 				case 1:
-					qDebug()<<" \nline minimize for ty"; 
-					qDebug("After search along ty (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug(" \nline minimize for ty function value fret = %f",fret);
+					//qDebug("After search along ty (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
+					
 					break;
 				case 2:
-					qDebug()<<" \nline minimize for rz"; 
-					qDebug("After search along rz (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug(" \nline minimize for rz function value fret = %f",fret);
+					//qDebug("After search along rz (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
 					break;
 				case 3:
-					qDebug()<<" \nline minimize for tz"; 
-					qDebug("After search along tz (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug(" \nline minimize for tz function value fret = %f",fret);
+					//qDebug("After search along tz (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
 					break;
 				case 4:
-					qDebug()<<" \nline minimize for rx"; 
-					qDebug("After search along rx (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug(" \nline minimize for rx function value fret = %f",fret);
+					//qDebug("After search along rx (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
 					break;
 				case 5:
-					qDebug()<<" \nline minimize for ry"; 
-					qDebug("After search along ry (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
-					qDebug("function value fret = %f\n",fret);
+					qDebug(" \nline minimize for ry function value fret = %f",fret);
+					//qDebug("After search along ry (%f, %f, %f); rvec = (%f, %f, %f)", p[0],p[1],p[3],p[4],p[5],p[2]);
 					break;
 				default:
 					break;
 				}
 				// End for debug only
 			}
+			qDebug("Result of iteration %d: tvec = (%f, %f, %f);  rvec = (%f, %f, %f) with fret = %f, diff = fp-fret =%f",iter, p[0],p[1],p[3],p[4],p[5],p[2], fret,fp-fret);
 			if (2.0*(fp-fret) <= ftol*(abs(fp)+abs(fret))+TINY) { // check if the decrease rate is small -> end
 				qDebug()<<"FUCK!\n";
 				return p;

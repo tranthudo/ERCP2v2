@@ -493,13 +493,9 @@ void OpenglPanel::testOptimization()
 	for (i=0;i<NDIM;i++)
 		for (j=0;j<NDIM;j++)
 			xi[i][j] = (i==j?1.0:0.0);
-	powell.minimize(p,true);
-	qDebug() << "Iterations: " << powell.iter;	
-	qDebug("Minimum found at tvec = (%f, %f, %f); rvec = (%f, %f, %f)", powell.p[0],powell.p[1],powell.p[3],powell.p[4],powell.p[5],powell.p[2]);
-	for (i=0;i<NDIM;i++) qDebug() << powell.p[i];
-	qDebug() << "\n\n" << "Minimum function value = ";
-	qDebug() << powell.fret;
-	qDebug() << "True minimum of function is at:" << endl;
+	powell.minimize(p,true);	
+	//for (i=0;i<NDIM;i++) qDebug() << powell.p[i];
+	qDebug() << "\n\n" << "Minimum function value = "<< powell.fret;		
 	qDebug() << "Real value    tvec = (-6.000000, 26.000000, -22.000000); rvec = (-42.000000, 151.000000, 60.000000);"<<endl;
 	
 	return;
@@ -526,17 +522,19 @@ Doub MIFunc::operator()( VecDoub &x )
 	model->setViewMatrix(rvec,tvec);
 	panel->updateGL();  // Need to redraw the opengl in order to update the moving image
 	cv::Mat movingImage = panel->getCurrentOpenGLImage();
-	//cv::imwrite("data/getgl/updateImage.jpg",movingImage);
-
-	// Convert to image to gray floating image
-	cv::Mat fixedGray;
-	cv::cvtColor(model->fixedImage,fixedGray,CV_RGB2GRAY);
-	
-	cv::Mat fixedF = floatingGray(fixedGray);					//normalized image and convert to floating image
 	cv::Mat movingGray; 
 	//movingImage.convertTo(movingGray,CV_RGB2GRAY);
 	cv::cvtColor(movingImage,movingGray,CV_RGB2GRAY);
 	cv::Mat movingF = floatingGray(movingGray);				// normalized image and convert to floating image
+
+	// Get the gray image from model	
+	cv::Mat fixedF;// = model->fixedFloat;					//normalized image and convert to floating image
+
+	// Processing 2 images
+	cv::Sobel(movingGray,movingF,CV_32FC1,1,0);
+	cv::Sobel(model->fixedFloat, fixedF, CV_32FC1,1,0);
+
+	
 	//cv::imshow("moving Image", movingF);
 	//cv::imshow("fixed Image",fixedF);
 

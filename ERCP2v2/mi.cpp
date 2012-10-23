@@ -84,7 +84,7 @@ float cpuMI(float *src1, float *src2, int length, int xbins, int ybins, double &
 			Hy -= Py * log(Py);
 	}
 
-	float MI = Hx + Hy - Hxy;
+	float MI = (Hx + Hy)/Hxy;
 	delete []hist;
 
 	CUT_SAFE_CALL(cutStopTimer(hTimer));
