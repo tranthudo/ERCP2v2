@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'openglpanel.h'
 **
-** Created: Tue Oct 16 22:00:16 2012
+** Created: Tue Oct 23 22:19:49 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,23 +23,31 @@ static const uint qt_meta_data_OpenglPanel[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       2,   14, // methods
+       6,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       0,       // signalCount
+       1,       // signalCount
+
+ // signals: signature, parameters, type, tag, flags
+      13,   12,   12,   12, 0x05,
 
  // slots: signature, parameters, type, tag, flags
-      13,   12,   12,   12, 0x08,
-      40,   38,   12,   12, 0x08,
+      37,   12,   12,   12, 0x08,
+      64,   62,   12,   12, 0x08,
+      87,   12,   12,   12, 0x08,
+     110,   12,   12,   12, 0x08,
+     130,   12,   12,   12, 0x08,
 
        0        // eod
 };
 
 static const char qt_meta_stringdata_OpenglPanel[] = {
-    "OpenglPanel\0\0startManualCalibration()\0"
-    "n\0setNumberOfPoints(int)\0"
+    "OpenglPanel\0\0finishSelectingPoints()\0"
+    "startManualCalibration()\0n\0"
+    "setNumberOfPoints(int)\0calculateCalibration()\0"
+    "saveRenderedImage()\0testOptimization()\0"
 };
 
 void OpenglPanel::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -48,8 +56,12 @@ void OpenglPanel::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id,
         Q_ASSERT(staticMetaObject.cast(_o));
         OpenglPanel *_t = static_cast<OpenglPanel *>(_o);
         switch (_id) {
-        case 0: _t->startManualCalibration(); break;
-        case 1: _t->setNumberOfPoints((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 0: _t->finishSelectingPoints(); break;
+        case 1: _t->startManualCalibration(); break;
+        case 2: _t->setNumberOfPoints((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 3: _t->calculateCalibration(); break;
+        case 4: _t->saveRenderedImage(); break;
+        case 5: _t->testOptimization(); break;
         default: ;
         }
     }
@@ -87,10 +99,16 @@ int OpenglPanel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 2)
+        if (_id < 6)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 2;
+        _id -= 6;
     }
     return _id;
+}
+
+// SIGNAL 0
+void OpenglPanel::finishSelectingPoints()
+{
+    QMetaObject::activate(this, &staticMetaObject, 0, 0);
 }
 QT_END_MOC_NAMESPACE

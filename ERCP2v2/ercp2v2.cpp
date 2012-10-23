@@ -50,7 +50,7 @@ ERCP2v2::ERCP2v2(QWidget *parent, Qt::WFlags flags)
 	QObject::connect(ui.spinBoxHeight, SIGNAL(valueChanged(int)), model, SLOT(setHeight(int)));
 
 	// Connect Camera Calibration	
-
+	
 }
 
 ERCP2v2::~ERCP2v2()
@@ -193,6 +193,26 @@ void ERCP2v2::objOrigin()
 	resetModel();  // with origin obj position and orientation = (0,0,0) and (0,0,0)
 	return;
 }
+
+
+
+void ERCP2v2::enableCaculateCalibration()
+{
+	ui.pushButtonCalculateCalibration->setEnabled(true);
+}
+
+void ERCP2v2::pushButtonCalculateCalibrationClicked()
+{
+	ui.pushButtonCalculateCalibration->setEnabled(false);	
+}
+
+//void ERCP2v2::keyPressEvent( QKeyEvent * event )
+//{
+//	if (event->key()==Qt::Key_Q)
+//	{
+//		qDebug()<<"HELLO KEYPRESS";
+//	}
+//}
 
 
 

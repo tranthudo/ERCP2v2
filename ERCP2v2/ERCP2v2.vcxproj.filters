@@ -33,11 +33,14 @@
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="cuda">
+      <UniqueIdentifier>{e00ce4b5-3379-4c32-a51c-78d55893521a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Numerical Recipes">
+      <UniqueIdentifier>{b2b79056-9a5d-4174-9222-0123b06e0950}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ercp2v2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -72,6 +75,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="geometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="img_process.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -111,5 +123,55 @@
     <ClInclude Include="DataStruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cuda\cuda_basics.h">
+      <Filter>cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\cuda_mi.h">
+      <Filter>cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\cuda_hist.h">
+      <Filter>cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\gpu_basics.h">
+      <Filter>cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="mi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="img_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\mins_ndim_n2t.h">
+      <Filter>Numerical Recipes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\nr3.h">
+      <Filter>Numerical Recipes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\mins.h">
+      <Filter>Numerical Recipes</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="cuda\cuda_basics.cu">
+      <Filter>cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cuda\cuda_hist.cu">
+      <Filter>cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cuda\cuda_mi.cu">
+      <Filter>cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cuda\gpu_mi.cu">
+      <Filter>cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cuda\gpu_hist.cu">
+      <Filter>cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cuda\gpu_basics.cu">
+      <Filter>cuda</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
 </Project>

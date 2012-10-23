@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'ercp2v2.h'
 **
-** Created: Tue Oct 16 08:49:13 2012
+** Created: Tue Oct 23 22:56:10 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_ERCP2v2[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       7,   14, // methods
+       9,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -38,6 +38,8 @@ static const uint qt_meta_data_ERCP2v2[] = {
      137,    8,    8,    8, 0x08,
      151,    8,    8,    8, 0x08,
      164,    8,    8,    8, 0x08,
+     176,    8,    8,    8, 0x08,
+     204,    8,    8,    8, 0x08,
 
        0        // eod
 };
@@ -48,6 +50,8 @@ static const char qt_meta_stringdata_ERCP2v2[] = {
     "updateUICamAngles(glm::vec3)\0"
     "updateUIObjPosition(glm::vec3)\0"
     "resetCamera()\0resetModel()\0objOrigin()\0"
+    "enableCaculateCalibration()\0"
+    "pushButtonCalculateCalibrationClicked()\0"
 };
 
 void ERCP2v2::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -63,6 +67,8 @@ void ERCP2v2::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, voi
         case 4: _t->resetCamera(); break;
         case 5: _t->resetModel(); break;
         case 6: _t->objOrigin(); break;
+        case 7: _t->enableCaculateCalibration(); break;
+        case 8: _t->pushButtonCalculateCalibrationClicked(); break;
         default: ;
         }
     }
@@ -100,9 +106,9 @@ int ERCP2v2::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 7)
+        if (_id < 9)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 7;
+        _id -= 9;
     }
     return _id;
 }

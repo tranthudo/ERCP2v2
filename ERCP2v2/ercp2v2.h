@@ -2,6 +2,9 @@
 #define ERCP2V2_H
 
 #pragma  once
+
+
+
 #include <QtGui/QMainWindow>
 #include "ui_ercp2v2.h"
 #include "modelgl.h"
@@ -14,6 +17,11 @@ public:
 	ERCP2v2(QWidget *parent = 0, Qt::WFlags flags = 0);
 	~ERCP2v2();
 	ModelGL* getModelGL();
+
+protected:
+	//void keyPressEvent(QKeyEvent * event);
+
+
 private:
 	Ui::ERCP2v2Class ui;
 	ModelGL* model;
@@ -32,6 +40,15 @@ private slots:
 	void resetCamera();
 	void resetModel();
 	void objOrigin();
+
+	void enableCaculateCalibration();
+	
+	void pushButtonCalculateCalibrationClicked();
+
+signals:
+	//void saveOpenGLImage();
+	
+
 };
 
 #endif // ERCP2V2_H

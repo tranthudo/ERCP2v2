@@ -22,16 +22,21 @@ ModelGL::ModelGL(QObject *parent)
 	updateRotationMatrix();
 
 	//setViewMatrix(glm::vec3(-42, 146, 87),glm::vec3(-6.455791, 13.588928, -20.027432));// close pose
-	setViewMatrix(glm::vec3(-42,151,60),glm::vec3(4.40673, 15.67409, -17.81709));  // not close pose
+	//setViewMatrix(glm::vec3(-42,151,60),glm::vec3(4.40673, 15.67409, -17.81709));  // not close pose
+	//setViewMatrix(glm::vec3(-42.0,151.0,60.0), glm::vec3(-5.69049, 26.01945,-22,12544));
+	
+	setViewMatrix(glm::vec3(-49,156,51), glm::vec3(-8.0,28.0,-25.5));
+	//setViewMatrix(glm::vec3(-42,151,60),glm::vec3(-6,26,-22));
 	objPosition  = glm::vec3(0,0,0);
 	objAngles = glm::vec3(0,0,0);
 	//setModelMatrix(glm::vec3(10,25,3), glm::vec3(5,5,5));
 	
 	//textureImage = cv::imread("data/n2t.jpg");
 
-	cv::Mat inputImage = cv::imread("data/ref01.png");
+	cv::Mat inputImage = cv::imread("data/fixed.bmp");
 	//textureImage = inputImage;
-	textureImage = inputImage(cv::Rect(228,50,376,376));
+	textureImage = inputImage;//(cv::Rect(228,50,376,376));
+	textureImage.copyTo(fixedImage);
 	cv::imshow("N2T Corporation", textureImage);
 
 	m_Obj=NULL;
@@ -48,7 +53,7 @@ ModelGL::~ModelGL()
 void ModelGL::initCamera()
 {
 	glShadeModel(GL_SMOOTH);			 	
-	glPixelStorei(GL_UNPACK_ALIGNMENT,4); // 8 byte pixel aligmnent
+	glPixelStorei(GL_UNPACK_ALIGNMENT,4); // 4 byte pixel alignment  // that can be changed to 1 in case of 
 
 	// Enable/disable features
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT,GL_NICEST);
@@ -807,7 +812,7 @@ void ModelGL::drawSub1()
 	glLoadMatrixf(glm::value_ptr(modelViewMatrix));
 	//drawModel();
 	setUpDraw();	
-	vec3d color(.8,0.5,0.7);
+	vec3d color(.4,0.4,0.4);
 	m_Obj->DrawObject(false, color);
 	glPopMatrix();
 	glPopAttrib();
@@ -957,6 +962,7 @@ void ModelGL::setUpDraw()
 	//glEnable(GL_LIGHTING);   
 	//glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
 	//glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
 	//glEnable(GL_LIGHT0);
 
 	//glFrontFace(GL_CCW);
@@ -964,21 +970,23 @@ void ModelGL::setUpDraw()
 	////	glShadeModel(GL_FLAT);
 	//glPolygonMode(GL_BACK, GL_FILL);
 
-
+	
 
 	glFrontFace(GL_CCW);
 	glPolygonMode(GL_FRONT, GL_FILL);
-	float shininess = 15.0f;
-	float diffuseColor[3] = {0.929524f, 0.796542f, 0.178823f};
-	float specularColor[4] = {1.00000f, 0.580392f, 0.549020f, 1.0f};
+	float shininess = 100.0f;
+	GLfloat ambientColor[] = {0.2f,0.2f,0.2f,1.0f};
+	float diffuseColor[3] = {0.796542f, 0.796542f, 0.796542f};
+	float specularColor[4] = {0.500000f, 0.580392f, 0.549020f, 1.0f};
 
 	// set specular and shiniess using glMaterial (gold-yellow)
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess); // range 0 ~ 128
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
-
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	// set ambient and diffuse color using glColorMaterial (gold-yellow)
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	glColor3fv(diffuseColor);
+	
+	//glColor3fv(diffuseColor);
 }
 
 float* ModelGL::getModelViewMatrixPtr()

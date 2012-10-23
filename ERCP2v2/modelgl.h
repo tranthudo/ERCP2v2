@@ -21,7 +21,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "glmmodel.h"
 #include <opencv2/opencv.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 #include "obj.h"
+
 
 class ModelGL : public QObject
 {
@@ -78,7 +80,7 @@ public:
 	void trackingCamera(float deltaX, float deltaY);
 	void setCameraPosition(glm::vec3 tvec);
 	void setCameraAngles(glm::vec3 rvec);
-
+	cv::Mat fixedImage;
 public slots:
 	void setCameraAngleX(double rx);
 	void setCameraAngleY(double ry);
@@ -131,6 +133,7 @@ private:
 	// Image
 	GLuint textureID;								// texture ID
 	cv::Mat textureImage;
+
 	// Private functions
 	void initLights();
 	void setViewport(int x, int y, int width, int height);
