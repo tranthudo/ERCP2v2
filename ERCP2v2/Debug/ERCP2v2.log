@@ -1,63 +1,10 @@
-﻿Build started 10/23/2012 11:30:36 PM.
-     1>Project "C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\ERCP2v2\ERCP2v2.vcxproj" on node 2 (build target(s)).
-     1>InitializeBuildStatus:
-         Creating "Debug\ERCP2v2.unsuccessfulbuild" because "AlwaysCreate" was specified.
-       CustomBuild:
-         All outputs are up-to-date.
-       ClCompile:
-         c:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I.\GeneratedFiles /I. /IC:\Qt\4.8.3\include /I.\GeneratedFiles\Debug /IC:\Qt\4.8.3\include\QtCore /IC:\Qt\4.8.3\include\QtGui /IC:\Qt\4.8.3\include\QtOpenGL /Zi /nologo /W1 /WX- /Od /Oy- /D UNICODE /D WIN32 /D QT_LARGEFILE_SUPPORT /D QT_DLL /D QT_CORE_LIB /D QT_GUI_LIB /D QT_OPENGL_LIB /Gm- /EHsc /MDd /GS /fp:precise /Zc:wchar_t- /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt openglpanel.cpp
-         openglpanel.cpp
-     1>C:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.2\c\common\inc\GL/glext.h(393): warning C4005: 'GL_BLEND_EQUATION_RGB' : macro redefinition
-                 c:\qt\4.8.3\include\qtopengl\../../src/opengl/qglfunctions.h(1445) : see previous definition of 'GL_BLEND_EQUATION_RGB'
-         Note: including lib: glut32.lib
-         
-     1>c:\Program Files\Microsoft Visual Studio 10.0\VC\include\xutility(2227): warning C4996: 'std::_Copy_impl': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
-                 c:\Program Files\Microsoft Visual Studio 10.0\VC\include\xutility(2212) : see declaration of 'std::_Copy_impl'
-                 c:\users\nguyen tien thinh\git\ercp2v2\ercp2v2\DataStruct.h(428) : see reference to function template instantiation '_OutIt std::copy<const double*,double*>(_InIt,_InIt,_OutIt)' being compiled
-                 with
-                 [
-                     _OutIt=double *,
-                     _InIt=const double *
-                 ]
-     1>c:\Program Files\Microsoft Visual Studio 10.0\VC\include\xutility(3051): warning C4996: 'std::_Equal1': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
-                 c:\Program Files\Microsoft Visual Studio 10.0\VC\include\xutility(3036) : see declaration of 'std::_Equal1'
-                 c:\users\nguyen tien thinh\git\ercp2v2\ercp2v2\DataStruct.h(613) : see reference to function template instantiation 'bool std::equal<const double*,const double*>(_InIt1,_InIt1,_InIt2)' being compiled
-                 with
-                 [
-                     _InIt1=const double *,
-                     _InIt2=const double *
-                 ]
-     1>c:\Program Files\Microsoft Visual Studio 10.0\VC\include\xutility(2227): warning C4996: 'std::_Copy_impl': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
-                 c:\Program Files\Microsoft Visual Studio 10.0\VC\include\xutility(2212) : see declaration of 'std::_Copy_impl'
-                 c:\users\nguyen tien thinh\git\ercp2v2\ercp2v2\DataStruct.h(651) : see reference to function template instantiation '_OutIt std::copy<double*,double*>(_InIt,_InIt,_OutIt)' being compiled
-                 with
-                 [
-                     _OutIt=double *,
-                     _InIt=double *
-                 ]
-         All outputs are up-to-date.
-       Link:
-         c:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\Win32\Debug\\ERCP2v2.exe" /NOLOGO /LIBPATH:C:\Qt\4.8.3\lib cudart.lib cutil32D.lib opencv_core242d.lib opencv_imgproc242d.lib opencv_highgui242d.lib opencv_features2d242d.lib opencv_calib3d242d.lib opencv_video242d.lib opencv_flann242d.lib qtmaind.lib QtCored4.lib QtGuid4.lib QtOpenGLd4.lib opengl32.lib glu32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\ERCP2v2.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\Win32\Debug\ERCP2v2.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\Win32\Debug\ERCP2v2.lib" /MACHINE:X86 Debug\ercp2v2.obj
-         Debug\moc_ercp2v2.obj
-         Debug\moc_modelgl.obj
-         Debug\moc_openglpanel.obj
-         Debug\qrc_ercp2v2.obj
-         Debug\geometry.obj
-         Debug\glmmodel.obj
-         Debug\img_process.obj
-         Debug\main.obj
-         Debug\mi.obj
-         Debug\modelgl.obj
-         Debug\openglpanel.obj
-         LINK : C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\Win32\Debug\\ERCP2v2.exe not found or not built by the last incremental link; performing full link
-         ERCP2v2.vcxproj -> C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\Win32\Debug\ERCP2v2.exe
-       Manifest:
-         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\Win32\Debug\\ERCP2v2.exe;#1" /manifest Debug\ERCP2v2.exe.intermediate.manifest
-       FinalizeBuildStatus:
-         Deleting file "Debug\ERCP2v2.unsuccessfulbuild".
-         Touching "Debug\ERCP2v2.lastbuildstate".
-     1>Done Building Project "C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\ERCP2v2\ERCP2v2.vcxproj" (build target(s)).
+﻿Build started 10/24/2012 3:07:34 AM.
+     1>Project "C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\ERCP2v2\ERCP2v2.vcxproj" on node 2 (clean target(s)).
+     1>_PrepareForClean:
+         Deleting file "Debug\ERCP2v2.lastbuildstate".
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : The process cannot access the file 'C:\USERS\NGUYEN TIEN THINH\GIT\ERCP2V2\ERCP2V2\GENERATEDFILES\UI_ERCP2V2.H' because it is being used by another process.
+     1>Done Building Project "C:\Users\Nguyen Tien Thinh\Git\ERCP2v2\ERCP2v2\ERCP2v2.vcxproj" (clean target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:09.12
+Time Elapsed 00:00:00.30
