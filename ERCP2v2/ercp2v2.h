@@ -40,6 +40,7 @@ private slots:
 	void resetCamera();
 	void resetModel();
 	void objOrigin();
+	void resetThirdView();
 
 	void enableCaculateCalibration();
 	

@@ -71,9 +71,6 @@
     <ClCompile Include="GeneratedFiles\Release\moc_modelgl.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="glmmodel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -107,9 +104,6 @@
   <ItemGroup>
     <ClInclude Include="GeneratedFiles\ui_ercp2v2.h">
       <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="glmmodel.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="geometry.h">
       <Filter>Header Files</Filter>

@@ -20,11 +20,6 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	: QGLWidget(parent)
 {
 	// Set the double buffer to false in order to get the Frame at each iteration
-	QGLFormat newFormat = this->format();
-	newFormat.setDoubleBuffer(false);
-	this->setFormat(newFormat);
-
-
 	model = ((ERCP2v2*)((this->parent())->parent()))->getModelGL();
 	movement = NONE;
 	mode = STOP;
@@ -107,15 +102,14 @@ void OpenglPanel::mousePressEvent( QMouseEvent *event )
 		}
 		else if (event->buttons()&Qt::RightButton)
 		{
-			if (event->modifiers()==Qt::ControlModifier){
+			if (event->modifiers()==Qt::AltModifier){
 				movement = THIRD_CAM_ZOOM;
 			}
-			else movement = THIRD_CAM_ROTATE;
-			{
-				lastPoint.setX(event->pos().x());
-				lastPoint.setY(event->pos().y());
-				lastPoint.setZ(0);
-			}
+			else movement = THIRD_CAM_ROTATE;			
+			lastPoint.setX(event->pos().x());
+			lastPoint.setY(event->pos().y());
+			lastPoint.setZ(0);
+			
 		}
 	}
 	else if (mode == CAMERA_CALIBRATION)
@@ -171,7 +165,61 @@ void OpenglPanel::mousePressEvent( QMouseEvent *event )
 			}
 		}
 	}
+	else if (mode == MANUAL_TRACKING)
+	{
+		// Check in sub window 1 = virtual image & sub window 2 = real image;
+		const static int number_of_points = 4;
+		QPointF point = event->posF();
+		if (event->buttons()&Qt::LeftButton)
+		{
+			if ((point.x() >0 & point.x() < this->width()/2-1)&(point.y()>0 & point.y()<this->height()/2-1))  // check if in sub window one
+			{
+				if (currentVirtualPoint++ <number_of_points)
+				{
+					// Get the obj 2d points and corresponding 3 locations and add to the list (vector of points)
+					cv::Point2f virtualImagePoint = cv::Point2f(point.x(),point.y());
+					virtualImagePoints.push_back(virtualImagePoint);
+					glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+					cv::Point3f objPoint = GetOGLPos(virtualImagePoint,viewPort);
+					objPoints.push_back(objPoint);
+					qDebug()<<"Virtual Point "<<currentVirtualPoint<<"th";
+					qDebug()<<"Virtual Image Point:  "<<virtualImagePoint.x<<", "<<virtualImagePoint.y;
+					qDebug()<<"Object 3D Point:      "<<objPoint.x<<", "<<objPoint.y<<", "<<objPoint.z;
+				}
+			}
+			else if ((point.x()>this->width()/2 & point.x()<this->width())&(point.y()>0 & point.y()<this->height()/2-1)) // check if mouse in sub window 2
+			{
+				if (currentRealPoint++<number_of_points)
+				{
+					// Get the 2D position of corresponding real images
+					cv::Point2f realImagePoint = cv::Point2f(point.x()-this->width()/2-1,point.y());
+					realImagePoints.push_back(realImagePoint);
+					qDebug()<<"Real Image Point "<<currentRealPoint<<"th";
+					qDebug()<<"Real Image Point:  "<<realImagePoint.x<<", "<<realImagePoint.y;
+				}
 
+			}
+			if (currentRealPoint >=number_of_points & currentVirtualPoint >=number_of_points)
+			{
+				mode = STOP;
+				qDebug()<<"Finish Selecting Point";		
+
+				fs.open("data/realImagePoints.yml",cv::FileStorage::WRITE);
+				fs<<"realImagePoints"<<realImagePoints;
+				fs.release();
+
+				fs.open("data/virtualImagePoints.yml",cv::FileStorage::WRITE);
+				fs<<"virtualImagePoints"<<virtualImagePoints;
+				fs.release();
+
+				fs.open("data/objPoints.yml", cv::FileStorage::WRITE);
+				fs<<"objPoints"<<objPoints;
+				fs.release();
+				//emit finishSelectingPoints();
+				QMessageBox::critical(this,"Manual selecting points done!", "Ok");
+			}
+		}
+	}
 }
 
 void OpenglPanel::mouseMoveEvent( QMouseEvent* event )
@@ -218,12 +266,22 @@ void OpenglPanel::mouseMoveEvent( QMouseEvent* event )
 			break;
 		case THIRD_CAM_ZOOM:
 			curPoint = QVector3D(event->pos().x(),event->pos().y(),0);
-			
+			model->zoomThirdCamera(curPoint.x()-lastPoint.x());
+			updateGL();
+			lastPoint = curPoint;
+			break;
+		case THIRD_CAM_ROTATE:
+			curPoint = QVector3D(event->pos().x(),event->pos().y(),0);
+			model->rotateThirdCamera(curPoint.x()-lastPoint.x(),curPoint.y()-lastPoint.y());
+			updateGL();
+			lastPoint = curPoint;
+			break;
+		
 		default:
 			break;
 		}	
 	}
-	else if (mode = CAMERA_CALIBRATION)
+	else if (mode == CAMERA_CALIBRATION)
 	{
 		
 	}	
@@ -241,12 +299,10 @@ void OpenglPanel::mouseReleaseEvent( QMouseEvent *event )
 
 void OpenglPanel::startManualCalibration()
 {
-	if (mode == CAMERA_CALIBRATION)
-	{
+	if (mode == CAMERA_CALIBRATION)	{
 		mode = STOP;
 	}
-	else 
-	{
+	else {
 		mode = CAMERA_CALIBRATION;
 		currentVirtualPoint = 0;
 		currentRealPoint = 0;
@@ -255,6 +311,21 @@ void OpenglPanel::startManualCalibration()
 	}	
 
 }
+
+void OpenglPanel::testManualTracking()
+{
+	QMessageBox::information(this,"N2T","Please select 4 points in endoscopic image\n and corresponding points in rendered image!");
+	if (mode == MANUAL_TRACKING) {mode = STOP;}
+	else {
+		mode = MANUAL_TRACKING;
+		currentVirtualPoint = 0;
+		currentRealPoint = 0;
+		virtualImagePoints.clear();
+		realImagePoints.clear();
+	}
+
+}
+
 
 cv::Point3f OpenglPanel::GetOGLPos( cv::Point2f point, glm::vec4 viewPort)
 {
@@ -492,6 +563,12 @@ void OpenglPanel::testOptimization()
 	//float t = 3;
 	//SWAP(a,b,t);*/
 	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Switch to single buffer mode in order to read one by one frame during each iteration
+	QGLFormat newFormat = this->format();
+	newFormat.setDoubleBuffer(false);
+	this->setFormat(newFormat);
+
+
 	const int NDIM = 6;
 	const Doub FTOL = 1.0e-6;
 	glm::vec3 rvec = model->getCameraAngles();
@@ -517,6 +594,10 @@ void OpenglPanel::testOptimization()
 	qDebug() << "True minimum of function is at:" << endl;*/
 	qDebug() << "Real value    tvec = (-6.000000, 26.000000, -22.000000); rvec = (-42.000000, 151.000000, 60.000000);"<<endl;
 	
+	// Return to double buffer mode to enhance smooth display	
+	newFormat.setDoubleBuffer(true);
+	this->setFormat(newFormat);
+
 	return;
 }
 
@@ -526,11 +607,90 @@ void OpenglPanel::testNewMutualInformation()
 	return;
 }
 
-void OpenglPanel::testManualTracking()
+void OpenglPanel::selfCalibration()
 {
-	QMessageBox::information(this,"N2T","Please select 4 points in endoscopic image\n and corresponding points in rendered image!");
-	
+	//Clear the objPoints and imagePoint to use
+	objPoints.clear();
+	virtualImagePoints.clear();
+	int stepx = (this->width()/2-1)/6;
+	int stepy = (this->height()/2-1)/6;
+	int w = this->width()/2-1;
+	int h = this->height()/2-1;
+	// search for a region of 4 and 5 points
+	float x = 0;
+	float y = 0;
+	for (int i = 0; i<5; i++) {
+		x =stepx*(i+1);
+		for (int j = 0; j<5; j++){
+			// get the position of camera			
+			y =stepx*(j+1);
+			virtualImagePoints.push_back(cv::Point2f(w-x,y));
+			glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+			cv::Point3f objPoint = GetOGLPos(cv::Point2f(x,y),viewPort);
+			objPoints.push_back(objPoint);
+		}
+	}	
+	double calibrationError;
+	float fy = (float)(this->height()/2-1)/2/tan(M_PI/180.0f*model->getCameraFovy()/2);
+	float fx = fy;
+	double intrinsic[3][3] = {fx, 0.00000,   ((float)this->width()/2.0-1.0)/2.0,
+		0.00000,   fy,   ((float)this->height()/2.0-1.0)/2.0,
+		0.00000,     0.00000,     1.00000};
+	cv::Mat temp_CamIntrinsic = cv::Mat(3,3,CV_64F,intrinsic);
+	cv::Mat cameraMatrix;
+	temp_CamIntrinsic.copyTo(cameraMatrix);
+	cv::Mat distCoeffs;
+	std::vector<std::vector<cv::Point3f>> objectPoints;
+	std::vector<std::vector<cv::Point2f>> imagePoints;	
+	objectPoints.push_back(objPoints);
+	imagePoints.push_back(virtualImagePoints);
+	std::vector<cv::Mat> rvecs;
+	std::vector<cv::Mat> tvecs;
+	calibrationError = cv::calibrateCamera(objectPoints,imagePoints,cv::Size(this->width()/2-1,this->height()/2-1),cameraMatrix,distCoeffs,rvecs,tvecs,cv::CALIB_USE_INTRINSIC_GUESS);
+	//calibrationError = cv::calibrateCamera(cv::Mat(objPoints),cv::Mat(virtualImagePoints),cv::Size(this->width()/2-1,this->height()/2-1),cameraMatrix,distCoeffs,rvecs,tvecs,cv::CALIB_USE_INTRINSIC_GUESS);
+	// PRINT OUT CAMERA MATRIX FOR DEBUGING
+	qDebug()<<"cameraMatrix =[";	
+	for (int j = 0; j<3;j++)
+	{
+		// get the pointer of row j
+		double* data = cameraMatrix.ptr<double>(j);
+		// process each pixel -----------------
+		qDebug()<<data[0]<<", "<<data[1]<<", "<<data[2]<<";";
+	}
+	// PRINT OUT DISTOSION COEFFICIENTS
+	qDebug()<<"distCoeffs =[";
+	for(int j = 0; j<distCoeffs.rows;j++)
+	{
+		double* data = distCoeffs.ptr<double>(j);
+		for (int i = 0; i<distCoeffs.cols;i++)
+		{
+			qDebug()<<data[i]<<", ";
+		}		
+	}
+	double* data = rvecs[0].ptr<double>(0);
+	qDebug()<<"Rodrigues = ["<<data[0]<<", "<<data[1]<<", "<<data[2]<<"]";
+	data = tvecs[0].ptr<double>(0);
+	qDebug()<<"tvec = ["<<data[0]<<", "<<data[1]<<", "<<data[2]<<"]";
+	cv::Mat rot;
+	cv::Rodrigues(rvecs[0],rot);
+	qDebug()<<"rotationMatrix = [";
+	for(int j = 0; j<rot.rows;j++)
+	{
+		double* data = rot.ptr<double>(j);
+		qDebug()<<data[0]<<","<<data[1]<<", "<<data[2]<<";";		
+	}	
+
+	fs.open("data/virtualImagePoints.yml",cv::FileStorage::WRITE);
+	fs<<"virtualImagePoints"<<virtualImagePoints;
+	fs.release();
+
+	fs.open("data/objPoints.yml", cv::FileStorage::WRITE);
+	fs<<"objPoints"<<objPoints;
+	fs.release();
+
 }
+
+
 
 
 

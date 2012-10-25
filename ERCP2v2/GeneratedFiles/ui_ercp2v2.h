@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'ercp2v2.ui'
 **
-** Created: Fri Oct 26 01:11:48 2012
+** Created: Fri Oct 26 03:49:34 2012
 **      by: Qt User Interface Compiler version 4.8.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -78,6 +78,7 @@ public:
     QPushButton *pushButtonObjOrigin;
     QGroupBox *groupBox_5;
     QPushButton *pushButtonResetModelMatrix;
+    QPushButton *pushButton_2;
     QGroupBox *groupBox_6;
     QPushButton *pushButtonInitialization;
     QPushButton *pushButtonStartTracking;
@@ -89,6 +90,7 @@ public:
     QSpinBox *spinBoxNpointsCalibration;
     QLabel *label_18;
     QPushButton *pushButtonCalculateCalibration;
+    QPushButton *pushButtonSelfCalibration;
     QTextEdit *textEditCommand;
     QPushButton *pushButtonTestOptimization;
     QPushButton *pushButtonTestMI;
@@ -280,6 +282,9 @@ public:
         pushButtonResetModelMatrix = new QPushButton(groupBox_5);
         pushButtonResetModelMatrix->setObjectName(QString::fromUtf8("pushButtonResetModelMatrix"));
         pushButtonResetModelMatrix->setGeometry(QRect(10, 20, 75, 23));
+        pushButton_2 = new QPushButton(groupBox_5);
+        pushButton_2->setObjectName(QString::fromUtf8("pushButton_2"));
+        pushButton_2->setGeometry(QRect(0, 50, 91, 23));
         groupBox_6 = new QGroupBox(centralWidget);
         groupBox_6->setObjectName(QString::fromUtf8("groupBox_6"));
         groupBox_6->setGeometry(QRect(1020, 550, 151, 191));
@@ -319,6 +324,9 @@ public:
         pushButtonCalculateCalibration->setObjectName(QString::fromUtf8("pushButtonCalculateCalibration"));
         pushButtonCalculateCalibration->setEnabled(false);
         pushButtonCalculateCalibration->setGeometry(QRect(10, 80, 141, 23));
+        pushButtonSelfCalibration = new QPushButton(groupBox_7);
+        pushButtonSelfCalibration->setObjectName(QString::fromUtf8("pushButtonSelfCalibration"));
+        pushButtonSelfCalibration->setGeometry(QRect(20, 120, 131, 23));
         textEditCommand = new QTextEdit(centralWidget);
         textEditCommand->setObjectName(QString::fromUtf8("textEditCommand"));
         textEditCommand->setGeometry(QRect(1140, 30, 211, 231));
@@ -357,6 +365,8 @@ public:
         QObject::connect(pushButtonTestMI, SIGNAL(released()), widget, SLOT(testNewMutualInformation()));
         QObject::connect(pushButtonTestManualTracking, SIGNAL(clicked()), widget, SLOT(testManualTracking()));
         QObject::connect(pushButtonObjOrigin, SIGNAL(clicked()), ERCP2v2Class, SLOT(objOrigin()));
+        QObject::connect(pushButtonResetModelMatrix, SIGNAL(clicked()), ERCP2v2Class, SLOT(pushButtonCalculateCalibrationClicked()));
+        QObject::connect(pushButtonSelfCalibration, SIGNAL(clicked()), widget, SLOT(selfCalibration()));
 
         QMetaObject::connectSlotsByName(ERCP2v2Class);
     } // setupUi
@@ -390,6 +400,7 @@ public:
         pushButtonObjOrigin->setText(QApplication::translate("ERCP2v2Class", "ObjOrigin", 0, QApplication::UnicodeUTF8));
         groupBox_5->setTitle(QApplication::translate("ERCP2v2Class", "Object Control", 0, QApplication::UnicodeUTF8));
         pushButtonResetModelMatrix->setText(QApplication::translate("ERCP2v2Class", "Reset Model", 0, QApplication::UnicodeUTF8));
+        pushButton_2->setText(QApplication::translate("ERCP2v2Class", "Reset Third View", 0, QApplication::UnicodeUTF8));
         groupBox_6->setTitle(QApplication::translate("ERCP2v2Class", "Main Control", 0, QApplication::UnicodeUTF8));
         pushButtonInitialization->setText(QApplication::translate("ERCP2v2Class", "Initialization", 0, QApplication::UnicodeUTF8));
         pushButtonStartTracking->setText(QApplication::translate("ERCP2v2Class", "Start Tracking", 0, QApplication::UnicodeUTF8));
@@ -399,6 +410,7 @@ public:
         pushButtonCalibration->setText(QApplication::translate("ERCP2v2Class", "Camera Calibration", 0, QApplication::UnicodeUTF8));
         label_18->setText(QApplication::translate("ERCP2v2Class", "N Points", 0, QApplication::UnicodeUTF8));
         pushButtonCalculateCalibration->setText(QApplication::translate("ERCP2v2Class", "Calculate", 0, QApplication::UnicodeUTF8));
+        pushButtonSelfCalibration->setText(QApplication::translate("ERCP2v2Class", "Self Calibration", 0, QApplication::UnicodeUTF8));
         pushButtonTestOptimization->setText(QApplication::translate("ERCP2v2Class", "Test Optimization", 0, QApplication::UnicodeUTF8));
         pushButtonTestMI->setText(QApplication::translate("ERCP2v2Class", "Test New Mutual Information", 0, QApplication::UnicodeUTF8));
         pushButtonTestManualTracking->setText(QApplication::translate("ERCP2v2Class", "Test Manual Tracking", 0, QApplication::UnicodeUTF8));

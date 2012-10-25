@@ -197,6 +197,13 @@ void ERCP2v2::objOrigin()
 
 
 
+void ERCP2v2::resetThirdView()
+{
+	model->resetThirdView();
+}
+
+
+
 void ERCP2v2::enableCaculateCalibration()
 {
 	ui.pushButtonCalculateCalibration->setEnabled(true);
@@ -206,6 +213,7 @@ void ERCP2v2::pushButtonCalculateCalibrationClicked()
 {
 	ui.pushButtonCalculateCalibration->setEnabled(false);	
 }
+
 
 //void ERCP2v2::keyPressEvent( QKeyEvent * event )
 //{

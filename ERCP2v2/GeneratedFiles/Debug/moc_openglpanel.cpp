@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'openglpanel.h'
 **
-** Created: Fri Oct 26 01:12:29 2012
+** Created: Fri Oct 26 03:49:35 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_OpenglPanel[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       8,   14, // methods
+       9,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -41,6 +41,7 @@ static const uint qt_meta_data_OpenglPanel[] = {
      130,   12,   12,   12, 0x08,
      149,   12,   12,   12, 0x08,
      176,   12,   12,   12, 0x08,
+     197,   12,   12,   12, 0x08,
 
        0        // eod
 };
@@ -51,7 +52,7 @@ static const char qt_meta_stringdata_OpenglPanel[] = {
     "setNumberOfPoints(int)\0calculateCalibration()\0"
     "saveRenderedImage()\0testOptimization()\0"
     "testNewMutualInformation()\0"
-    "testManualTracking()\0"
+    "testManualTracking()\0selfCalibration()\0"
 };
 
 void OpenglPanel::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -68,6 +69,7 @@ void OpenglPanel::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id,
         case 5: _t->testOptimization(); break;
         case 6: _t->testNewMutualInformation(); break;
         case 7: _t->testManualTracking(); break;
+        case 8: _t->selfCalibration(); break;
         default: ;
         }
     }
@@ -105,9 +107,9 @@ int OpenglPanel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 8)
+        if (_id < 9)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 8;
+        _id -= 9;
     }
     return _id;
 }

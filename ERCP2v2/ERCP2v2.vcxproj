@@ -112,7 +112,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="geometry.cpp" />
-    <ClCompile Include="glmmodel.cpp" />
     <ClCompile Include="img_process.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mi.cpp" />
@@ -153,7 +152,6 @@
     <ClInclude Include="DataStruct.h" />
     <ClInclude Include="GeneratedFiles\ui_ercp2v2.h" />
     <ClInclude Include="geometry.h" />
-    <ClInclude Include="glmmodel.h" />
     <ClInclude Include="img_process.h" />
     <ClInclude Include="mi.h" />
     <ClInclude Include="obj.h" />

@@ -28,7 +28,7 @@ struct Func {
 
 typedef enum {ROTATE, TRACKING, THIRD_CAM_ROTATE, THIRD_CAM_ZOOM, NONE} MouseMoveState;
 
-typedef enum {CAMERA_CALIBRATION, INITIALIZATION, CAMERA_TRACKING, STOP} ProgramMode;
+typedef enum {CAMERA_CALIBRATION, INITIALIZATION, CAMERA_TRACKING, MANUAL_TRACKING, STOP} ProgramMode;
 
 class OpenglPanel : public QGLWidget
 {
@@ -63,6 +63,8 @@ private:
 	std::vector<cv::Point2f> realImagePoints;
 	std::vector<cv::Point3f> objPoints;
 	cv::FileStorage fs;
+	cv::Mat camera_intrinsic;
+	cv::Mat camera_extrinsic;
 	
 // private functions go here
 private:
@@ -81,6 +83,14 @@ private slots:
 	void testOptimization();
 	void testNewMutualInformation();
 	void testManualTracking();
+	//************************************
+	// Method:    selfCalibration
+	// FullName:  OpenglPanel::selfCalibration
+	// Access:    private 
+	// Returns:   void
+	// Qualifier:
+	//************************************
+	void selfCalibration();
 signals:
 	void finishSelectingPoints();
 

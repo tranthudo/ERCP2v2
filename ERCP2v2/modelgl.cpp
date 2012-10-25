@@ -528,48 +528,48 @@ glm::mat3 ModelGL::extractRotationMatrix( glm::mat4 a_modelView )
 	return rotMat;
 }
 
-void ModelGL::drawModel()
-{
-	
-
-	// Load the model only if it hasn't been loaded before
-	// If it's been loaded then pmodel1 should be a pointer to the model geometry data...otherwise it's null
-	if (!object) 
-	{
-		// this is the call that actually reads the OBJ and creates the model object
-		object = glmReadOBJ("data/duodenum.uni.obj");
-		GLuint mode = GLM_SMOOTH;
-		/*char* fileName = "data/duodenum.uni.obj";
-		glmWriteOBJ(pmodel,fileName,mode);	*/
-		if (!object) exit(0);
-		// this Unitize is modified to calculated original center point position and position of the model
-		// glmUnitize(pmodel);
-		
-		// These 2 functions calculate triangle and vertex normals from the geometry data.
-		// To be honest I had some problem with very complex models that didn't look to good because of how vertex normals were calculated
-		// So if you can export these directly from you modeling tool do it and comment these line
-		// 3DS Max can calculate these for you and GLM is perfectly capable of loading them
-		
-		glmFacetNormals(object);        
-		glmVertexNormals(object, 90.0);
-	}
-	// This is the call that will actually draw the model
-	// Don't forget to tell it if you want textures or not :))
-	glFrontFace(GL_CW);
-	glPolygonMode(GL_FRONT, GL_FILL);
-	float shininess = 15.0f;
-	float diffuseColor[3] = {0.929524f, 0.796542f, 0.178823f};
-	float specularColor[4] = {1.00000f, 0.980392f, 0.549020f, 1.0f};
-
-	// set specular and shiniess using glMaterial (gold-yellow)
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess); // range 0 ~ 128
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
-
-	// set ambient and diffuse color using glColorMaterial (gold-yellow)
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	glColor3fv(diffuseColor);
-	glmDraw(object, GLM_SMOOTH| GLM_TEXTURE);
-}
+//void ModelGL::drawModel()
+//{
+//	
+//
+//	// Load the model only if it hasn't been loaded before
+//	// If it's been loaded then pmodel1 should be a pointer to the model geometry data...otherwise it's null
+//	if (!object) 
+//	{
+//		// this is the call that actually reads the OBJ and creates the model object
+//		object = glmReadOBJ("data/duodenum.uni.obj");
+//		GLuint mode = GLM_SMOOTH;
+//		/*char* fileName = "data/duodenum.uni.obj";
+//		glmWriteOBJ(pmodel,fileName,mode);	*/
+//		if (!object) exit(0);
+//		// this Unitize is modified to calculated original center point position and position of the model
+//		// glmUnitize(pmodel);
+//		
+//		// These 2 functions calculate triangle and vertex normals from the geometry data.
+//		// To be honest I had some problem with very complex models that didn't look to good because of how vertex normals were calculated
+//		// So if you can export these directly from you modeling tool do it and comment these line
+//		// 3DS Max can calculate these for you and GLM is perfectly capable of loading them
+//		
+//		glmFacetNormals(object);        
+//		glmVertexNormals(object, 90.0);
+//	}
+//	// This is the call that will actually draw the model
+//	// Don't forget to tell it if you want textures or not :))
+//	glFrontFace(GL_CW);
+//	glPolygonMode(GL_FRONT, GL_FILL);
+//	float shininess = 15.0f;
+//	float diffuseColor[3] = {0.929524f, 0.796542f, 0.178823f};
+//	float specularColor[4] = {1.00000f, 0.980392f, 0.549020f, 1.0f};
+//
+//	// set specular and shiniess using glMaterial (gold-yellow)
+//	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess); // range 0 ~ 128
+//	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+//
+//	// set ambient and diffuse color using glColorMaterial (gold-yellow)
+//	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+//	glColor3fv(diffuseColor);
+//	glmDraw(object, GLM_SMOOTH| GLM_TEXTURE);
+//}
 
 void ModelGL::zoomCamera( float delta )   // Change the camera Position but not orientation
 {
@@ -1001,6 +1001,18 @@ float* ModelGL::getModelViewMatrixPtr()
 float* ModelGL::getProjectionMatrixPtr()
 {
 	return glm::value_ptr(projectionMatrix);
+}
+
+void ModelGL::zoomThirdCamera( float delta )
+{
+	thirdPersonDistance -=(delta)*0.1f;	
+}
+
+void ModelGL::rotateThirdCamera( int deltaX, int deltaY )
+{
+	const static float scale = 0.5f;
+	thirdPersonAngleX += scale*deltaX;
+	thirdPersonAngleY += scale*deltaY;
 }
 
 

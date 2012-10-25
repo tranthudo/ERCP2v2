@@ -658,6 +658,19 @@
       <string>Reset Model</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="pushButton_2">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>50</y>
+       <width>91</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reset Third View</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_6">
     <property name="geometry">
@@ -813,6 +826,19 @@
       <string>Calculate</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="pushButtonSelfCalibration">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>120</y>
+       <width>131</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Self Calibration</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QTextEdit" name="textEditCommand">
     <property name="geometry">
@@ -902,6 +928,7 @@
     <slot>testOptimization()</slot>
     <slot>testNewMutualInformation()</slot>
     <slot>testManualTracking()</slot>
+    <slot>selfCalibration()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -1117,6 +1144,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButtonResetModelMatrix</sender>
+   <signal>clicked()</signal>
+   <receiver>ERCP2v2Class</receiver>
+   <slot>pushButtonCalculateCalibrationClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1035</x>
+     <y>354</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1043</x>
+     <y>302</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonSelfCalibration</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>selfCalibration()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1290</x>
+     <y>726</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>279</x>
+     <y>669</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <signal>saveOpenGLImage()</signal>
@@ -1128,5 +1187,6 @@
   <slot>enableCaculateCalibration()</slot>
   <slot>pushButtonCalculateCalibrationClicked()</slot>
   <slot>saveRenderedImage()</slot>
+  <slot>resetThirdView()</slot>
  </slots>
 </ui>

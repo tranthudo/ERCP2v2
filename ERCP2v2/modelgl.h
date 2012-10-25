@@ -76,13 +76,17 @@ public:
 	void drawFrustum(float fovY, float aspectRatio, float nearPlane, float farPlane);
 	void drawGrid(float size, float step);
 	void zoomCamera(float delta);
+	
 	void rotateModel(float angle, glm::vec3 rotAxis);
 	void trackingCamera(float deltaX, float deltaY);
-	
+	void zoomThirdCamera(float delta);
+	void rotateThirdCamera(int deltaX, int deltaY);
+
 	void setCameraPosition(glm::vec3 tvec);
 	void setCameraAngles(glm::vec3 rvec);
 	cv::Mat fixedImage;
 	cv::Mat fixedFloat;
+	void resetThirdView(){thirdPersonAngleX = 45.0f, thirdPersonAngleY = 45.0f, thirdPersonDistance = 100.f;}
 public slots:
 	void setCameraAngleX(double rx);
 	void setCameraAngleY(double ry);
@@ -130,7 +134,7 @@ private:
 	int windowWidth;
 	int windowHeight;
 	float bgColor[3];
-	GLMmodel* object;
+	//GLMmodel* object;
 	CObj* m_Obj;
 	// Image
 	GLuint textureID;								// texture ID
@@ -143,7 +147,7 @@ private:
 	void setThirViewportSub(int left, int bottom, int width, int height, float near, float far);
 	void getFrame2GLTexture(cv::Mat textureImage);	// get frame and convert to texture
 	void drawGrabbedFrame(int x, int y, int m_WindowWidth, int m_WindowHeight);
-	void drawModel();
+	//void drawModel();
 	void setUpDraw();
 	//void drawObj();
 	
