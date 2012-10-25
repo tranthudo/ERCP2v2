@@ -26,7 +26,7 @@ struct Func {
 };
 
 
-typedef enum {ROTATE, TRACKING, NONE} MouseMoveState;
+typedef enum {ROTATE, TRACKING, THIRD_CAM_ROTATE, THIRD_CAM_ZOOM, NONE} MouseMoveState;
 
 typedef enum {CAMERA_CALIBRATION, INITIALIZATION, CAMERA_TRACKING, STOP} ProgramMode;
 
@@ -50,6 +50,7 @@ protected:
 	virtual void keyPressEvent(QKeyEvent * event);
 	virtual void timerEvent(QKeyEvent *event);
 private:
+	QMessageBox messBox;
 	ModelGL* model;	
 	MouseMoveState movement;
 	QVector3D lastPoint;

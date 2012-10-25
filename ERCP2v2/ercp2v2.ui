@@ -619,6 +619,19 @@
       <string>Reset Camera</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="pushButtonObjOrigin">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>75</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>ObjOrigin</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_5">
     <property name="geometry">
@@ -1085,6 +1098,22 @@
     <hint type="destinationlabel">
      <x>654</x>
      <y>404</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonObjOrigin</sender>
+   <signal>clicked()</signal>
+   <receiver>ERCP2v2Class</receiver>
+   <slot>objOrigin()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1063</x>
+     <y>131</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1131</x>
+     <y>176</y>
     </hint>
    </hints>
   </connection>

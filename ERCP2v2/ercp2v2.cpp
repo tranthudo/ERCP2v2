@@ -190,6 +190,7 @@ void ERCP2v2::objOrigin()
 
 	updateUICamPosition(camPos);
 	updateUICamAngles(camAng);
+	model->setViewMatrix(camAng,camPos);
 	resetModel();  // with origin obj position and orientation = (0,0,0) and (0,0,0)
 	return;
 }

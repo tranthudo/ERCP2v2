@@ -33,7 +33,7 @@ glm::vec3 getEulerFromRotationMatrix(glm::mat3 rot, glm::vec3 curAngles)  // ord
 
 
 	// Find 2 possible y values
-	float y1 = asin(R13);
+	float y1 = asin(-R13);
 	float y2 = M_PI - y1;
 
 	// Find possible z values
@@ -41,11 +41,11 @@ glm::vec3 getEulerFromRotationMatrix(glm::mat3 rot, glm::vec3 curAngles)  // ord
 	{
 		// y != M_PI_2
 		float cy1 = cos(y1); float cy2 = cos(y2);
-		float z1 = atan2(-R12/cy1, R11/cy1);
-		float z2 = atan2(-R12/cy2, R11/cy2);
+		float z1 = atan2(R12/cy1, R11/cy1);
+		float z2 = atan2(R12/cy2, R11/cy2);
 		// Find 2 Possible x
-		float x1 = atan2(-R23/cy1, R33/cy1);
-		float x2 = atan2(-R23/cy2, R33/cy2);
+		float x1 = atan2(R23/cy1, R33/cy1);
+		float x2 = atan2(R23/cy2, R33/cy2);
 
 		glm::vec3 rot1(x1,y1,z1);
 		glm::vec3 rot2(x2,y2,z2);
@@ -65,13 +65,13 @@ glm::vec3 getEulerFromRotationMatrix(glm::mat3 rot, glm::vec3 curAngles)  // ord
 	{
 		// cos(y) = 0
 		// calculate possible x+z
-		float xz1 = atan2(R21,R22);
+		float xz1 = atan2(-R21,R22);
 		float x1 = radAngles.x;  // remain x
 		float z1 = -x1 + xz1;
 
-		float xz2 = atan2(R12,R22);
+		float xz2 = atan2(R21,R22);
 		float x2 = radAngles.x;
-		float z2 = x2 + xz2;
+		float z2 = xz2 - x2;
 
 		glm::vec3 rot1(x1,y1,z1);
 		glm::vec3 rot2(x2,y2,z2);

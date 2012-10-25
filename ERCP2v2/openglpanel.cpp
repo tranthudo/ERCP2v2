@@ -105,6 +105,18 @@ void OpenglPanel::mousePressEvent( QMouseEvent *event )
 			lastPoint.setY(event->pos().y());
 			lastPoint.setZ(0);
 		}
+		else if (event->buttons()&Qt::RightButton)
+		{
+			if (event->modifiers()==Qt::ControlModifier){
+				movement = THIRD_CAM_ZOOM;
+			}
+			else movement = THIRD_CAM_ROTATE;
+			{
+				lastPoint.setX(event->pos().x());
+				lastPoint.setY(event->pos().y());
+				lastPoint.setZ(0);
+			}
+		}
 	}
 	else if (mode == CAMERA_CALIBRATION)
 	{
@@ -204,6 +216,9 @@ void OpenglPanel::mouseMoveEvent( QMouseEvent* event )
 			}		
 			lastPoint = curPoint;
 			break;
+		case THIRD_CAM_ZOOM:
+			curPoint = QVector3D(event->pos().x(),event->pos().y(),0);
+			
 		default:
 			break;
 		}	
@@ -513,7 +528,8 @@ void OpenglPanel::testNewMutualInformation()
 
 void OpenglPanel::testManualTracking()
 {
-
+	QMessageBox::information(this,"N2T","Please select 4 points in endoscopic image\n and corresponding points in rendered image!");
+	
 }
 
 

@@ -518,7 +518,7 @@ glm::vec3 ModelGL::extractCameraPos( glm::mat4 a_modelView )
 	glm::mat3 rotMat(a_modelView);
 	glm::vec3 d(a_modelView[3]);
 
-	glm::vec3 retVec = -d * rotMat;
+	glm::vec3 retVec = -glm::transpose(rotMat)*d;
 	return retVec;
 }
 

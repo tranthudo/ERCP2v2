@@ -78,6 +78,7 @@ public:
 	void zoomCamera(float delta);
 	void rotateModel(float angle, glm::vec3 rotAxis);
 	void trackingCamera(float deltaX, float deltaY);
+	
 	void setCameraPosition(glm::vec3 tvec);
 	void setCameraAngles(glm::vec3 rvec);
 	cv::Mat fixedImage;
