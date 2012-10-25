@@ -34,7 +34,7 @@ ModelGL::ModelGL(QObject *parent)
 	
 	//textureImage = cv::imread("data/n2t.jpg");
 
-	cv::Mat inputImage = cv::imread("data/fixed.bmp");
+	cv::Mat inputImage = cv::imread("data/reference.png");
 	//textureImage = inputImage;
 	textureImage = inputImage;//(cv::Rect(228,50,376,376));
 	textureImage.copyTo(fixedImage);
@@ -92,7 +92,7 @@ void ModelGL::initLights()
 	GLfloat lightKs[] = {1, 1, 1, 1};
 	glLightfv(GL_LIGHT0, GL_AMBIENT, lightKa);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightKs);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, lightKd);  // ambients, diffuse and spec are all assigned to LIGHT0 src
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, lightKd);  // ambients, diffuse and spec are all assigned to LIGHT0 src
 
 	// Position the light in eye space;
 	float lightPos[4] = {0, 1, 5, 0};// directional light;
@@ -815,8 +815,8 @@ void ModelGL::drawSub1()
 	glLoadMatrixf(glm::value_ptr(viewMatrix));
 	glLoadMatrixf(glm::value_ptr(modelViewMatrix));
 	//drawModel();
-	setUpDraw();	
-	vec3d color(.4,0.4,0.4);
+	//setUpDraw();	
+	vec3d color(.6,0.6,0.6);
 	m_Obj->DrawObject(false, color);
 	glPopMatrix();
 	glPopAttrib();
@@ -983,12 +983,12 @@ void ModelGL::setUpDraw()
 	float diffuseColor[3] = {0.796542f, 0.796542f, 0.796542f};
 	float specularColor[4] = {0.500000f, 0.580392f, 0.549020f, 1.0f};
 
-	// set specular and shiniess using glMaterial (gold-yellow)
+	// set specular and shininess using glMaterial (gold-yellow)
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess); // range 0 ~ 128
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	// set ambient and diffuse color using glColorMaterial (gold-yellow)
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	
 	//glColor3fv(diffuseColor);
 }
