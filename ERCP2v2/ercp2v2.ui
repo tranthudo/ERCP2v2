@@ -23,8 +23,8 @@
      <rect>
       <x>30</x>
       <y>20</y>
-      <width>754</width>
-      <height>754</height>
+      <width>626</width>
+      <height>626</height>
      </rect>
     </property>
    </widget>
@@ -824,6 +824,32 @@
      <string>Test Optimization</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButtonTestMI">
+    <property name="geometry">
+     <rect>
+      <x>1150</x>
+      <y>330</y>
+      <width>201</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Test New Mutual Information</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonTestManualTracking">
+    <property name="geometry">
+     <rect>
+      <x>1150</x>
+      <y>360</y>
+      <width>201</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Test Manual Tracking</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -855,11 +881,14 @@
    <slots>
     <signal>cameraChanged()</signal>
     <signal>finishSelectingPoints()</signal>
+    <signal>finishCalculateNewMutualInformation()</signal>
     <slot>startManualCalibration()</slot>
     <slot>setNumberOfPoints(int)</slot>
     <slot>calculateCalibration()</slot>
     <slot>saveRenderedImage()</slot>
     <slot>testOptimization()</slot>
+    <slot>testNewMutualInformation()</slot>
+    <slot>testManualTracking()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -926,8 +955,8 @@
      <y>620</y>
     </hint>
     <hint type="destinationlabel">
-     <x>774</x>
-     <y>567</y>
+     <x>655</x>
+     <y>600</y>
     </hint>
    </hints>
   </connection>
@@ -942,8 +971,8 @@
      <y>656</y>
     </hint>
     <hint type="destinationlabel">
-     <x>740</x>
-     <y>800</y>
+     <x>655</x>
+     <y>678</y>
     </hint>
    </hints>
   </connection>
@@ -954,8 +983,8 @@
    <slot>enableCaculateCalibration()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>766</x>
-     <y>478</y>
+     <x>655</x>
+     <y>511</y>
     </hint>
     <hint type="destinationlabel">
      <x>1216</x>
@@ -990,8 +1019,8 @@
      <y>685</y>
     </hint>
     <hint type="destinationlabel">
-     <x>759</x>
-     <y>724</y>
+     <x>655</x>
+     <y>678</y>
     </hint>
    </hints>
   </connection>
@@ -1006,8 +1035,8 @@
      <y>403</y>
     </hint>
     <hint type="destinationlabel">
-     <x>779</x>
-     <y>387</y>
+     <x>655</x>
+     <y>420</y>
     </hint>
    </hints>
   </connection>
@@ -1022,8 +1051,40 @@
      <y>334</y>
     </hint>
     <hint type="destinationlabel">
-     <x>779</x>
-     <y>318</y>
+     <x>655</x>
+     <y>351</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonTestMI</sender>
+   <signal>released()</signal>
+   <receiver>widget</receiver>
+   <slot>testNewMutualInformation()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1253</x>
+     <y>380</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>640</x>
+     <y>384</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonTestManualTracking</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>testManualTracking()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1207</x>
+     <y>401</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>654</x>
+     <y>404</y>
     </hint>
    </hints>
   </connection>

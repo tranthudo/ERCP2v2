@@ -505,6 +505,17 @@ void OpenglPanel::testOptimization()
 	return;
 }
 
+void OpenglPanel::testNewMutualInformation()
+{
+
+	return;
+}
+
+void OpenglPanel::testManualTracking()
+{
+
+}
+
 
 
 

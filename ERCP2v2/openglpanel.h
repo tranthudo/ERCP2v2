@@ -78,7 +78,8 @@ private slots:
 	void calculateCalibration();
 	void saveRenderedImage();
 	void testOptimization();
-
+	void testNewMutualInformation();
+	void testManualTracking();
 signals:
 	void finishSelectingPoints();
 

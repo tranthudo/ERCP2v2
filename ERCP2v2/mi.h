@@ -13,7 +13,7 @@
 
 #pragma once
 
-#define BUFFER_LEN			141376
+#define BUFFER_LEN			312*312 //Note that it is important to change to the resolution of the image;
 #define	BINS				80
 
 

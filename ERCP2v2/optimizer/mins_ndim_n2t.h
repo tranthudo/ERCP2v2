@@ -171,7 +171,7 @@ struct N2tPowell : Powell<T> {
 	VecDoub minimize(VecDoub_I &pp, MatDoub_IO &ximat, bool mode)
 	{
 		
-		const Int ITMAX=100;		// maximum allowed iterations
+		const Int ITMAX=20;		// maximum allowed iterations
 		const Doub TINY=1.0e-25;	// a small number
 		Doub fptt;					// temporary value of function
 		Int n=pp.size();

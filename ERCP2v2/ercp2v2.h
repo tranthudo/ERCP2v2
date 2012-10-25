@@ -44,7 +44,7 @@ private slots:
 	void enableCaculateCalibration();
 	
 	void pushButtonCalculateCalibrationClicked();
-
+	
 signals:
 	//void saveOpenGLImage();
 	

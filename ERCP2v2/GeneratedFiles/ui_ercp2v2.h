@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'ercp2v2.ui'
 **
-** Created: Wed Oct 24 06:46:56 2012
+** Created: Thu Oct 25 22:35:32 2012
 **      by: Qt User Interface Compiler version 4.8.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -90,6 +90,8 @@ public:
     QPushButton *pushButtonCalculateCalibration;
     QTextEdit *textEditCommand;
     QPushButton *pushButtonTestOptimization;
+    QPushButton *pushButtonTestMI;
+    QPushButton *pushButtonTestManualTracking;
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
@@ -106,7 +108,7 @@ public:
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         widget = new OpenglPanel(centralWidget);
         widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(30, 20, 754, 754));
+        widget->setGeometry(QRect(30, 20, 626, 626));
         groupBox = new QGroupBox(centralWidget);
         groupBox->setObjectName(QString::fromUtf8("groupBox"));
         groupBox->setGeometry(QRect(820, 30, 171, 241));
@@ -319,6 +321,12 @@ public:
         pushButtonTestOptimization = new QPushButton(centralWidget);
         pushButtonTestOptimization->setObjectName(QString::fromUtf8("pushButtonTestOptimization"));
         pushButtonTestOptimization->setGeometry(QRect(1150, 300, 201, 23));
+        pushButtonTestMI = new QPushButton(centralWidget);
+        pushButtonTestMI->setObjectName(QString::fromUtf8("pushButtonTestMI"));
+        pushButtonTestMI->setGeometry(QRect(1150, 330, 201, 23));
+        pushButtonTestManualTracking = new QPushButton(centralWidget);
+        pushButtonTestManualTracking->setObjectName(QString::fromUtf8("pushButtonTestManualTracking"));
+        pushButtonTestManualTracking->setGeometry(QRect(1150, 360, 201, 23));
         ERCP2v2Class->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(ERCP2v2Class);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
@@ -342,6 +350,8 @@ public:
         QObject::connect(pushButtonCalculateCalibration, SIGNAL(clicked()), widget, SLOT(calculateCalibration()));
         QObject::connect(ERCP2v2Class, SIGNAL(saveOpenGLImage()), widget, SLOT(repaint()));
         QObject::connect(pushButtonTestOptimization, SIGNAL(clicked()), widget, SLOT(testOptimization()));
+        QObject::connect(pushButtonTestMI, SIGNAL(released()), widget, SLOT(testNewMutualInformation()));
+        QObject::connect(pushButtonTestManualTracking, SIGNAL(clicked()), widget, SLOT(testManualTracking()));
 
         QMetaObject::connectSlotsByName(ERCP2v2Class);
     } // setupUi
@@ -384,6 +394,8 @@ public:
         label_18->setText(QApplication::translate("ERCP2v2Class", "N Points", 0, QApplication::UnicodeUTF8));
         pushButtonCalculateCalibration->setText(QApplication::translate("ERCP2v2Class", "Calculate", 0, QApplication::UnicodeUTF8));
         pushButtonTestOptimization->setText(QApplication::translate("ERCP2v2Class", "Test Optimization", 0, QApplication::UnicodeUTF8));
+        pushButtonTestMI->setText(QApplication::translate("ERCP2v2Class", "Test New Mutual Information", 0, QApplication::UnicodeUTF8));
+        pushButtonTestManualTracking->setText(QApplication::translate("ERCP2v2Class", "Test Manual Tracking", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
