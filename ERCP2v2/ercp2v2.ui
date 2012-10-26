@@ -929,6 +929,7 @@
     <slot>testNewMutualInformation()</slot>
     <slot>testManualTracking()</slot>
     <slot>selfCalibration()</slot>
+    <slot>startTracking()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -1173,6 +1174,22 @@
     <hint type="destinationlabel">
      <x>279</x>
      <y>669</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonStartTracking</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>startTracking()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1044</x>
+     <y>709</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>337</x>
+     <y>654</y>
     </hint>
    </hints>
   </connection>

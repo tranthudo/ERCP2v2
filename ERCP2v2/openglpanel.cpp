@@ -1,7 +1,8 @@
 #include "openglpanel.h"
 #include "ercp2v2.h"
-
-
+#include "geometry.h"
+#include "glm/glm.hpp"
+#include "glm/gtx/transform.hpp"
 
 
 const float m_ROTSCALE = 90.0;
@@ -28,7 +29,10 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	QObject::connect(timer, SIGNAL(timeout()), this, SLOT(updateGL()));
 	timer->start(300);
 	setFocusPolicy(Qt::StrongFocus);
-	
+	calibrated = false;
+	double __d[4] = {0,0,0,0}; 
+	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
+	distCoeffsTemp.copyTo(distCoeffs);
 	
 }
 
@@ -170,6 +174,8 @@ void OpenglPanel::mousePressEvent( QMouseEvent *event )
 		// Check in sub window 1 = virtual image & sub window 2 = real image;
 		const static int number_of_points = 4;
 		QPointF point = event->posF();
+		int w = this->width()/2-1;
+		int h = this->height()/2-1;
 		if (event->buttons()&Qt::LeftButton)
 		{
 			if ((point.x() >0 & point.x() < this->width()/2-1)&(point.y()>0 & point.y()<this->height()/2-1))  // check if in sub window one
@@ -178,7 +184,7 @@ void OpenglPanel::mousePressEvent( QMouseEvent *event )
 				{
 					// Get the obj 2d points and corresponding 3 locations and add to the list (vector of points)
 					cv::Point2f virtualImagePoint = cv::Point2f(point.x(),point.y());
-					virtualImagePoints.push_back(virtualImagePoint);
+					virtualImagePoints.push_back(cv::Point2f(point.x(),point.y()));
 					glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
 					cv::Point3f objPoint = GetOGLPos(virtualImagePoint,viewPort);
 					objPoints.push_back(objPoint);
@@ -308,20 +314,26 @@ void OpenglPanel::startManualCalibration()
 		currentRealPoint = 0;
 		virtualImagePoints.clear();
 		realImagePoints.clear();
+
 	}	
 
 }
 
 void OpenglPanel::testManualTracking()
 {
-	QMessageBox::information(this,"N2T","Please select 4 points in endoscopic image\n and corresponding points in rendered image!");
+	if (!calibrated)
+	{
+		selfCalibration();
+	}
 	if (mode == MANUAL_TRACKING) {mode = STOP;}
 	else {
 		mode = MANUAL_TRACKING;
+		QMessageBox::information(this,"N2T","Please select 4 points in endoscopic image\n and corresponding points in rendered image!");
 		currentVirtualPoint = 0;
 		currentRealPoint = 0;
 		virtualImagePoints.clear();
 		realImagePoints.clear();
+		objPoints.clear();
 	}
 
 }
@@ -424,6 +436,7 @@ void OpenglPanel::calculateCalibration()
 	double *_r = rvec.ptr<double>();
 	double* _t = tvec.ptr<double>();
 	double* _rot = rotMatrix.ptr<double>();
+	
 
 	solvePnP(objPoints,realImagePoints,cameraMatrix,distCoeffs,rvec,tvec,false,cv::EPNP);
 	qDebug()<<"Rodrigues Rotation = "<<_r[0]<<", "<<_r[1]<<", "<<_r[2];
@@ -624,7 +637,7 @@ void OpenglPanel::selfCalibration()
 		for (int j = 0; j<5; j++){
 			// get the position of camera			
 			y =stepx*(j+1);
-			virtualImagePoints.push_back(cv::Point2f(w-x,y));
+			virtualImagePoints.push_back(cv::Point2f(x,y));
 			glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
 			cv::Point3f objPoint = GetOGLPos(cv::Point2f(x,y),viewPort);
 			objPoints.push_back(objPoint);
@@ -638,17 +651,21 @@ void OpenglPanel::selfCalibration()
 		0.00000,     0.00000,     1.00000};
 	cv::Mat temp_CamIntrinsic = cv::Mat(3,3,CV_64F,intrinsic);
 	cv::Mat cameraMatrix;
-	temp_CamIntrinsic.copyTo(cameraMatrix);
-	cv::Mat distCoeffs;
+	temp_CamIntrinsic.copyTo(cameraMatrix);	
 	std::vector<std::vector<cv::Point3f>> objectPoints;
 	std::vector<std::vector<cv::Point2f>> imagePoints;	
 	objectPoints.push_back(objPoints);
 	imagePoints.push_back(virtualImagePoints);
 	std::vector<cv::Mat> rvecs;
 	std::vector<cv::Mat> tvecs;
-	calibrationError = cv::calibrateCamera(objectPoints,imagePoints,cv::Size(this->width()/2-1,this->height()/2-1),cameraMatrix,distCoeffs,rvecs,tvecs,cv::CALIB_USE_INTRINSIC_GUESS);
+	double b[4] = {0,0,0,0}; 
+	cv::Mat newDistort(1,4,CV_64FC1,b);
+	
+
+	calibrationError = cv::calibrateCamera(objectPoints,imagePoints,cv::Size(this->width()/2-1,this->height()/2-1),cameraMatrix,newDistort,rvecs,tvecs,cv::CALIB_USE_INTRINSIC_GUESS);
 	//calibrationError = cv::calibrateCamera(cv::Mat(objPoints),cv::Mat(virtualImagePoints),cv::Size(this->width()/2-1,this->height()/2-1),cameraMatrix,distCoeffs,rvecs,tvecs,cv::CALIB_USE_INTRINSIC_GUESS);
 	// PRINT OUT CAMERA MATRIX FOR DEBUGING
+	qDebug()<<"\n =====================calibrateCamera Result================================";
 	qDebug()<<"cameraMatrix =[";	
 	for (int j = 0; j<3;j++)
 	{
@@ -658,16 +675,18 @@ void OpenglPanel::selfCalibration()
 		qDebug()<<data[0]<<", "<<data[1]<<", "<<data[2]<<";";
 	}
 	// PRINT OUT DISTOSION COEFFICIENTS
+	double* data;
 	qDebug()<<"distCoeffs =[";
 	for(int j = 0; j<distCoeffs.rows;j++)
 	{
-		double* data = distCoeffs.ptr<double>(j);
+		 data= distCoeffs.ptr<double>(j);
 		for (int i = 0; i<distCoeffs.cols;i++)
 		{
 			qDebug()<<data[i]<<", ";
 		}		
 	}
-	double* data = rvecs[0].ptr<double>(0);
+
+	data = rvecs[0].ptr<double>(0);
 	qDebug()<<"Rodrigues = ["<<data[0]<<", "<<data[1]<<", "<<data[2]<<"]";
 	data = tvecs[0].ptr<double>(0);
 	qDebug()<<"tvec = ["<<data[0]<<", "<<data[1]<<", "<<data[2]<<"]";
@@ -679,6 +698,12 @@ void OpenglPanel::selfCalibration()
 		double* data = rot.ptr<double>(j);
 		qDebug()<<data[0]<<","<<data[1]<<", "<<data[2]<<";";		
 	}	
+    data =rvecs[0].ptr<double>(0);
+	cv::Mat _rmat(3,1,CV_64FC1,data);
+	_rmat.copyTo(rvec);
+	data =tvecs[0].ptr<double>(0);
+	cv::Mat _tmat(3,1,CV_64FC1,data);
+	_tmat.copyTo(rvec);
 
 	fs.open("data/virtualImagePoints.yml",cv::FileStorage::WRITE);
 	fs<<"virtualImagePoints"<<virtualImagePoints;
@@ -687,7 +712,108 @@ void OpenglPanel::selfCalibration()
 	fs.open("data/objPoints.yml", cv::FileStorage::WRITE);
 	fs<<"objPoints"<<objPoints;
 	fs.release();
+	cameraMatrix.copyTo(camera_intrinsic);				// Copy to camera_intrinsic
+	glm_camera_exintrinsic = glm::mat4(1.0);
+	for (int j = 0; j<rot.rows; j++)
+	{
+		double* data = rot.ptr<double>(j);
+		glm_camera_exintrinsic[j].x = (float)data[0];
+		glm_camera_exintrinsic[j].y = (float)data[1];
+		glm_camera_exintrinsic[j].z = (float) data[2];
+		data = tvecs[0].ptr<double>(0);	
+		glm_camera_exintrinsic[j].w = (float)data[j];  
+	}
+	rvecs[0].copyTo(rvec);
+	tvecs[0].copyTo(tvec);
 
+	qDebug()<<"\n =====================solvePnP Results===================================";
+	// STUPID THING HERE
+	// Reset distortion Coefficients if wanna get good results
+	
+
+	objPoints.erase(objPoints.begin()+4,objPoints.end());								 // USE these 2 lines if use cv::P3P							
+	virtualImagePoints.erase(virtualImagePoints.begin()+4,virtualImagePoints.end());
+	cv::solvePnP(objPoints,virtualImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, CV_P3P);	
+
+	//cv::solvePnP(objPoints,virtualImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, CV_EPNP);	
+	
+	
+	
+	//cv::solvePnPRansac(cv::Mat(objPoints),cv::Mat(virtualImagePoints),camera_intrinsic,distCoeffs,rvec,tvec,true, 100, 1.0f,100,inliers,cv::EPNP);
+	//cv::solvePnPRansac(objPoints,virtualImagePoints,camera_intrinsic,distCoeffs,rvec,tvec,true, 100, 10.0f,100,inliers,cv::EPNP);
+	qDebug()<<"Camera intrinsic recal";
+	for(int j = 0; j<rot.rows;j++)
+	{
+		double* data = camera_intrinsic.ptr<double>(j);
+		qDebug()<<data[0]<<","<<data[1]<<", "<<data[2]<<";";		
+	}	
+	data = rvec.ptr<double>();
+	qDebug()<<"Rodrigues = ["<<data[0]<<", "<<data[1]<<", "<<data[2]<<"]";
+	data = tvec.ptr<double>();
+	qDebug()<<"tvec = ["<<data[0]<<", "<<data[1]<<", "<<data[2]<<"]";
+	
+	cv::Rodrigues(rvec,rot);
+	qDebug()<<"rotationMatrix = [";
+	for(int j = 0; j<rot.rows;j++)
+	{
+		double* data = rot.ptr<double>(j);
+		qDebug()<<data[0]<<","<<data[1]<<", "<<data[2]<<";";		
+	}	
+	objPoints.clear();
+	imagePoints.clear();
+	objectPoints.clear();
+	virtualImagePoints.clear();
+	realImagePoints.clear();
+
+	calibrated = true;
+}
+
+void OpenglPanel::startTracking()
+{
+	if (calibrated)
+	{ 
+		if (objPoints.size()==4 & virtualImagePoints.size()==4)  // for manual initialzation only
+		{
+			// calculate the initial position of the camera 
+			// cv::solvePnP(objPoints,virtualImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, cv::EPNP); // test accuracy
+			cv::solvePnP(objPoints,realImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, cv::EPNP); 
+			cv::Mat rMat;
+			cv::Rodrigues(rvec, rMat);
+			
+			double* _rMat = rMat.ptr<double>();
+			double*_t = tvec.ptr<double>();
+			// Update the modelview matrix  // _rmat from 0 to 4 should be negatived
+			
+			glm_camera_exintrinsic[0].x = (float)_rMat[0];
+			glm_camera_exintrinsic[1].x = (float)_rMat[1];
+			glm_camera_exintrinsic[2].x = (float)_rMat[2];
+			glm_camera_exintrinsic[3].x = (float)_t[0];
+
+			glm_camera_exintrinsic[0].y = (float)-_rMat[3];
+			glm_camera_exintrinsic[1].y = (float)-_rMat[4];
+			glm_camera_exintrinsic[2].y = (float)-_rMat[5];
+			glm_camera_exintrinsic[3].y = (float)-_t[1];
+
+			glm_camera_exintrinsic[0].z = (float)-_rMat[6];
+			glm_camera_exintrinsic[1].z = (float)-_rMat[7];
+			glm_camera_exintrinsic[2].z = (float)-_rMat[8];
+			glm_camera_exintrinsic[3].z = (float)-_t[2];
+
+			glm_camera_exintrinsic[0].w = 0.0;
+			glm_camera_exintrinsic[1].w = 0.0;
+			glm_camera_exintrinsic[2].w = 0.0;
+			glm_camera_exintrinsic[3].w = 1.0;
+
+			// Extract position of the camera corresponding to when the obj is moved to the origin
+			glm::vec3 camPos = model->extractCameraPos(glm_camera_exintrinsic);
+			glm::vec3 camAng = getEulerFromRotationMatrix(glm::mat3(glm_camera_exintrinsic),model->getCameraAngles());	
+			((ERCP2v2*)((this->parent())->parent()))->updateUICamPosition(camPos);
+			((ERCP2v2*)((this->parent())->parent()))->updateUICamAngles(camAng);
+			model->setViewMatrix(camAng,camPos);
+			//((ERCP2v2*)((this->parent())->parent()))->resetModel();  // with origin obj position and orientation = (0,0,0) and (0,0,0)
+			return;
+		}
+	}
 }
 
 

@@ -30,6 +30,8 @@ typedef enum {ROTATE, TRACKING, THIRD_CAM_ROTATE, THIRD_CAM_ZOOM, NONE} MouseMov
 
 typedef enum {CAMERA_CALIBRATION, INITIALIZATION, CAMERA_TRACKING, MANUAL_TRACKING, STOP} ProgramMode;
 
+
+
 class OpenglPanel : public QGLWidget
 {
 	Q_OBJECT
@@ -65,7 +67,13 @@ private:
 	cv::FileStorage fs;
 	cv::Mat camera_intrinsic;
 	cv::Mat camera_extrinsic;
-	
+	cv::Mat distCoeffs;
+	cv::Mat rvec;
+	cv::Mat tvec;
+	glm::mat4 glm_camera_exintrinsic;
+	glm::mat3 glm_camera_intrinsic;
+	bool calibrated;
+	std::vector<int> inliers;		
 // private functions go here
 private:
 	QVector3D trackBallMapping(QPoint point, int width, int height);
@@ -83,6 +91,8 @@ private slots:
 	void testOptimization();
 	void testNewMutualInformation();
 	void testManualTracking();
+	void startTracking();
+
 	//************************************
 	// Method:    selfCalibration
 	// FullName:  OpenglPanel::selfCalibration

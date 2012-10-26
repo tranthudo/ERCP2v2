@@ -32,7 +32,7 @@ private:
 	void updateCameraUI();
 
 	
-private slots:
+public slots:
 	void updateUICamPosition(glm::vec3 pos);
 	void updateUIObjAngles(glm::vec3 ang);
 	void updateUICamAngles(glm::vec3 pos);

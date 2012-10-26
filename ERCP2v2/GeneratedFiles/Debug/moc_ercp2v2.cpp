@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'ercp2v2.h'
 **
-** Created: Fri Oct 26 03:49:34 2012
+** Created: Fri Oct 26 20:25:05 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -31,16 +31,16 @@ static const uint qt_meta_data_ERCP2v2[] = {
        0,       // signalCount
 
  // slots: signature, parameters, type, tag, flags
-      13,    9,    8,    8, 0x08,
-      48,   44,    8,    8, 0x08,
-      77,    9,    8,    8, 0x08,
-     106,   44,    8,    8, 0x08,
-     137,    8,    8,    8, 0x08,
-     151,    8,    8,    8, 0x08,
-     164,    8,    8,    8, 0x08,
-     176,    8,    8,    8, 0x08,
-     193,    8,    8,    8, 0x08,
-     221,    8,    8,    8, 0x08,
+      13,    9,    8,    8, 0x0a,
+      48,   44,    8,    8, 0x0a,
+      77,    9,    8,    8, 0x0a,
+     106,   44,    8,    8, 0x0a,
+     137,    8,    8,    8, 0x0a,
+     151,    8,    8,    8, 0x0a,
+     164,    8,    8,    8, 0x0a,
+     176,    8,    8,    8, 0x0a,
+     193,    8,    8,    8, 0x0a,
+     221,    8,    8,    8, 0x0a,
 
        0        // eod
 };

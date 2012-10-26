@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'ercp2v2.ui'
 **
-** Created: Fri Oct 26 03:49:34 2012
+** Created: Fri Oct 26 20:25:05 2012
 **      by: Qt User Interface Compiler version 4.8.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -367,6 +367,7 @@ public:
         QObject::connect(pushButtonObjOrigin, SIGNAL(clicked()), ERCP2v2Class, SLOT(objOrigin()));
         QObject::connect(pushButtonResetModelMatrix, SIGNAL(clicked()), ERCP2v2Class, SLOT(pushButtonCalculateCalibrationClicked()));
         QObject::connect(pushButtonSelfCalibration, SIGNAL(clicked()), widget, SLOT(selfCalibration()));
+        QObject::connect(pushButtonStartTracking, SIGNAL(clicked()), widget, SLOT(startTracking()));
 
         QMetaObject::connectSlotsByName(ERCP2v2Class);
     } // setupUi
