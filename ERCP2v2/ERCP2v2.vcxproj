@@ -56,7 +56,7 @@
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>cudart.lib;cutil32D.lib;opencv_core242d.lib;opencv_imgproc242d.lib;opencv_highgui242d.lib;opencv_features2d242d.lib;opencv_calib3d242d.lib;opencv_video242d.lib;opencv_flann242d.lib;qtmaind.lib;QtCored4.lib;QtGuid4.lib;QtOpenGLd4.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart.lib;cutil32D.lib;opencv_core242d.lib;opencv_imgproc242d.lib;opencv_highgui242d.lib;opencv_nonfree242d.lib;opencv_features2d242d.lib;opencv_calib3d242d.lib;opencv_video242d.lib;opencv_flann242d.lib;qtmaind.lib;QtCored4.lib;QtGuid4.lib;QtOpenGLd4.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>

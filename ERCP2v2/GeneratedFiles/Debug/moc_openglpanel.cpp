@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'openglpanel.h'
 **
-** Created: Fri Oct 26 20:25:06 2012
+** Created: Sun Oct 28 07:53:04 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_OpenglPanel[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      10,   14, // methods
+      11,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -42,7 +42,8 @@ static const uint qt_meta_data_OpenglPanel[] = {
      149,   12,   12,   12, 0x08,
      176,   12,   12,   12, 0x08,
      197,   12,   12,   12, 0x08,
-     213,   12,   12,   12, 0x08,
+     215,   12,   12,   12, 0x08,
+     231,   12,   12,   12, 0x08,
 
        0        // eod
 };
@@ -53,8 +54,8 @@ static const char qt_meta_stringdata_OpenglPanel[] = {
     "setNumberOfPoints(int)\0calculateCalibration()\0"
     "saveRenderedImage()\0testOptimization()\0"
     "testNewMutualInformation()\0"
-    "testManualTracking()\0startTracking()\0"
-    "selfCalibration()\0"
+    "testManualTracking()\0prepareTracking()\0"
+    "startTracking()\0selfCalibration()\0"
 };
 
 void OpenglPanel::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -71,8 +72,9 @@ void OpenglPanel::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id,
         case 5: _t->testOptimization(); break;
         case 6: _t->testNewMutualInformation(); break;
         case 7: _t->testManualTracking(); break;
-        case 8: _t->startTracking(); break;
-        case 9: _t->selfCalibration(); break;
+        case 8: _t->prepareTracking(); break;
+        case 9: _t->startTracking(); break;
+        case 10: _t->selfCalibration(); break;
         default: ;
         }
     }
@@ -110,9 +112,9 @@ int OpenglPanel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 10)
+        if (_id < 11)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 11;
     }
     return _id;
 }

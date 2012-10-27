@@ -34,7 +34,7 @@ ModelGL::ModelGL(QObject *parent)
 	
 	//textureImage = cv::imread("data/n2t.jpg");
 
-	cv::Mat inputImage = cv::imread("data/ref03.png");
+	cv::Mat inputImage = cv::imread("data/ref02.png");
 	//textureImage = inputImage;
 	textureImage = inputImage;//(cv::Rect(228,50,376,376));
 	textureImage.copyTo(fixedImage);

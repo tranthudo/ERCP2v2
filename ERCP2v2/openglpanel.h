@@ -70,15 +70,40 @@ private:
 	cv::Mat distCoeffs;
 	cv::Mat rvec;
 	cv::Mat tvec;
+	cv::Mat cv_Rvec;  // holding the Rodrigues result of the camera view matrix
+	cv::Mat cv_Tvec;  // holding the translation result of the camera view matrix
+
 	glm::mat4 glm_camera_exintrinsic;
 	glm::mat3 glm_camera_intrinsic;
+	glm::mat4 ref_camera_extrinsic;
+	glm::vec3 ref_camera_positions;
+	glm::vec3 ref_camera_angle;
 	bool calibrated;
-	std::vector<int> inliers;		
+	std::vector<int> inliers;	
+	// Feature detection matching stuff
+	cv::Mat currentFrame;
+	cv::Mat previousFrame;	
+	cv::VideoCapture capture; // The recorded video here
+	double captureRate;			// video rate
+	double captureDelay;		// delay = 1000/rate	
+	double capturePosition;		// position of frame
+	double captureMsec;			// position of frame at milisec
+	cv::Mat referenceFrame;
+	cv::SIFT sift_cpu;
+	cv::SURF surf_cpu;
+	std::vector<cv::KeyPoint> keypoints;
+	cv::Mat descriptors;
+	std::vector<cv::Point3f> refObjPoints;// Reference frame object points
+	std::vector<cv::Point2f> refImagePoints;// Reference image points
+	
+
+
 // private functions go here
 private:
 	QVector3D trackBallMapping(QPoint point, int width, int height);
 	cv::Point3f GetOGLPos(cv::Point2f point, glm::vec4 viewPort);
-
+	void initializeWithFourPoints();
+	void generateReferncePoints();
 //public functions go here
 public:
 	cv::Mat getCurrentOpenGLImage();
@@ -91,8 +116,8 @@ private slots:
 	void testOptimization();
 	void testNewMutualInformation();
 	void testManualTracking();
+	void prepareTracking();
 	void startTracking();
-
 	//************************************
 	// Method:    selfCalibration
 	// FullName:  OpenglPanel::selfCalibration

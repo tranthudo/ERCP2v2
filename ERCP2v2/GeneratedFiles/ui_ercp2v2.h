@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'ercp2v2.ui'
 **
-** Created: Fri Oct 26 20:25:05 2012
+** Created: Sun Oct 28 07:53:03 2012
 **      by: Qt User Interface Compiler version 4.8.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -81,7 +81,6 @@ public:
     QPushButton *pushButton_2;
     QGroupBox *groupBox_6;
     QPushButton *pushButtonInitialization;
-    QPushButton *pushButtonStartTracking;
     QPushButton *pushButtonReference;
     QSpinBox *spinBox;
     QPushButton *pushButtonResetTracking;
@@ -95,6 +94,8 @@ public:
     QPushButton *pushButtonTestOptimization;
     QPushButton *pushButtonTestMI;
     QPushButton *pushButtonTestManualTracking;
+    QPushButton *pushButtonPrepareTracking;
+    QPushButton *pushButtonStartTracking;
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
@@ -291,9 +292,6 @@ public:
         pushButtonInitialization = new QPushButton(groupBox_6);
         pushButtonInitialization->setObjectName(QString::fromUtf8("pushButtonInitialization"));
         pushButtonInitialization->setGeometry(QRect(10, 70, 121, 23));
-        pushButtonStartTracking = new QPushButton(groupBox_6);
-        pushButtonStartTracking->setObjectName(QString::fromUtf8("pushButtonStartTracking"));
-        pushButtonStartTracking->setGeometry(QRect(10, 110, 121, 23));
         pushButtonReference = new QPushButton(groupBox_6);
         pushButtonReference->setObjectName(QString::fromUtf8("pushButtonReference"));
         pushButtonReference->setGeometry(QRect(10, 30, 75, 23));
@@ -339,6 +337,12 @@ public:
         pushButtonTestManualTracking = new QPushButton(centralWidget);
         pushButtonTestManualTracking->setObjectName(QString::fromUtf8("pushButtonTestManualTracking"));
         pushButtonTestManualTracking->setGeometry(QRect(1150, 360, 201, 23));
+        pushButtonPrepareTracking = new QPushButton(centralWidget);
+        pushButtonPrepareTracking->setObjectName(QString::fromUtf8("pushButtonPrepareTracking"));
+        pushButtonPrepareTracking->setGeometry(QRect(1150, 390, 201, 23));
+        pushButtonStartTracking = new QPushButton(centralWidget);
+        pushButtonStartTracking->setObjectName(QString::fromUtf8("pushButtonStartTracking"));
+        pushButtonStartTracking->setGeometry(QRect(1150, 430, 201, 23));
         ERCP2v2Class->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(ERCP2v2Class);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
@@ -367,6 +371,7 @@ public:
         QObject::connect(pushButtonObjOrigin, SIGNAL(clicked()), ERCP2v2Class, SLOT(objOrigin()));
         QObject::connect(pushButtonResetModelMatrix, SIGNAL(clicked()), ERCP2v2Class, SLOT(pushButtonCalculateCalibrationClicked()));
         QObject::connect(pushButtonSelfCalibration, SIGNAL(clicked()), widget, SLOT(selfCalibration()));
+        QObject::connect(pushButtonPrepareTracking, SIGNAL(clicked()), widget, SLOT(prepareTracking()));
         QObject::connect(pushButtonStartTracking, SIGNAL(clicked()), widget, SLOT(startTracking()));
 
         QMetaObject::connectSlotsByName(ERCP2v2Class);
@@ -404,7 +409,6 @@ public:
         pushButton_2->setText(QApplication::translate("ERCP2v2Class", "Reset Third View", 0, QApplication::UnicodeUTF8));
         groupBox_6->setTitle(QApplication::translate("ERCP2v2Class", "Main Control", 0, QApplication::UnicodeUTF8));
         pushButtonInitialization->setText(QApplication::translate("ERCP2v2Class", "Initialization", 0, QApplication::UnicodeUTF8));
-        pushButtonStartTracking->setText(QApplication::translate("ERCP2v2Class", "Start Tracking", 0, QApplication::UnicodeUTF8));
         pushButtonReference->setText(QApplication::translate("ERCP2v2Class", "Reference", 0, QApplication::UnicodeUTF8));
         pushButtonResetTracking->setText(QApplication::translate("ERCP2v2Class", "Reset Tracking", 0, QApplication::UnicodeUTF8));
         groupBox_7->setTitle(QApplication::translate("ERCP2v2Class", "Ultilities", 0, QApplication::UnicodeUTF8));
@@ -415,6 +419,8 @@ public:
         pushButtonTestOptimization->setText(QApplication::translate("ERCP2v2Class", "Test Optimization", 0, QApplication::UnicodeUTF8));
         pushButtonTestMI->setText(QApplication::translate("ERCP2v2Class", "Test New Mutual Information", 0, QApplication::UnicodeUTF8));
         pushButtonTestManualTracking->setText(QApplication::translate("ERCP2v2Class", "Test Manual Tracking", 0, QApplication::UnicodeUTF8));
+        pushButtonPrepareTracking->setText(QApplication::translate("ERCP2v2Class", "Prepare Tracking", 0, QApplication::UnicodeUTF8));
+        pushButtonStartTracking->setText(QApplication::translate("ERCP2v2Class", "Start Tracking", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

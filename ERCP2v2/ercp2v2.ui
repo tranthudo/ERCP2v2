@@ -697,19 +697,6 @@
       <string>Initialization</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButtonStartTracking">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>110</y>
-       <width>121</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Start Tracking</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="pushButtonReference">
      <property name="geometry">
       <rect>
@@ -889,6 +876,32 @@
      <string>Test Manual Tracking</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButtonPrepareTracking">
+    <property name="geometry">
+     <rect>
+      <x>1150</x>
+      <y>390</y>
+      <width>201</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Prepare Tracking</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonStartTracking">
+    <property name="geometry">
+     <rect>
+      <x>1150</x>
+      <y>430</y>
+      <width>201</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Start Tracking</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -930,6 +943,7 @@
     <slot>testManualTracking()</slot>
     <slot>selfCalibration()</slot>
     <slot>startTracking()</slot>
+    <slot>prepareTracking()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -1178,18 +1192,34 @@
    </hints>
   </connection>
   <connection>
+   <sender>pushButtonPrepareTracking</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>prepareTracking()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1164</x>
+     <y>439</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>337</x>
+     <y>654</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>pushButtonStartTracking</sender>
    <signal>clicked()</signal>
    <receiver>widget</receiver>
    <slot>startTracking()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1044</x>
-     <y>709</y>
+     <x>1193</x>
+     <y>470</y>
     </hint>
     <hint type="destinationlabel">
-     <x>337</x>
-     <y>654</y>
+     <x>604</x>
+     <y>507</y>
     </hint>
    </hints>
   </connection>
