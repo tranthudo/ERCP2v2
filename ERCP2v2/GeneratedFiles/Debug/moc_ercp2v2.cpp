@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'ercp2v2.h'
 **
-** Created: Sun Oct 28 07:53:03 2012
+** Created: Sun Oct 28 10:22:54 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.3)
 **
 ** WARNING! All changes made in this file will be lost!

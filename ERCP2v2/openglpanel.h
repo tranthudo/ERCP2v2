@@ -51,12 +51,14 @@ protected:
 	virtual void mouseReleaseEvent(QMouseEvent *event);
 	virtual void keyPressEvent(QKeyEvent * event);
 	virtual void timerEvent(QKeyEvent *event);
+public slots:
+	void updateGL();
 private:
 	QMessageBox messBox;
 	ModelGL* model;	
 	MouseMoveState movement;
 	QVector3D lastPoint;
-	QTimer *timer;
+	QTimer *timer;	
 	ProgramMode mode;
 	int currentVirtualPoint;
 	int currentRealPoint;
@@ -87,12 +89,18 @@ private:
 	double captureRate;			// video rate
 	double captureDelay;		// delay = 1000/rate	
 	double capturePosition;		// position of frame
-	double captureMsec;			// position of frame at milisec
+	double captureMsec;			// position of frame at millisecond
 	cv::Mat referenceFrame;
 	cv::SIFT sift_cpu;
 	cv::SURF surf_cpu;
-	std::vector<cv::KeyPoint> keypoints;
-	cv::Mat descriptors;
+	std::vector<cv::KeyPoint> ref_keypoints;	// current reference keypoints
+	cv::Mat ref_descriptors;					// current descriptor
+	std::vector<cv::KeyPoint> cur_keypoints;	// current keypoints
+	cv::Mat cur_descriptors;					// current descriptor
+	std::vector<cv::Mat> dbDescriptors;			// descriptor database
+	cv::FlannBasedMatcher flannMatcher;			// Flann matcher
+	std::vector<std::vector<cv::DMatch >> matches;		// Matched vector
+
 	std::vector<cv::Point3f> refObjPoints;// Reference frame object points
 	std::vector<cv::Point2f> refImagePoints;// Reference image points
 	
@@ -103,7 +111,8 @@ private:
 	QVector3D trackBallMapping(QPoint point, int width, int height);
 	cv::Point3f GetOGLPos(cv::Point2f point, glm::vec4 viewPort);
 	void initializeWithFourPoints();
-	void generateReferncePoints();
+	void generateReferncePoints(); // extract reference keypoitns and descriptors and train them
+	void poseEstimation();
 //public functions go here
 public:
 	cv::Mat getCurrentOpenGLImage();

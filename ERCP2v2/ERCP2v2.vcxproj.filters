@@ -83,6 +83,9 @@
     <ClCompile Include="mi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="N2TMatcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="ercp2v2.h">
@@ -143,6 +146,9 @@
     </ClInclude>
     <ClInclude Include="optimizer\mins.h">
       <Filter>Optimization</Filter>
+    </ClInclude>
+    <ClInclude Include="N2TMatcher.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

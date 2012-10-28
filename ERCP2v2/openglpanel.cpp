@@ -873,7 +873,7 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 	}
 }
 
-void OpenglPanel::generateReferncePoints()
+void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and descriptors and train them
 {
 	// Read the current image extract keypoints, descriptors and corresponding 3D location
 	model->fixedImage.copyTo(referenceFrame);
@@ -887,21 +887,25 @@ void OpenglPanel::generateReferncePoints()
 	
 	// Test SIFT Feature detection
 	//sift_cpu(referenceImg,cv::Mat(),keypoints,descriptors,false);//
-	sift_cpu(referenceFrame,mask,keypoints,descriptors,false);
+	sift_cpu(referenceFrame,mask,ref_keypoints,ref_descriptors,false);
 	refObjPoints.clear();
 	refImagePoints.clear();
-	for (int i = 0; i<keypoints.size(); i++)
+	for (int i = 0; i<ref_keypoints.size(); i++)
 	{
-		float x = keypoints[i].pt.x;
-		float y = keypoints[i].pt.y;
+		float x = ref_keypoints[i].pt.x;
+		float y = ref_keypoints[i].pt.y;
 		cv::Point3f objPoint;
 		glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
-		objPoint = GetOGLPos(keypoints[i].pt,viewPort);
+		objPoint = GetOGLPos(ref_keypoints[i].pt,viewPort);
 		//TRACE("ObjPoint = [%f; %f; %f; 1]; ImgPoint = [%f;%f]\n",objPoint.x,objPoint.y,objPoint.z, x,y);
 		refObjPoints.push_back(objPoint);
-		refImagePoints.push_back(keypoints[i].pt);
+		refImagePoints.push_back(ref_keypoints[i].pt);
 	}
-
+	// Train the descriptor
+	dbDescriptors.push_back(ref_descriptors);
+	flannMatcher.add(dbDescriptors);
+	flannMatcher.train();	
+	
 	// Save result to ref.yml;
 	fs.open("data/refImagePoints.yml",cv::FileStorage::WRITE);
 	fs<<"refImagePoints"<<refImagePoints;
@@ -945,6 +949,42 @@ void OpenglPanel::startTracking()
 	cv::imshow("Cropped Frame", currentFrame);
 	mode = CAMERA_TRACKING;
 
+}
+
+void OpenglPanel::updateGL()
+{
+	if (mode == CAMERA_TRACKING)
+	{
+		cv::Mat frame;
+		cv::Mat croppedImage;
+		//qDebug()<<"Camera tracking mode";
+		capturePosition +=captureDelay;
+		capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
+		// for all fames in video
+		capture.grab();
+		if (!capture.retrieve(frame))
+			return;		
+		croppedImage = frame(cv::Rect(258,86,312,312));
+		currentFrame.copyTo(previousFrame);
+		croppedImage.copyTo(currentFrame);		
+		cv::imshow("Video Frame",frame);
+		cv::imshow("Cropped Frame", currentFrame);
+		poseEstimation();
+
+
+	}
+	return QGLWidget::updateGL();
+}
+
+void OpenglPanel::poseEstimation()
+{
+	sift_cpu(currentFrame,cv::Mat(),cur_keypoints,cur_descriptors,false);
+	flannMatcher.knnMatch(cur_descriptors,matches,2);
+	 //drawing the results
+	cv::Mat img_matches;
+	cv::namedWindow("matches", 1);		
+	cv::drawMatches(currentFrame, cur_keypoints,referenceFrame, ref_keypoints, matches, img_matches);
+	cv::imshow("matches", img_matches);
 }
 
 
