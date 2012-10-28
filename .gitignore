@@ -7,6 +7,9 @@
 *.pdb
 *.ipch
 
+#intelligent data
+*.sdf
+
 # Compiled Dynamic libraries
 *.so
 
