@@ -9,6 +9,7 @@
 
 #intelligent data
 *.sdf
+*.opensdf
 
 # Compiled Dynamic libraries
 *.so
