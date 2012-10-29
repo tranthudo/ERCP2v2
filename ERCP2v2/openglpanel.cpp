@@ -27,15 +27,16 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	numberOfPoints = 10;
 	timer = new QTimer(this);
 	QObject::connect(timer, SIGNAL(timeout()), this, SLOT(updateGL()));
-	timer->start(30);
+	timer->start(1);
 	setFocusPolicy(Qt::StrongFocus);
 	calibrated = false;
 	double __d[4] = {0,0,0,0}; 
 	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
-	cv::SIFT sift_cpu(1000,4,0.01,10,1.6);
-	cv::SURF surf_cpu(50,3,2,false);
+	sift_cpu = cv::SIFT(1000,4,0.01,10,1.6);
+	surf_cpu = cv::SURF(2000,4);	
+	detector = cv::SurfFeatureDetector(1000,4);	
 	
 }
 
@@ -883,13 +884,21 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	cv::Mat referenceGrayImg;
 	cv::cvtColor(referenceFrame, referenceGrayImg,CV_RGB2GRAY);
 	cv::threshold(referenceGrayImg,mask,150,255,cv::THRESH_BINARY_INV);
-	cv::imshow("MASK",mask);
+	cv::imshow("REF MASK",mask);
 	
 	// Test SIFT Feature detection
 	//sift_cpu(referenceImg,cv::Mat(),keypoints,descriptors,false);//
-	sift_cpu(referenceFrame,mask,ref_keypoints,ref_descriptors,false);
+	/*surf_cpu(referenceFrame,mask,ref_keypoints,ref_descriptors,false);*/
+	
+	// detection
+	// can be any feature detection
+	detector.detect(referenceGrayImg,ref_keypoints,mask);
+	// extraction of descriptor
+	extractor.compute(referenceGrayImg,ref_keypoints,ref_descriptors);
+
 	refObjPoints.clear();
 	refImagePoints.clear();
+	qDebug()<<"Reference Keypoints size = "<<ref_keypoints.size();
 	for (int i = 0; i<ref_keypoints.size(); i++)
 	{
 		float x = ref_keypoints[i].pt.x;
@@ -903,8 +912,8 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	}
 	// Train the descriptor
 	dbDescriptors.push_back(ref_descriptors);
-	flannMatcher.add(dbDescriptors);
-	flannMatcher.train();	
+	/*flannMatcher.add(dbDescriptors);
+	flannMatcher.train();	*/
 	
 	// Save result to ref.yml;
 	fs.open("data/refImagePoints.yml",cv::FileStorage::WRITE);
@@ -922,7 +931,7 @@ void OpenglPanel::startTracking()
 {	
 	// Initialize start online tracking and let everything done! in the onTimer function is that OK?
 	// Or may not using the timer function just do a loop untill .. stop.
-	capture.open("F:/2012 FALL/ERCP/CTandVideo/ERCP0.avi");
+	capture.open("data/ERCP0.avi");
 	// check if video is opened
 	if (!capture.isOpened()) return;
 	cv::Mat frame;
@@ -933,10 +942,10 @@ void OpenglPanel::startTracking()
 	cv::namedWindow("Cropped Frame");
 	// Delay between each frame in ms
 	// corresponding to video frame rate
-	captureDelay = 1000/captureRate;
+	captureDelay = 1000.0/captureRate;
 	// go to frame at (minute, second) of the video
 	int minute = 1;
-	int second = 14;
+	int second = 21;
 	capturePosition = (double) (minute*60+second)*1000.0;
 	capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
 	// for all fames in video
@@ -955,8 +964,7 @@ void OpenglPanel::updateGL()
 {
 	if (mode == CAMERA_TRACKING)
 	{
-		cv::Mat frame;
-		cv::Mat croppedImage;
+		
 		//qDebug()<<"Camera tracking mode";
 		capturePosition +=captureDelay;
 		capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
@@ -964,6 +972,7 @@ void OpenglPanel::updateGL()
 		capture.grab();
 		if (!capture.retrieve(frame))
 			return;		
+		//capture>>frame;
 		croppedImage = frame(cv::Rect(258,86,312,312));
 		currentFrame.copyTo(previousFrame);
 		croppedImage.copyTo(currentFrame);		
@@ -971,20 +980,85 @@ void OpenglPanel::updateGL()
 		cv::imshow("Cropped Frame", currentFrame);
 		poseEstimation();
 
-
 	}
 	return QGLWidget::updateGL();
 }
 
 void OpenglPanel::poseEstimation()
 {
-	sift_cpu(currentFrame,cv::Mat(),cur_keypoints,cur_descriptors,false);
-	flannMatcher.knnMatch(cur_descriptors,matches,2);
+	qDebug("_________________________");
+	qDebug()<<"Camera_intrinsic rows = "<<camera_intrinsic.rows<<"cols "<<camera_intrinsic.cols;
+	qDebug("_________________________");
+	/*sift_cpu(currentFrame,cv::Mat(),cur_keypoints,cur_descriptors,false);
+	flannMatcher.knnMatch(cur_descriptors,matches,2);*/
+	cv::Mat currentGrayFrame;
+	cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
+	cv::Mat mask;
+	cv::threshold(currentGrayFrame,mask,150,255,cv::THRESH_BINARY_INV);	
+	cv::imshow("CUR MASK",mask);
+	detector.detect(currentGrayFrame,cur_keypoints,mask);
+	extractor.compute(currentGrayFrame,cur_keypoints,cur_descriptors);
+	// matching
+	bfMatcher.match(cur_descriptors,ref_descriptors,freakMatches);
+
 	 //drawing the results
 	cv::Mat img_matches;
 	cv::namedWindow("matches", 1);		
-	cv::drawMatches(currentFrame, cur_keypoints,referenceFrame, ref_keypoints, matches, img_matches);
+	cv::drawMatches(currentFrame, cur_keypoints,referenceFrame, ref_keypoints, freakMatches, img_matches);
 	cv::imshow("matches", img_matches);
+
+	keyPoints_selected.clear();                                         
+	objPoints_selected.clear();		
+	for (int i = 0; i <(int)freakMatches.size(); i++)
+	{
+		objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
+		keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
+	}
+	freakMatches.clear();
+	//solvePnP(objPoints_selected,keyPoints_selected, m_CamIntrinsic, distCoeffs, rvec, tvec, false, cv::EPNP);
+	solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(keyPoints_selected), 
+		camera_intrinsic, distCoeffs, rvec, tvec, 
+		true, 100, 1.0f,100,inliers,cv::EPNP);	
+
+	// Update camera pose
+	cv::Mat rMat;
+	cv::Rodrigues(rvec, rMat);
+
+	double* _rMat = rMat.ptr<double>();
+	double*_t = tvec.ptr<double>();
+	// Update the modelview matrix  // _rmat from 0 to 4 should be negatived
+
+	glm_camera_exintrinsic[0].x = (float)_rMat[0];
+	glm_camera_exintrinsic[1].x = (float)_rMat[1];
+	glm_camera_exintrinsic[2].x = (float)_rMat[2];
+	glm_camera_exintrinsic[3].x = (float)_t[0];
+
+	glm_camera_exintrinsic[0].y = (float)-_rMat[3];
+	glm_camera_exintrinsic[1].y = (float)-_rMat[4];
+	glm_camera_exintrinsic[2].y = (float)-_rMat[5];
+	glm_camera_exintrinsic[3].y = (float)-_t[1];
+
+	glm_camera_exintrinsic[0].z = (float)-_rMat[6];
+	glm_camera_exintrinsic[1].z = (float)-_rMat[7];
+	glm_camera_exintrinsic[2].z = (float)-_rMat[8];
+	glm_camera_exintrinsic[3].z = (float)-_t[2];
+
+	glm_camera_exintrinsic[0].w = 0.0;
+	glm_camera_exintrinsic[1].w = 0.0;
+	glm_camera_exintrinsic[2].w = 0.0;
+	glm_camera_exintrinsic[3].w = 1.0;
+	// copy to the reference camera parameter
+	ref_camera_extrinsic = glm_camera_exintrinsic;
+
+	// Extract position of the camera corresponding to when the obj is moved to the origin
+	glm::vec3 camPos = model->extractCameraPos(glm_camera_exintrinsic);
+	glm::vec3 camAng = getEulerFromRotationMatrix(glm::mat3(glm_camera_exintrinsic),model->getCameraAngles());	
+	ref_camera_positions = camPos;
+	ref_camera_angle = camAng;
+	((ERCP2v2*)((this->parent())->parent()))->updateUICamPosition(camPos);
+	((ERCP2v2*)((this->parent())->parent()))->updateUICamAngles(camAng);
+	model->setViewMatrix(camAng,camPos);
+	mode = ProgramMode::STOP;
 }
 
 

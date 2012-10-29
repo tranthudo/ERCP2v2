@@ -33,8 +33,30 @@ ModelGL::ModelGL(QObject *parent)
 	//setModelMatrix(glm::vec3(10,25,3), glm::vec3(5,5,5));
 	
 	//textureImage = cv::imread("data/n2t.jpg");
-
-	cv::Mat inputImage = cv::imread("data/ref02.png");
+	// Or may not using the timer function just do a loop untill .. stop.
+	cv::VideoCapture capture;
+	capture.open("data/ERCP0.avi");
+	// check if video is opened
+	if (!capture.isOpened()) return;
+	cv::Mat frame;
+	cv::Mat croppedImage;
+	double captureRate = capture.get(CV_CAP_PROP_FPS);// get the frame per second
+	bool stop(false);	
+	// Delay between each frame in ms
+	// corresponding to video frame rate
+	double captureDelay = 1000.0/captureRate;
+	// go to frame at (minute, second) of the video
+	int minute = 1;
+	int second = 21;
+	double capturePosition = (double) (minute*60+second)*1000.0;
+	capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
+	// for all fames in video
+	capture.grab();
+	capture.retrieve(frame);
+	croppedImage = frame(cv::Rect(258,86,312,312));	
+	//capture.release();
+	cv::Mat inputImage;
+	croppedImage.copyTo(inputImage);
 	//textureImage = inputImage;
 	textureImage = inputImage;//(cv::Rect(228,50,376,376));
 	textureImage.copyTo(fixedImage);
