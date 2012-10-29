@@ -35,8 +35,10 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
 	sift_cpu = cv::SIFT(1000,4,0.01,10,1.6);
-	surf_cpu = cv::SURF(2000,4);	
-	detector = cv::SurfFeatureDetector(1000,4);	
+	surf_cpu = cv::SURF(2000,4);		
+	detector = new cv::SurfFeatureDetector(1000,2);	
+	//detector = new cv::SIFT(1000,2,0.04,10,2.0);
+
 	// Initialize start online tracking and let everything done! in the onTimer function is that OK?
 	// Or may not using the timer function just do a loop untill .. stop.
 	capture.open("data/ERCP0.avi");
@@ -56,6 +58,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	int second = 21;
 	capturePosition = (double) (minute*60+second)*1000.0;
 	n_frame = 0;
+	number_of_continuos_failures = 0;
 }
 
 OpenglPanel::~OpenglPanel()
@@ -876,12 +879,13 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	
 	// detection
 	// can be any feature detection
-	detector.detect(referenceGrayImg,ref_keypoints,mask);
+	detector->detect(referenceGrayImg,ref_keypoints,mask);
 	// extraction of descriptor
 	extractor.compute(referenceGrayImg,ref_keypoints,ref_descriptors);
-
+	ref_descriptors.copyTo(first_ref_Descriptors);
 	refObjPoints.clear();
 	refImagePoints.clear();	
+	first_ref_KeyPoints.clear();
 	qDebug()<<"Reference Keypoints size = "<<ref_keypoints.size();
 	for (int i = 0; i<ref_keypoints.size(); i++)
 	{
@@ -893,6 +897,8 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 		//TRACE("ObjPoint = [%f; %f; %f; 1]; ImgPoint = [%f;%f]\n",objPoint.x,objPoint.y,objPoint.z, x,y);
 		refObjPoints.push_back(objPoint);
 		refImagePoints.push_back(ref_keypoints[i].pt);
+		first_ref_ObjPoints.push_back(objPoint);
+		first_ref_KeyPoints.push_back(ref_keypoints[i]);
 	}
 	// Train the descriptor
 	dbDescriptors.push_back(ref_descriptors);
@@ -962,7 +968,7 @@ void OpenglPanel::poseEstimation()
 	cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
 	cv::threshold(currentGrayFrame,mask,150,255,cv::THRESH_BINARY_INV);	
 	cv::imshow("CUR MASK",mask);
-	detector.detect(currentGrayFrame,cur_keypoints,mask);
+	detector->detect(currentGrayFrame,cur_keypoints,mask);
 	extractor.compute(currentGrayFrame,cur_keypoints,cur_descriptors);
 	// matching
 	bfMatcher.match(cur_descriptors,ref_descriptors,freakMatches);	
@@ -980,6 +986,7 @@ void OpenglPanel::poseEstimation()
 		keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 	}
 	freakMatches.clear();
+	qDebug()<<"Number of refObjPoints"<<refObjPoints.size();
 	//solvePnP(objPoints_selected,keyPoints_selected, m_CamIntrinsic, distCoeffs, rvec, tvec, false, cv::EPNP);
 	rvec.copyTo(backup_rvec);
 	tvec.copyTo(backup_tvec);
@@ -990,16 +997,17 @@ void OpenglPanel::poseEstimation()
 		poseGLUpdate();		
 		qDebug()<<"Number of Inliers = "<<inliers.size();
 		firstTime = false;
-		referenceFrame = currentFrame;
+		currentFrame.copyTo(referenceFrame);
 		model->textureImage = currentFrame;
 	}
 	else 
 	{
 		// Need to do the reset camera pose here
-		firstTime = true;
-		qDebug()<<"!!!!!!!!!!!!Lost tracking: Number of inliers = "<<inliers.size();
+		firstTime = true;		
 		rvec = backup_rvec;// restore back rvec, tvec;
 		tvec = backup_tvec;
+		number_of_continuos_failures ++;
+		qDebug()<<"!!!!!!!!!!!!Lost tracking: Number of inliers = "<<inliers.size()<<"; number of failure frames = "<<n_frame;
 	}
 	n_frame +=1;
 	qDebug()<<"Frame "<<n_frame<<"th";
@@ -1065,6 +1073,7 @@ void OpenglPanel::generateKeypointsFromCalculatedPose()
 		//TRACE("ObjPoint = [%f; %f; %f; 1]; ImgPoint = [%f;%f]\n",objPoint.x,objPoint.y,objPoint.z, x,y);
 		refObjPoints.push_back(objPoint);	
 		ref_keypoints.push_back(cur_keypoints[i]);
+		
 	}
 }
 

@@ -62,6 +62,8 @@ private:
 	QTimer *timer;	
 	ProgramMode mode;
 	bool firstTime;
+	int number_of_continuos_failures;
+
 	int n_frame;
 	int currentVirtualPoint;
 	int currentRealPoint;
@@ -69,6 +71,8 @@ private:
 	std::vector<cv::Point2f> virtualImagePoints;
 	std::vector<cv::Point2f> realImagePoints;
 	std::vector<cv::Point3f> objPoints;
+
+	
 	cv::FileStorage fs;
 	cv::Mat camera_intrinsic;
 	cv::Mat camera_extrinsic;
@@ -101,7 +105,9 @@ private:
 
 	cv::SIFT sift_cpu;
 	cv::SURF surf_cpu;
-	cv::SurfFeatureDetector detector;
+	//cv::SurfFeatureDetector detector;
+	//cv::SiftFeatureDetector detector;
+	cv::FeatureDetector* detector;
 	cv::FREAK extractor;
 	cv::BruteForceMatcher<cv::Hamming> bfMatcher;
 	
@@ -112,12 +118,15 @@ private:
 	cv::Mat cur_descriptors;					// current descriptor
 	std::vector<cv::Mat> dbDescriptors;			// descriptor database
 	cv::FlannBasedMatcher flannMatcher;			// Flann matcher
-	std::vector<std::vector<cv::DMatch >> matches;		// Matched vector
+	std::vector<std::vector<cv::DMatch >> matches;			// Matched vector
 	std::vector<cv::DMatch> freakMatches;
-	std::vector<cv::Point3f> refObjPoints;// Reference frame object points
-	std::vector<cv::Point2f> refImagePoints;// Reference image points
-	std::vector<cv::Point3f> objPoints_selected;		// obj Points
-	std::vector<cv::Point2f> keyPoints_selected;		// keypoints Selected
+	std::vector<cv::Point3f> refObjPoints;					// Reference frame object points
+	std::vector<cv::Point2f> refImagePoints;				// Reference image points
+	std::vector<cv::Point3f> objPoints_selected;			// obj Points
+	std::vector<cv::Point2f> keyPoints_selected;			// keypoints Selected
+	std::vector<cv::Point3f> first_ref_ObjPoints;			// First matching reference view
+	cv::Mat					 first_ref_Descriptors;			// First reference view descriptor
+	std::vector<cv::KeyPoint> first_ref_KeyPoints;			// First reference view image poitns
 
 
 // private functions go here
