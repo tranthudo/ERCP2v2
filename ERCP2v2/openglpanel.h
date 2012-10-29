@@ -32,6 +32,7 @@ typedef enum {CAMERA_CALIBRATION, INITIALIZATION, CAMERA_TRACKING, MANUAL_TRACKI
 
 
 
+
 class OpenglPanel : public QGLWidget
 {
 	Q_OBJECT
@@ -60,6 +61,8 @@ private:
 	QVector3D lastPoint;
 	QTimer *timer;	
 	ProgramMode mode;
+	bool firstTime;
+	int n_frame;
 	int currentVirtualPoint;
 	int currentRealPoint;
 	int numberOfPoints;
@@ -93,12 +96,15 @@ private:
 	cv::Mat referenceFrame;
 	cv::Mat frame;
 	cv::Mat croppedImage;
+	cv::Mat backup_rvec;
+	cv::Mat backup_tvec;
 
 	cv::SIFT sift_cpu;
 	cv::SURF surf_cpu;
 	cv::SurfFeatureDetector detector;
 	cv::FREAK extractor;
 	cv::BruteForceMatcher<cv::Hamming> bfMatcher;
+	
 
 	std::vector<cv::KeyPoint> ref_keypoints;	// current reference keypoints
 	cv::Mat ref_descriptors;					// current descriptor
@@ -121,6 +127,8 @@ private:
 	void initializeWithFourPoints();
 	void generateReferncePoints(); // extract reference keypoitns and descriptors and train them
 	void poseEstimation();
+	void poseGLUpdate();
+	void generateKeypointsFromCalculatedPose();
 //public functions go here
 public:
 	cv::Mat getCurrentOpenGLImage();
@@ -143,6 +151,8 @@ private slots:
 	// Qualifier:
 	//************************************
 	void selfCalibration();
+	void initialization();
+
 signals:
 	void finishSelectingPoints();
 

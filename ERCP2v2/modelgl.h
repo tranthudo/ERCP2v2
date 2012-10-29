@@ -91,6 +91,7 @@ public:
 	void setCameraAngles(glm::vec3 rvec);
 	cv::Mat fixedImage;
 	cv::Mat fixedFloat;
+	cv::Mat textureImage;
 	void resetThirdView(){thirdPersonAngleX = 45.0f, thirdPersonAngleY = 45.0f, thirdPersonDistance = 100.f;}
 public slots:
 	void setCameraAngleX(double rx);
@@ -143,7 +144,7 @@ private:
 	CObj* m_Obj;
 	// Image
 	GLuint textureID;								// texture ID
-	cv::Mat textureImage;
+	
 
 	// Private functions
 	void initLights();

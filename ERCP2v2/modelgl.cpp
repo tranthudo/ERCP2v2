@@ -219,6 +219,7 @@ void ModelGL::setThirViewportSub( int left, int bottom, int width, int height, f
 void ModelGL::draw()
 {
 	//initCamera();
+	getFrame2GLTexture(textureImage);
 	drawSub1();
 	drawSub2();
 	drawSub3();
