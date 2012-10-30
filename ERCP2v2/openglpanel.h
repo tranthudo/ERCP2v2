@@ -103,13 +103,16 @@ private:
 	cv::Mat backup_rvec;
 	cv::Mat backup_tvec;
 
-	cv::SIFT sift_cpu;
-	cv::SURF surf_cpu;
+	/*cv::SIFT sift_cpu;
+	cv::SURF surf_cpu;*/
 	//cv::SurfFeatureDetector detector;
 	//cv::SiftFeatureDetector detector;
 	cv::FeatureDetector* detector;
-	cv::FREAK extractor;
-	cv::BruteForceMatcher<cv::Hamming> bfMatcher;
+	cv::DescriptorExtractor* hammingExtractor;
+	cv::DescriptorExtractor* l2Extractor;
+	cv::DescriptorMatcher* hammingMatcher;
+	cv::DescriptorMatcher* l2Matcher;
+	
 	
 
 	std::vector<cv::KeyPoint> ref_keypoints;	// current reference keypoints

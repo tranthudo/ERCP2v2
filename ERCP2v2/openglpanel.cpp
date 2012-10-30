@@ -34,10 +34,16 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
-	sift_cpu = cv::SIFT(1000,4,0.01,10,1.6);
-	surf_cpu = cv::SURF(2000,4);		
-	detector = new cv::SurfFeatureDetector(1000,2);	
+	/*sift_cpu = cv::SIFT(1000,4,0.01,10,1.6);
+	surf_cpu = cv::SURF(2000,4);		*/
+	detector = new cv::SurfFeatureDetector(1000,4);	
 	//detector = new cv::SIFT(1000,2,0.04,10,2.0);
+	hammingExtractor = new cv::FREAK;
+	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
+	//l2Extractor = new cv::SURF(2000,3,2,true,true);// cv::SIFT
+	l2Extractor = new cv::SIFT(1000,2,0.04,10,2.0);
+	l2Matcher = new cv::BFMatcher(cv::NORM_L2,true);
+
 
 	// Initialize start online tracking and let everything done! in the onTimer function is that OK?
 	// Or may not using the timer function just do a loop untill .. stop.
@@ -59,6 +65,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	capturePosition = (double) (minute*60+second)*1000.0;
 	n_frame = 0;
 	number_of_continuos_failures = 0;
+
 }
 
 OpenglPanel::~OpenglPanel()
@@ -881,7 +888,8 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	// can be any feature detection
 	detector->detect(referenceGrayImg,ref_keypoints,mask);
 	// extraction of descriptor
-	extractor.compute(referenceGrayImg,ref_keypoints,ref_descriptors);
+	//hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
+	l2Extractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
 	ref_descriptors.copyTo(first_ref_Descriptors);
 	refObjPoints.clear();
 	refImagePoints.clear();	
@@ -969,22 +977,44 @@ void OpenglPanel::poseEstimation()
 	cv::threshold(currentGrayFrame,mask,150,255,cv::THRESH_BINARY_INV);	
 	cv::imshow("CUR MASK",mask);
 	detector->detect(currentGrayFrame,cur_keypoints,mask);
-	extractor.compute(currentGrayFrame,cur_keypoints,cur_descriptors);
-	// matching
-	bfMatcher.match(cur_descriptors,ref_descriptors,freakMatches);	
+	
+
+	// hamming matcher case
+	//hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);		
+	//hammingMatcher->radiusMatch(cur_descriptors,ref_descriptors,matches,5);
+	//qDebug()<<"matches size = "<<matches.size();
+	//freakMatches.clear();
+	//for (int i = 0; i<matches.size();i++)
+	//{
+	//	freakMatches.push_back(matches[i][0]);
+	//}
+
+	// L2 matcher case
+	l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);
+	l2Matcher->match(cur_descriptors,ref_descriptors,freakMatches,cv::Mat());
+
+
+
+	
+	//freakMatches = cv::Mat(matches);
 	 //drawing the results
 	cv::Mat img_matches;
 	cv::namedWindow("matches", 1);		
-	cv::drawMatches(currentFrame, cur_keypoints,referenceFrame, ref_keypoints, freakMatches, img_matches);
+	cv::drawMatches(currentFrame, cur_keypoints,referenceFrame, ref_keypoints, freakMatches, img_matches,cv::Scalar::all(-1),cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 	cv::imshow("matches", img_matches);
 
 	keyPoints_selected.clear();                                         
 	objPoints_selected.clear();		
-	for (int i = 0; i <(int)freakMatches.size(); i++)
+	for (int i = 0; i<freakMatches.size();i++)
 	{
-		objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
+		objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);   // change freakMatches[i] to matches[i][0]
 		keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 	}
+	//for (int i = 0; i<matches.size();i++)
+	//{
+	//	objPoints_selected.push_back(refObjPoints[matches[i][0].trainIdx]);   // change freakMatches[i] to matches[i][0]
+	//	keyPoints_selected.push_back(cur_keypoints[matches[i][0].queryIdx].pt);
+	//}
 	freakMatches.clear();
 	qDebug()<<"Number of refObjPoints"<<refObjPoints.size();
 	//solvePnP(objPoints_selected,keyPoints_selected, m_CamIntrinsic, distCoeffs, rvec, tvec, false, cv::EPNP);
@@ -992,8 +1022,8 @@ void OpenglPanel::poseEstimation()
 	tvec.copyTo(backup_tvec);
 	solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(keyPoints_selected), 
 		camera_intrinsic, distCoeffs, rvec, tvec, 
-		true, 100, 1.0f,100,inliers,cv::EPNP);		
-	if (inliers.size()>10) {
+		true, 100, 3.0f,30,inliers,cv::EPNP);		
+	if (inliers.size()>6) {
 		poseGLUpdate();		
 		qDebug()<<"Number of Inliers = "<<inliers.size();
 		firstTime = false;
@@ -1007,6 +1037,27 @@ void OpenglPanel::poseEstimation()
 		rvec = backup_rvec;// restore back rvec, tvec;
 		tvec = backup_tvec;
 		number_of_continuos_failures ++;
+		if (number_of_continuos_failures==1)
+		{
+			cv::imwrite("ref_fail.png",referenceFrame);
+			cv::imwrite("current_fail.png",currentFrame);
+			// Save result to ref.yml;
+			fs.open("data/output/ref_fail_img.yml_img_points",cv::FileStorage::WRITE);
+			fs<<"ref_fail_img_points"<<refImagePoints;
+			fs.release();
+
+			fs.open("data/output/ref_obj_fail_obj_points.yml",cv::FileStorage::WRITE);
+			fs<<"ref_obj_fail_obj_points"<<refObjPoints;
+			fs.release();
+
+			fs.open("data/output/keyPoints_selected.yml",cv::FileStorage::WRITE);
+			fs<<"keyPoints_selected"<<keyPoints_selected;
+			fs.release();
+
+			fs.open("data/output/objPoints_selected.yml",cv::FileStorage::WRITE);
+			fs<<"keyPoints_selected"<<objPoints_selected;
+			fs.release();
+		}
 		qDebug()<<"!!!!!!!!!!!!Lost tracking: Number of inliers = "<<inliers.size()<<"; number of failure frames = "<<n_frame;
 	}
 	n_frame +=1;
