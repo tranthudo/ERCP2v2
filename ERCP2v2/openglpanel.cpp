@@ -888,8 +888,8 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	// can be any feature detection
 	detector->detect(referenceGrayImg,ref_keypoints,mask);
 	// extraction of descriptor
-	//hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
-	l2Extractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
+	hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
+	//l2Extractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
 	ref_descriptors.copyTo(first_ref_Descriptors);
 	refObjPoints.clear();
 	refImagePoints.clear();	
@@ -980,22 +980,20 @@ void OpenglPanel::poseEstimation()
 	
 
 	// hamming matcher case
-	//hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);		
-	//hammingMatcher->radiusMatch(cur_descriptors,ref_descriptors,matches,5);
-	//qDebug()<<"matches size = "<<matches.size();
-	//freakMatches.clear();
-	//for (int i = 0; i<matches.size();i++)
-	//{
-	//	freakMatches.push_back(matches[i][0]);
-	//}
+	hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);		
+	hammingMatcher->radiusMatch(cur_descriptors,ref_descriptors,matches,5);
+	qDebug()<<"matches size = "<<matches.size();
+	freakMatches.clear();
+	for (int i = 0; i<matches.size();i++)
+	{
+		freakMatches.push_back(matches[i][0]);
+	}
 
 	// L2 matcher case
-	l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);
-	l2Matcher->match(cur_descriptors,ref_descriptors,freakMatches,cv::Mat());
+	/*l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);
+	l2Matcher->match(cur_descriptors,ref_descriptors,freakMatches,cv::Mat());*/
 
-
-
-	
+		
 	//freakMatches = cv::Mat(matches);
 	 //drawing the results
 	cv::Mat img_matches;
@@ -1005,16 +1003,16 @@ void OpenglPanel::poseEstimation()
 
 	keyPoints_selected.clear();                                         
 	objPoints_selected.clear();		
-	for (int i = 0; i<freakMatches.size();i++)
-	{
-		objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);   // change freakMatches[i] to matches[i][0]
-		keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
-	}
-	//for (int i = 0; i<matches.size();i++)
+	//for (int i = 0; i<freakMatches.size();i++)
 	//{
-	//	objPoints_selected.push_back(refObjPoints[matches[i][0].trainIdx]);   // change freakMatches[i] to matches[i][0]
-	//	keyPoints_selected.push_back(cur_keypoints[matches[i][0].queryIdx].pt);
+	//	objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);   // change freakMatches[i] to matches[i][0]
+	//	keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 	//}
+	for (int i = 0; i<matches.size();i++)
+	{
+		objPoints_selected.push_back(refObjPoints[matches[i][0].trainIdx]);   // change freakMatches[i] to matches[i][0]
+		keyPoints_selected.push_back(cur_keypoints[matches[i][0].queryIdx].pt);
+	}
 	freakMatches.clear();
 	qDebug()<<"Number of refObjPoints"<<refObjPoints.size();
 	//solvePnP(objPoints_selected,keyPoints_selected, m_CamIntrinsic, distCoeffs, rvec, tvec, false, cv::EPNP);
