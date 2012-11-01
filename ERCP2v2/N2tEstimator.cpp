@@ -15,7 +15,7 @@ void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& ca
 	double *_r = rvec.ptr<double>();
 	double *_t = tvec.ptr<double>();	
 	double p[6] = {_r[0], _r[1], _r[2],_t[0], _t[1], _t[2]};
-	double *x = new double[300];
+	double *x = new double[1000];
 	cv::Mat errPoints;
 	cv::projectPoints(objPoints,rvec,tvec,camera_intrinsic,distCoeffs,errPoints);
 	errPoints = errPoints - imgPoints;
