@@ -7,7 +7,7 @@ const float DEG2RAD = 3.141593f / 180;
 
 ModelGL::ModelGL(QObject *parent)
 	: QObject(parent), cameraPosition(0,0,10.0), cameraUp(0,1.0,0), cameraTarget(0.0f),
-	cameraDirection(0,0,1.0), cameraNear(1), cameraFar(100),cameraFovy(60),
+	cameraDirection(0,0,1.0), cameraNear(1), cameraFar(100),cameraFovy(70),
 	thirdPersonDistance(100.0f),thirdPersonAngleX(45.0f),thirdPersonAngleY(-45.0f),
 	windowWidth(0), windowHeight(0)
 {

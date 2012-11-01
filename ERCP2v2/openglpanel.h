@@ -17,6 +17,7 @@
 //#include "optimizer/bessel.h"
 #include "img_process.h"
 #include "mi.h"
+#include "N2tEstimator.h"
 
 struct Func {
 	Doub operator() (VecDoub &x)
@@ -63,7 +64,7 @@ private:
 	ProgramMode mode;
 	bool firstTime;
 	int number_of_continuos_failures;
-
+	
 	int n_frame;
 	int currentVirtualPoint;
 	int currentRealPoint;
@@ -71,7 +72,7 @@ private:
 	std::vector<cv::Point2f> virtualImagePoints;
 	std::vector<cv::Point2f> realImagePoints;
 	std::vector<cv::Point3f> objPoints;
-
+	N2tEstimator n2tEstimator;
 	
 	cv::FileStorage fs;
 	cv::Mat camera_intrinsic;

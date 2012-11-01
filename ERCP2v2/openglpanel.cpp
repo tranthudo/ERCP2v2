@@ -36,7 +36,8 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	// Initialize feature detections
 	/*sift_cpu = cv::SIFT(1000,4,0.01,10,1.6);
 	surf_cpu = cv::SURF(2000,4);		*/
-	detector = new cv::SurfFeatureDetector(1000,4);	
+	//detector = new cv::SurfFeatureDetector(1000,3);	
+	detector = new cv::SURF;
 	//detector = new cv::SIFT(1000,2,0.04,10,2.0);
 	hammingExtractor = new cv::FREAK;
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
@@ -65,6 +66,9 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	capturePosition = (double) (minute*60+second)*1000.0;
 	n_frame = 0;
 	number_of_continuos_failures = 0;
+
+
+	// Estimator	
 
 }
 
@@ -575,7 +579,7 @@ void OpenglPanel::timerEvent( QKeyEvent *event )
 {
 	setFocus();
 	updateGL();
-	qDebug()<<"FUCK YOU";
+	qDebug()<<"TEST YOU";
 }
 
 void OpenglPanel::testOptimization()
@@ -981,13 +985,13 @@ void OpenglPanel::poseEstimation()
 
 	// hamming matcher case
 	hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);		
-	hammingMatcher->radiusMatch(cur_descriptors,ref_descriptors,matches,5);
-	qDebug()<<"matches size = "<<matches.size();
+	hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);
+	/*qDebug()<<"matches size = "<<matches.size();
 	freakMatches.clear();
 	for (int i = 0; i<matches.size();i++)
 	{
 		freakMatches.push_back(matches[i][0]);
-	}
+	}*/
 
 	// L2 matcher case
 	/*l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);
@@ -1003,16 +1007,16 @@ void OpenglPanel::poseEstimation()
 
 	keyPoints_selected.clear();                                         
 	objPoints_selected.clear();		
-	//for (int i = 0; i<freakMatches.size();i++)
-	//{
-	//	objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);   // change freakMatches[i] to matches[i][0]
-	//	keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
-	//}
-	for (int i = 0; i<matches.size();i++)
+	for (int i = 0; i<freakMatches.size();i++)
 	{
-		objPoints_selected.push_back(refObjPoints[matches[i][0].trainIdx]);   // change freakMatches[i] to matches[i][0]
-		keyPoints_selected.push_back(cur_keypoints[matches[i][0].queryIdx].pt);
+		objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);   // change freakMatches[i] to matches[i][0]
+		keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 	}
+	//for (int i = 0; i<matches.size();i++)
+	//{
+	//	objPoints_selected.push_back(refObjPoints[matches[i][0].trainIdx]);   // change freakMatches[i] to matches[i][0]
+	//	keyPoints_selected.push_back(cur_keypoints[matches[i][0].queryIdx].pt);
+	//}
 	freakMatches.clear();
 	qDebug()<<"Number of refObjPoints"<<refObjPoints.size();
 	//solvePnP(objPoints_selected,keyPoints_selected, m_CamIntrinsic, distCoeffs, rvec, tvec, false, cv::EPNP);
@@ -1020,8 +1024,29 @@ void OpenglPanel::poseEstimation()
 	tvec.copyTo(backup_tvec);
 	solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(keyPoints_selected), 
 		camera_intrinsic, distCoeffs, rvec, tvec, 
-		true, 100, 3.0f,30,inliers,cv::EPNP);		
-	if (inliers.size()>6) {
+		true, 100, 5.0f,30,inliers,cv::EPNP);	
+	double *_r = rvec.ptr<double>();
+	double* _t = tvec.ptr<double>();		
+	qDebug()<<"Rodrigues Rotation = "<<_r[0]<<", "<<_r[1]<<", "<<_r[2];
+	qDebug()<<"Translation Vector = "<<_t[0]<<", "<<_t[1]<<", "<<_t[2];
+	std::vector<cv::Point3f> new_objPoints;
+	std::vector<cv::Point2f> new_keyPoints;
+	if (inliers.size()>10) {
+		// refine the pose
+		int number_of_removed = 0;
+		for (int i = 0; i<inliers.size();i++)
+		{
+			new_objPoints.push_back(objPoints_selected[inliers[i]]);
+			new_keyPoints.push_back(keyPoints_selected[inliers[i]]);
+		}
+		
+		/*solvePnP(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
+			camera_intrinsic, distCoeffs,rvec,tvec,true,CV_ITERATIVE);*/
+		/*n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
+		camera_intrinsic, distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,N2T_NOT_USE_JACOBIAN);*/
+		n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
+			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY,N2T_NOT_USE_JACOBIAN);
+
 		poseGLUpdate();		
 		qDebug()<<"Number of Inliers = "<<inliers.size();
 		firstTime = false;
@@ -1037,8 +1062,8 @@ void OpenglPanel::poseEstimation()
 		number_of_continuos_failures ++;
 		if (number_of_continuos_failures==1)
 		{
-			cv::imwrite("ref_fail.png",referenceFrame);
-			cv::imwrite("current_fail.png",currentFrame);
+			cv::imwrite("data/output/ref_fail.png",referenceFrame);
+			cv::imwrite("data/output/current_fail.png",currentFrame);
 			// Save result to ref.yml;
 			fs.open("data/output/ref_fail_img.yml_img_points",cv::FileStorage::WRITE);
 			fs<<"ref_fail_img_points"<<refImagePoints;

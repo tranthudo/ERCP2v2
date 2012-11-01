@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>data/n2t.jpg</normaloff>data/n2t.jpg</iconset>
+    <normaloff>../../../.designer/backup/data/n2t.jpg</normaloff>../../../.designer/backup/data/n2t.jpg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="OpenglPanel" name="widget" native="true">
@@ -944,6 +944,7 @@
     <slot>selfCalibration()</slot>
     <slot>startTracking()</slot>
     <slot>prepareTracking()</slot>
+    <slot>initialization()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -1220,6 +1221,22 @@
     <hint type="destinationlabel">
      <x>604</x>
      <y>507</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonInitialization</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>initialization()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1071</x>
+     <y>664</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>625</x>
+     <y>111</y>
     </hint>
    </hints>
   </connection>

@@ -39,6 +39,9 @@
     <Filter Include="Optimization">
       <UniqueIdentifier>{b2b79056-9a5d-4174-9222-0123b06e0950}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Optimization\levmar">
+      <UniqueIdentifier>{59838f5d-dc33-4556-b359-791629c265cc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ercp2v2.cpp">
@@ -84,6 +87,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="N2TMatcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="N2tEstimator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\misc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\lmlec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\lmbleic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\lmblec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\lmbc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\lm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\Axb.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -149,6 +176,21 @@
     </ClInclude>
     <ClInclude Include="N2TMatcher.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="N2tEstimator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\levmar\compiler.h">
+      <Filter>Optimization\levmar</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\levmar\levmar.h">
+      <Filter>Optimization\levmar</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\levmar\lm.h">
+      <Filter>Optimization\levmar</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\levmar\misc.h">
+      <Filter>Optimization\levmar</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
