@@ -19,7 +19,10 @@
 #define N2T_NOT_USE_JACOBIAN false
 
 void leastSquare(double *p, double *x, int m, int n, void *adata);
-void tukey(double *p, double *jac, int m, int n, void*adata);
+void tukey(double *p, double *x, int m, int n, void*adata);
+
+void jaLeastSquare(double *p, double *jac, int m, int n, void *adata);
+void jaTukey(double *p, double *jac, int m, int n, void* adata);
 
 struct N2tEstimatorData 
 {

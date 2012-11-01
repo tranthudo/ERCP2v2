@@ -1,5 +1,5 @@
 #include "N2tEstimator.h"
-
+ #include <QDebug>
 
 
 void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& camera_intrinsic, cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode, bool jac )
@@ -44,11 +44,14 @@ void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& ca
 	double *covar = new double;
 	double ret;	
 	switch (mode) {
-	case N2T_LEAST_SQUARE:
-		break;
+	case N2T_LEAST_SQUARE:		
 		ret = dlevmar_dif(leastSquare,p,x,m,n,100,opts,info,work, covar,n2tData);
+		break;
 	case N2T_TUKEY:
 		ret = dlevmar_dif(tukey,p,x,m,n,100,opts,info,work, covar,n2tData);
+		break;
+	case N2T_LEAST_SQUARE_JACOBIAN:
+		ret = dlevmar_der(leastSquare,jaLeastSquare, p,x,m,n,100,opts,info,work,covar,n2tData);
 		break;
 	default:
 		break;
@@ -88,7 +91,7 @@ void leastSquare( double *p, double *x, int m, int n, void *adata )
 		float* data = errPoints.ptr<float>(j);
 		for (int i = 0; i<errPoints.rows; i++)
 		{
-			x[j*i]  = data[i];
+			x[j*errPoints.rows+i]  = data[i];
 		}
 	}
 }
@@ -110,11 +113,37 @@ void tukey( double *p, double *x, int m, int n, void*adata )
 		for (int i = 0; i<errPoints.rows; i++)
 		{
 			if (data[i]<-c)
-				x[j*i] = -c;
+				x[j*errPoints.cols+i] = -c;
 			else if (data[i]>c) 
-				x[j*i] = c;
+				x[j*errPoints.cols+i] = c;
 			else 
-				x[j*i] = data[i];			
+				x[j*errPoints.cols+i] = data[i];			
 		}
 	}
+}
+
+void jaLeastSquare( double *p, double *jac, int m, int n, void *adata )
+{
+	N2tEstimatorData* n2tData = (N2tEstimatorData*)adata;
+
+	cv::Mat rvec(3,1,CV_64F,p);
+	cv::Mat tvec(3,1,CV_64F,p+3);
+	cv::Mat errPoints;	
+	cv::Mat jacobian;
+	cv::projectPoints(n2tData->ObjPoints,rvec,tvec,n2tData->camera_intrinsic,n2tData->distCoeffs,errPoints,jacobian);	
+	//errPoints = errPoints-n2tData->ImgPoints;	
+	
+	qDebug()<<"m = "<<m<<"; n= "<<n<<"; size of jacobian=("<<jacobian.rows<<","<<jacobian.cols<<")";
+	for (int j = 0; j<m; j++){
+		double* data= jacobian.ptr<double>(j);		
+		for (int i = 0; i <n; i++){
+			jac[n*j+i] = data[i];
+		}		
+	}
+	qDebug()<<"number of jacobian element"<<m*n;
+}
+
+void jaTukey( double *p, double *jac, int m, int n, void* adata )
+{
+
 }
