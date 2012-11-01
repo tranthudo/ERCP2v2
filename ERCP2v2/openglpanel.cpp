@@ -1042,10 +1042,10 @@ void OpenglPanel::poseEstimation()
 		
 		/*solvePnP(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
 			camera_intrinsic, distCoeffs,rvec,tvec,true,CV_ITERATIVE);*/
-		/*n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
-		camera_intrinsic, distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,N2T_NOT_USE_JACOBIAN);*/
 		n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
-			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY,N2T_NOT_USE_JACOBIAN);
+		camera_intrinsic, distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,N2T_NOT_USE_JACOBIAN);
+		/*n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
+			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY,N2T_NOT_USE_JACOBIAN);*/
 
 		poseGLUpdate();		
 		qDebug()<<"Number of Inliers = "<<inliers.size();
