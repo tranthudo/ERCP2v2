@@ -37,7 +37,8 @@ void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& ca
 
 	// tukey function
 	m = 6;
-	n = imgPoints.cols*imgPoints.rows;
+	//n = imgPoints.cols*imgPoints.rows;
+	n = 1;// if 1 measure ment
 
 	double *work = new double;
 	double *covar = new double;
@@ -81,14 +82,15 @@ void leastSquare( double *p, double *x, int m, int n, void *adata )
 	cv::Mat errPoints;
 	cv::projectPoints(n2tData->ObjPoints,rvec,tvec,n2tData->camera_intrinsic,n2tData->distCoeffs,errPoints);	
 	errPoints = errPoints-n2tData->ImgPoints;
-	for (int j = 0; j<errPoints.cols;j++)
+	x[0] = cv::norm(errPoints);		
+	/*for (int j = 0; j<errPoints.cols;j++)
 	{
 		float* data = errPoints.ptr<float>(j);
 		for (int i = 0; i<errPoints.rows; i++)
 		{
 			x[j*errPoints.cols+i]  = data[i];
 		}
-	}
+	}*/
 }
 
 void tukey( double *p, double *x, int m, int n, void*adata )
@@ -104,11 +106,24 @@ void tukey( double *p, double *x, int m, int n, void*adata )
 	for (int j = 0; j<errPoints.cols;j++)
 	{
 		float* data = errPoints.ptr<float>(j);		
+		for (int i = 0; i<errPoints.rows;i++)
+		{
+			double err =  data[i];
+			if (err>c || err<-c){
+				x[0] += c*c;
+			}
+			else x[0] +=err*err;
+		}
+
+	}
+	/*for (int j = 0; j<errPoints.cols;j++)
+	{
+		float* data = errPoints.ptr<float>(j);		
 		for (int i = 0; i<errPoints.rows; i++)
 		{
 			if (data[i]>c) x[j*errPoints.cols+i] =c;
 			else if (data[i]<-c) x[j*errPoints.cols+i] =-c;
 			else x[j*errPoints.cols+i] = data[i];
 		}
-	}
+	}*/
 }
