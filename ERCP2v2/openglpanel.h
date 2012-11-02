@@ -119,7 +119,7 @@ private:
 	
 
 	std::vector<cv::KeyPoint> ref_keypoints;	// current reference keypoints
-	cv::Mat ref_descriptors;					// current descriptor
+	cv::Mat ref_descriptors;					// reference descriptor
 	std::vector<cv::KeyPoint> cur_keypoints;	// current keypoints
 	cv::Mat cur_descriptors;					// current descriptor
 	std::vector<cv::Mat> dbDescriptors;			// descriptor database
@@ -158,6 +158,7 @@ private slots:
 	void testManualTracking();
 	void prepareTracking();
 	void startTracking();
+	void testFeatureDetection();
 	//************************************
 	// Method:    selfCalibration
 	// FullName:  OpenglPanel::selfCalibration

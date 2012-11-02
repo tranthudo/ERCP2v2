@@ -564,15 +564,19 @@ void OpenglPanel::saveRenderedImage()
 
 	cv::flip(img, flipped, 0);
 
-	cv::imwrite("data/OpenGL Image.bmp",flipped);
+	cv::imwrite("data/output/currentGL.png",flipped);
 }
 
 void OpenglPanel::keyPressEvent( QKeyEvent * event )
 {
-	if (event->key()==Qt::Key_Q)
-	{
+	if (event->key()==Qt::Key_Q){
 		saveRenderedImage();
+		cv::imwrite("data/output/currentFrame.png",currentFrame);
 	}
+	else if (event->key()==Qt::Key_A) {
+		cv::imwrite("currentFrame.png",currentFrame);
+	}
+
 }
 
 void OpenglPanel::timerEvent( QKeyEvent *event )
@@ -875,8 +879,6 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 
 void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and descriptors and train them
 {
-	
-
 	// Create a mask to eliminate the specular point
 	cv::Mat mask;
 	cv::Mat referenceGrayImg;
@@ -898,6 +900,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	refObjPoints.clear();
 	refImagePoints.clear();	
 	first_ref_KeyPoints.clear();
+	dbDescriptors.clear();
 	qDebug()<<"Reference Keypoints size = "<<ref_keypoints.size();
 	for (int i = 0; i<ref_keypoints.size(); i++)
 	{
@@ -914,6 +917,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	}
 	// Train the descriptor
 	dbDescriptors.push_back(ref_descriptors);
+	ref_descriptors.copyTo(first_ref_Descriptors);
 	/*flannMatcher.add(dbDescriptors);
 	flannMatcher.train();	*/
 	
@@ -925,6 +929,17 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	fs.open("data/refObjPoints.yml",cv::FileStorage::WRITE);
 	fs<<"refObjPoints"<<refObjPoints;
 	fs.release();
+
+	// Save firsttime output
+	fs.open("data/output/first_ref_ObjPoints.yml",cv::FileStorage::WRITE);
+	fs<<"first_ref_ObjPoints"<<first_ref_ObjPoints;
+	fs.release();
+
+	fs.open("data/output/first_ref_KeyPoints.yml",cv::FileStorage::WRITE);
+	fs<<"first_ref_ObjPoints"<<first_ref_ObjPoints;
+	fs.release();
+
+	cv::imwrite("data/output/first_ref_Frame.png",referenceFrame);
 	
 }
 
@@ -1163,6 +1178,99 @@ void OpenglPanel::generateKeypointsFromCalculatedPose()
 		ref_keypoints.push_back(cur_keypoints[i]);
 		
 	}
+}
+
+void OpenglPanel::testFeatureDetection()
+{
+
+	cv::Mat testImg = cv::imread("data/output/currentFrame.png");
+	cv::Mat testGrayImg;
+	cv::cvtColor(testImg,testGrayImg,CV_RGB2GRAY);
+	std::vector<cv::KeyPoint> testKeypoints;
+	cv::Mat testDescriptor;
+	cv::Mat mask;
+	std::vector<cv::DMatch> matches;
+	cv::threshold(testGrayImg,mask,150,255,cv::THRESH_BINARY_INV);		
+	detector->detect(testGrayImg,testKeypoints,mask);
+	hammingExtractor->compute(testGrayImg,testKeypoints,testDescriptor);
+	hammingMatcher->match(testDescriptor,first_ref_Descriptors,matches);
+	cv::Mat matchedImg;
+	cv::drawMatches(testImg,testKeypoints,referenceFrame,first_ref_KeyPoints,matches,matchedImg);
+	cv::imshow("Test Matches", matchedImg);
+	keyPoints_selected.clear();                                         
+	objPoints_selected.clear();		
+	std::vector<cv::KeyPoint> new_test_keyPoints;
+	std::vector<cv::KeyPoint> new_ref_keyPoints;
+	for (int i = 0; i<matches.size();i++)
+	{
+		objPoints_selected.push_back(first_ref_ObjPoints[matches[i].trainIdx]);   // change freakMatches[i] to matches[i][0]
+		keyPoints_selected.push_back(testKeypoints[matches[i].queryIdx].pt);
+		new_ref_keyPoints.push_back(first_ref_KeyPoints[matches[i].trainIdx]);
+		new_test_keyPoints.push_back(testKeypoints[matches[i].queryIdx]);
+	}
+	//for (int i = 0; i<matches.size();i++)
+	//{
+	//	objPoints_selected.push_back(refObjPoints[matches[i][0].trainIdx]);   // change freakMatches[i] to matches[i][0]
+	//	keyPoints_selected.push_back(cur_keypoints[matches[i][0].queryIdx].pt);
+	//}
+
+
+	qDebug()<<"Number of refObjPoints"<<first_ref_ObjPoints.size();
+	//solvePnP(objPoints_selected,keyPoints_selected, m_CamIntrinsic, distCoeffs, rvec, tvec, false, cv::EPNP);
+	double *_r = rvec.ptr<double>();
+	double* _t = tvec.ptr<double>();
+	qDebug()<<"Pose before solved!";
+	qDebug()<<"Rodrigues Rotation = "<<_r[0]<<", "<<_r[1]<<", "<<_r[2];
+	qDebug()<<"Translation Vector = "<<_t[0]<<", "<<_t[1]<<", "<<_t[2];
+	rvec.copyTo(backup_rvec);
+	tvec.copyTo(backup_tvec);
+	tinit = cv::getTickCount();
+	solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(keyPoints_selected), 
+		camera_intrinsic, distCoeffs, rvec, tvec, 
+		true, 100, 8.0f,30,inliers,cv::EPNP);
+	qDebug()<<"Time to solve PnP Ransac"<<(cv::getTickCount()-tinit)*freq;
+	qDebug()<<"rvec rows = "<<rvec.rows<<"; cols = "<<rvec.cols<<";";
+			
+	qDebug()<<"Rodrigues Rotation = "<<_r[0]<<", "<<_r[1]<<", "<<_r[2];
+	qDebug()<<"Translation Vector = "<<_t[0]<<", "<<_t[1]<<", "<<_t[2];
+	std::vector<cv::Point3f> new_objPoints;
+	std::vector<cv::Point2f> new_keyPoints;
+	std::vector<cv::DMatch> new_matches;
+	if (inliers.size()>=4) {
+		// refine the pose
+		int number_of_removed = 0;
+		for (int i = 0; i<inliers.size();i++)
+		{
+			new_objPoints.push_back(objPoints_selected[inliers[i]]);
+			new_keyPoints.push_back(keyPoints_selected[inliers[i]]);			
+			new_matches.push_back(matches[inliers[i]]);
+			/*new_test_keyPoints.push_back(testKeypoints[matches[inliers[i]].queryIdx]);
+			new_ref_keyPoints.push_back(first_ref_KeyPoints[matches[inliers[i]].trainIdx]);
+			new_matches.push_back(cv::DMatch(i,i,0));*/			
+		}
+		
+		/*solvePnP(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
+			camera_intrinsic, distCoeffs,rvec,tvec,true,CV_ITERATIVE);*/
+		/*n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
+		camera_intrinsic, distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,N2T_NOT_USE_JACOBIAN);*/
+		/*n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
+			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY,N2T_NOT_USE_JACOBIAN);*/
+		tinit = cv::getTickCount();
+		n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
+			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY, N2T_USE_JACOBIAN);
+		qDebug()<<"Time to solve solve robustN2t estimator"<<(cv::getTickCount()-tinit)*freq;
+		poseGLUpdate();		
+		qDebug()<<"Number of Inliers = "<<inliers.size();
+		firstTime = false;
+		
+		//model->textureImage = currentFrame;
+	}	
+	if (inliers.size()>=4) {
+	cv::Mat new_matches_img;
+	cv::drawMatches(testImg,testKeypoints,referenceFrame,first_ref_KeyPoints,new_matches,new_matches_img);
+	cv::imshow("New Matched Img",new_matches_img);
+	}
+	
 }
 
 

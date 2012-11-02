@@ -902,6 +902,35 @@
      <string>Start Tracking</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButtonTestFeatureDetection">
+    <property name="geometry">
+     <rect>
+      <x>1150</x>
+      <y>480</y>
+      <width>201</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Test Feature Detection</string>
+    </property>
+   </widget>
+   <zorder>groupBox</zorder>
+   <zorder>groupBox_2</zorder>
+   <zorder>groupBox_3</zorder>
+   <zorder>pushButton</zorder>
+   <zorder>groupBox_4</zorder>
+   <zorder>groupBox_5</zorder>
+   <zorder>groupBox_6</zorder>
+   <zorder>groupBox_7</zorder>
+   <zorder>textEditCommand</zorder>
+   <zorder>pushButtonTestOptimization</zorder>
+   <zorder>pushButtonTestMI</zorder>
+   <zorder>pushButtonTestManualTracking</zorder>
+   <zorder>pushButtonPrepareTracking</zorder>
+   <zorder>pushButtonStartTracking</zorder>
+   <zorder>pushButtonTestFeatureDetection</zorder>
+   <zorder>widget</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -945,6 +974,7 @@
     <slot>startTracking()</slot>
     <slot>prepareTracking()</slot>
     <slot>initialization()</slot>
+    <slot>testFeatureDetection()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -1237,6 +1267,22 @@
     <hint type="destinationlabel">
      <x>625</x>
      <y>111</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonTestFeatureDetection</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>testFeatureDetection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1226</x>
+     <y>530</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>647</x>
+     <y>551</y>
     </hint>
    </hints>
   </connection>
