@@ -67,7 +67,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	n_frame = 0;
 	number_of_continuos_failures = 0;
 
-
+	freq = 1000./cv::getTickFrequency();
 	// Estimator	
 
 }
@@ -977,15 +977,21 @@ void OpenglPanel::poseEstimation()
 	flannMatcher.knnMatch(cur_descriptors,matches,2);*/
 	cv::Mat mask;
 	cv::Mat currentGrayFrame;
+	
 	cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
 	cv::threshold(currentGrayFrame,mask,150,255,cv::THRESH_BINARY_INV);	
 	cv::imshow("CUR MASK",mask);
+	tinit = cv::getTickCount();	
 	detector->detect(currentGrayFrame,cur_keypoints,mask);
-	
+	qDebug()<<"Time to detect"<<(cv::getTickCount()-tinit)*freq;
 
 	// hamming matcher case
+	tinit = cv::getTickCount();	
 	hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);		
+	qDebug()<<"Time to compute descriptor "<<(cv::getTickCount()-tinit)*freq;
+	tinit = cv::getTickCount();	
 	hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);
+	qDebug()<<"Time to match descriptor"<<(cv::getTickCount()-tinit)*freq;
 	/*qDebug()<<"matches size = "<<matches.size();
 	freakMatches.clear();
 	for (int i = 0; i<matches.size();i++)
@@ -1022,9 +1028,12 @@ void OpenglPanel::poseEstimation()
 	//solvePnP(objPoints_selected,keyPoints_selected, m_CamIntrinsic, distCoeffs, rvec, tvec, false, cv::EPNP);
 	rvec.copyTo(backup_rvec);
 	tvec.copyTo(backup_tvec);
+	tinit = cv::getTickCount();
 	solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(keyPoints_selected), 
 		camera_intrinsic, distCoeffs, rvec, tvec, 
-		true, 100, 5.0f,30,inliers,cv::EPNP);	
+		true, 20, 5.0f,30,inliers,cv::EPNP);
+	qDebug()<<"Time to solve PnP Ransac"<<(cv::getTickCount()-tinit)*freq;
+	qDebug()<<"rvec rows = "<<rvec.rows<<"; cols = "<<rvec.cols<<";";
 	double *_r = rvec.ptr<double>();
 	double* _t = tvec.ptr<double>();		
 	qDebug()<<"Rodrigues Rotation = "<<_r[0]<<", "<<_r[1]<<", "<<_r[2];
@@ -1046,15 +1055,14 @@ void OpenglPanel::poseEstimation()
 		camera_intrinsic, distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,N2T_NOT_USE_JACOBIAN);*/
 		/*n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
 			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY,N2T_NOT_USE_JACOBIAN);*/
-
+		tinit = cv::getTickCount();
 		n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
-			camera_intrinsic, distCoeffs,rvec,tvec,N2T_LEAST_SQUARE, N2T_USE_JACOBIAN);
-
+			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY, N2T_USE_JACOBIAN);
+		qDebug()<<"Time to solve solve robustN2t estimator"<<(cv::getTickCount()-tinit)*freq;
 		poseGLUpdate();		
-		/*qDebug()<<"Number of Inliers = "<<inliers.size();
+		qDebug()<<"Number of Inliers = "<<inliers.size();
 		firstTime = false;
-		currentFrame.copyTo(referenceFrame);
-		currentFrame.copyTo(model->textureImage);*/
+		
 		//model->textureImage = currentFrame;
 	}
 	else 
@@ -1087,6 +1095,8 @@ void OpenglPanel::poseEstimation()
 		}
 		qDebug()<<"!!!!!!!!!!!!Lost tracking: Number of inliers = "<<inliers.size()<<"; number of failure frames = "<<n_frame;
 	}
+	currentFrame.copyTo(referenceFrame);
+	currentFrame.copyTo(model->textureImage);
 	n_frame +=1;
 	qDebug()<<"Frame "<<n_frame<<"th";
 }

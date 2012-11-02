@@ -64,7 +64,9 @@ private:
 	ProgramMode mode;
 	bool firstTime;
 	int number_of_continuos_failures;
-	
+	int64 tinit;
+	float freq;	
+
 	int n_frame;
 	int currentVirtualPoint;
 	int currentRealPoint;

@@ -38,11 +38,14 @@ public:
 	N2tEstimator();
 	//N2tEstimator(std::vector<cv::Point3f>* oPoints, std::vector<cv::Point2f>* iPoints);
 	~N2tEstimator();
-	void estimate(cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& camera_intrinsic, cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode = 0, bool jac=false);
+	void estimate(cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& camera_intrinsic, 
+		cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode = 0, bool jac=false);
 
 private:	
 	std::vector<cv::Point3f> objPoints;
 	std::vector<cv::Point2f> imgPoints;
+	double* work;
+	double* covar;
 	
 };
 
