@@ -68,6 +68,7 @@ private:
 	float freq;	
 
 	int n_frame;
+	int n_frame_success;
 	int currentVirtualPoint;
 	int currentRealPoint;
 	int numberOfPoints;
@@ -82,6 +83,8 @@ private:
 	cv::Mat distCoeffs;
 	cv::Mat rvec;
 	cv::Mat tvec;
+	cv::Mat first_rvec;
+	cv::Mat first_tvec;
 	cv::Mat cv_Rvec;  // holding the Rodrigues result of the camera view matrix
 	cv::Mat cv_Tvec;  // holding the translation result of the camera view matrix
 
@@ -91,7 +94,7 @@ private:
 	glm::vec3 ref_camera_positions;
 	glm::vec3 ref_camera_angle;
 	bool calibrated;
-	std::vector<int> inliers;	
+	std::vector<uchar> inliers;	
 	// Feature detection matching stuff
 	cv::Mat currentFrame;
 	cv::Mat previousFrame;	
@@ -102,6 +105,7 @@ private:
 	double captureMsec;			// position of frame at millisecond
 	cv::Mat referenceFrame;
 	cv::Mat firstFrame;;
+	
 	cv::Mat frame;
 	cv::Mat croppedImage;
 	cv::Mat backup_rvec;
@@ -133,6 +137,7 @@ private:
 	std::vector<cv::Point2f> refImagePoints;				// Reference image points
 	std::vector<cv::Point3f> objPoints_selected;			// obj Points
 	std::vector<cv::Point2f> keyPoints_selected;			// keypoints Selected
+	std::vector<cv::Point2f> imgPoints_selected;			// used to alterate keypoints_selected which is not appropriate name
 	std::vector<cv::Point3f> first_ref_ObjPoints;			// First matching reference view
 	cv::Mat					 first_ref_Descriptors;			// First reference view descriptor
 	std::vector<cv::KeyPoint> first_ref_KeyPoints;			// First reference view image poitns
