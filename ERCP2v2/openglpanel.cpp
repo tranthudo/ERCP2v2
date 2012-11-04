@@ -20,6 +20,9 @@ const float m_ROTSCALE = 90.0;
 OpenglPanel::OpenglPanel(QWidget *parent)
 	: QGLWidget(parent)
 {
+	QGLFormat newFormat = this->format();
+	newFormat.setDoubleBuffer(false);
+	this->setFormat(newFormat);
 	// Set the double buffer to false in order to get the Frame at each iteration
 	model = ((ERCP2v2*)((this->parent())->parent()))->getModelGL();
 	movement = NONE;
@@ -34,15 +37,15 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
-	/*sift_cpu = cv::SIFT(1000,4,0.01,10,1.6);
-	surf_cpu = cv::SURF(2000,4);		*/
-	//detector = new cv::SurfFeatureDetector(1000,3);	
-	detector = new cv::SURF(300,2,2, false,false);
-	//detector = new cv::SIFT(1000,2,0.04,10,2.0);
+	detector = new cv::SURF(100,2,2, false,false);
+	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);
+	
 	hammingExtractor = new cv::FREAK;
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
+
 	l2Extractor = new cv::SURF(300,2,2, false,false);
-	//l2Extractor = new cv::SIFT(1000,2,0.04,10,2.0);
+	//l2Extractor = new cv::SIFT(1000,2,0.05,10.0,1.0);
+
 	l2Matcher = new cv::BFMatcher(cv::NORM_L1,true);
 	//flannMatcher = new cv::FlannBasedMatcher;  // provide some 
 
@@ -577,6 +580,9 @@ void OpenglPanel::keyPressEvent( QKeyEvent * event )
 	else if (event->key()==Qt::Key_A) {
 		cv::imwrite("currentFrame.png",currentFrame);
 	}
+	else if (event->key()==Qt::Key_X) {
+		firstTime = true;
+	}
 
 }
 
@@ -959,7 +965,7 @@ void OpenglPanel::startTracking()
 	cv::imshow("Video Frame",frame);
 	cv::imshow("Cropped Frame", currentFrame);
 	mode = CAMERA_TRACKING;
-	timer->setInterval(1);
+	timer->setInterval(300);
 
 }
 
@@ -1037,7 +1043,7 @@ void OpenglPanel::updateGL()
 		if (firstTime){ 
 			n_frame_success  =0;
 			// 4.1 CALCULATE POSE USING CURRENT FRAME AND FIRST FRAME ONLY
-			qDebug()<<"CALCULATE POSE USING CURRENT FRAME AND FIRST FRAME ONLY";
+			//qDebug()<<"POSE ESTIMATION: ";
 			for (int i = 0; i<l2Matches.size();i++) {
 				objPoints_selected.push_back(first_ref_ObjPoints[l2Matches[i].trainIdx]);
 				imgPoints_selected.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
@@ -1045,9 +1051,9 @@ void OpenglPanel::updateGL()
 			cv::Mat temp_rvec,temp_tvec;
 			first_rvec.copyTo(temp_rvec);
 			first_tvec.copyTo(temp_tvec);
-			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,30,8.0f,30,inliers,cv::EPNP);
+			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,5.0f,30,inliers,cv::EPNP);
 			
-			if (inliers.size()>=20) {
+			if (inliers.size()>=15) {
 				qDebug()<<"===========================================";
 				qDebug()<<"POSE ESTIMATION FROM CURRENT FRAME ANS FIRST FRAME SEEM TO BE OK!";
 				qDebug()<<"===========================================";
@@ -1063,7 +1069,11 @@ void OpenglPanel::updateGL()
 				poseGLUpdate();
 				firstTime = false;
 			}
-			else qDebug()<<"POSE ESTIMATION FROM 1ST FRAME IS NOT OK";			
+			else{
+				qDebug()<<"POSE ESTIMATION FROM 1ST FRAME IS NOT OK because inliers = "<<inliers.size();			
+				temp_rvec.copyTo(rvec);
+				temp_tvec.copyTo(tvec);
+			}
 		}
 		else // not first time (not lost tracking)
 		{
@@ -1072,10 +1082,12 @@ void OpenglPanel::updateGL()
 				imgPoints_selected.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
 			}
 			cv::Mat temp_rvec,temp_tvec;
-			rvec.copyTo(temp_rvec);  // in order to back up them
-			tvec.copyTo(temp_tvec);	
+			first_rvec.copyTo(temp_rvec);  // in order to back up them
+			first_rvec.copyTo(temp_tvec);	
 			// 4.2 CALCULATE FROM FIRST FRAME -> then calculate from previous frame
-			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,30,10.0f,30,inliers,cv::EPNP);			
+			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,5.0f,30,inliers,cv::EPNP);	
+			qDebug()<<"===========================================";
+			qDebug()<<"Number of inliers matching with 1st frame = "<<inliers.size();
 			if (inliers.size()>=15) {	
 				qDebug()<<"===========================================";
 				qDebug()<<"POSE ESTIMATION BY FIRST + ADJACENT";
@@ -1087,6 +1099,7 @@ void OpenglPanel::updateGL()
 					new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
 					new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
 				}
+				
 				if (++n_frame_success>=3)
 				{
 					qDebug()<<"YAHOO";
@@ -1097,7 +1110,7 @@ void OpenglPanel::updateGL()
 						imgPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 						objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
 					}
-					cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,20,3.0,20,inliers,cv::EPNP);
+					cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,true,20,3.0,20,inliers,cv::EPNP);
 					if (inliers.size()>=20) {
 						for (int i = 0; i<inliers.size();i++){					
 						new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
@@ -1105,8 +1118,11 @@ void OpenglPanel::updateGL()
 						}
 					}
 				}
-				temp_rvec.copyTo(rvec);
-				temp_tvec.copyTo(tvec);
+				else {
+					temp_tvec.copyTo(tvec);
+					temp_rvec.copyTo(rvec);
+				}
+				
 				n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);				
 				poseGLUpdate();	
 				firstTime = false;
@@ -1114,7 +1130,9 @@ void OpenglPanel::updateGL()
 			// 4.3 CALCULATE POSE ONLY BY using the previous frame information
 			else {
 				n_frame_success = 0;
+				qDebug()<<"===========================================";
 				qDebug()<<"POSE ESTIMATION USING PREVIOUS and CURRENT FRAME MATCHING ONLY";
+				qDebug()<<"===========================================";
 				imgPoints_selected.clear();
 				objPoints_selected.clear();
 				new_imgPoints_selected.clear();
@@ -1126,7 +1144,7 @@ void OpenglPanel::updateGL()
 					objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
 				}
 				cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,30,3.0,50,inliers,cv::EPNP);
-				if (inliers.size()>=30)	{
+				if (inliers.size()>=20)	{
 					// Refine pose by Robust estimator
 					// refine by m-estimator
 					qDebug()<<"RANSAC PRE AND CUR FRAME OK!";
@@ -1135,14 +1153,17 @@ void OpenglPanel::updateGL()
 						new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
 						new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
 					}
-					n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,N2T_TUKEY,true);					
 					number_of_continuos_failures = 0;
+					n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,N2T_TUKEY,true);										
 					temp_rvec.copyTo(rvec);
 					temp_tvec.copyTo(tvec);
+					firstTime = false;					
 				}
 				else {
-					if (++number_of_continuos_failures>=20)
+					if (++number_of_continuos_failures>=5)
 						firstTime = true;
+					qDebug()<<"FAIL ===== POSE ESTIMATION USING PREVIOUS and CURRENT FRAME MATCHING ONLY";
+					qDebug()<<"===========================================";
 				}				
 				poseGLUpdate();	
 			}

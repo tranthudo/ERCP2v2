@@ -63,12 +63,14 @@ private:
 	QTimer *timer;	
 	ProgramMode mode;
 	bool firstTime;
-	int number_of_continuos_failures;
+	
 	int64 tinit;
 	float freq;	
 
+	int number_of_continuos_failures;
 	int n_frame;
 	int n_frame_success;
+
 	int currentVirtualPoint;
 	int currentRealPoint;
 	int numberOfPoints;
