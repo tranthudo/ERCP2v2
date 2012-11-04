@@ -101,6 +101,7 @@ private:
 	double capturePosition;		// position of frame
 	double captureMsec;			// position of frame at millisecond
 	cv::Mat referenceFrame;
+	cv::Mat firstFrame;;
 	cv::Mat frame;
 	cv::Mat croppedImage;
 	cv::Mat backup_rvec;
@@ -115,17 +116,19 @@ private:
 	cv::DescriptorExtractor* l2Extractor;
 	cv::DescriptorMatcher* hammingMatcher;
 	cv::DescriptorMatcher* l2Matcher;
-	
+	//cv::DescriptorMatcher* flannMatcher;
 	
 
 	std::vector<cv::KeyPoint> ref_keypoints;	// current reference keypoints
 	cv::Mat ref_descriptors;					// reference descriptor
 	std::vector<cv::KeyPoint> cur_keypoints;	// current keypoints
-	cv::Mat cur_descriptors;					// current descriptor
+	cv::Mat cur_descriptors;					// current NORM_HAMMING descriptor
+	cv::Mat cur_descriptors2;					// current NORM_L2 descriptor
 	std::vector<cv::Mat> dbDescriptors;			// descriptor database
 	cv::FlannBasedMatcher flannMatcher;			// Flann matcher
 	std::vector<std::vector<cv::DMatch >> matches;			// Matched vector
 	std::vector<cv::DMatch> freakMatches;
+	std::vector<cv::DMatch> l2Matches;
 	std::vector<cv::Point3f> refObjPoints;					// Reference frame object points
 	std::vector<cv::Point2f> refImagePoints;				// Reference image points
 	std::vector<cv::Point3f> objPoints_selected;			// obj Points

@@ -27,7 +27,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	numberOfPoints = 10;
 	timer = new QTimer(this);
 	QObject::connect(timer, SIGNAL(timeout()), this, SLOT(updateGL()));
-	timer->start(1);
+	timer->start(300);
 	setFocusPolicy(Qt::StrongFocus);
 	calibrated = false;
 	double __d[4] = {0,0,0,0}; 
@@ -37,13 +37,14 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	/*sift_cpu = cv::SIFT(1000,4,0.01,10,1.6);
 	surf_cpu = cv::SURF(2000,4);		*/
 	//detector = new cv::SurfFeatureDetector(1000,3);	
-	detector = new cv::SURF;
+	detector = new cv::SURF(300,2,2, false,false);
 	//detector = new cv::SIFT(1000,2,0.04,10,2.0);
 	hammingExtractor = new cv::FREAK;
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
-	//l2Extractor = new cv::SURF(2000,3,2,true,true);// cv::SIFT
-	l2Extractor = new cv::SIFT(1000,2,0.04,10,2.0);
-	l2Matcher = new cv::BFMatcher(cv::NORM_L2,true);
+	l2Extractor = new cv::SURF(300,2,2, false,false);
+	//l2Extractor = new cv::SIFT(1000,2,0.04,10,2.0);
+	l2Matcher = new cv::BFMatcher(cv::NORM_L1,true);
+	//flannMatcher = new cv::FlannBasedMatcher;  // provide some 
 
 
 	// Initialize start online tracking and let everything done! in the onTimer function is that OK?
@@ -872,7 +873,8 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 		poseGLUpdate();
 		//((ERCP2v2*)((this->parent())->parent()))->resetModel();  // with origin obj position and orientation = (0,0,0) and (0,0,0)
 		// Read the current image extract keypoints, descriptors and corresponding 3D location
-		model->fixedImage.copyTo(referenceFrame);		
+		model->fixedImage.copyTo(referenceFrame);	
+		referenceFrame.copyTo(firstFrame);
 		return;
 	}
 }
@@ -883,7 +885,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	cv::Mat mask;
 	cv::Mat referenceGrayImg;
 	cv::cvtColor(referenceFrame, referenceGrayImg,CV_RGB2GRAY);
-	cv::threshold(referenceGrayImg,mask,150,255,cv::THRESH_BINARY_INV);
+	cv::threshold(referenceGrayImg,mask,140,255,cv::THRESH_BINARY_INV);
 	cv::imshow("REF MASK",mask);
 	
 	// Test SIFT Feature detection
@@ -895,8 +897,8 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	detector->detect(referenceGrayImg,ref_keypoints,mask);
 	// extraction of descriptor
 	hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
-	//l2Extractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
-	ref_descriptors.copyTo(first_ref_Descriptors);
+	l2Extractor->compute(referenceGrayImg,ref_keypoints,first_ref_Descriptors);
+	//ref_descriptors.copyTo(first_ref_Descriptors);
 	refObjPoints.clear();
 	refImagePoints.clear();	
 	first_ref_KeyPoints.clear();
@@ -915,11 +917,10 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 		first_ref_ObjPoints.push_back(objPoint);
 		first_ref_KeyPoints.push_back(ref_keypoints[i]);
 	}
-	// Train the descriptor
-	dbDescriptors.push_back(ref_descriptors);
-	ref_descriptors.copyTo(first_ref_Descriptors);
-	/*flannMatcher.add(dbDescriptors);
-	flannMatcher.train();	*/
+	// Train the first frame descriptor
+	dbDescriptors.push_back(first_ref_Descriptors);	
+	flannMatcher.add(dbDescriptors);
+	flannMatcher.train();	
 	
 	// Save result to ref.yml;
 	fs.open("data/refImagePoints.yml",cv::FileStorage::WRITE);
@@ -957,6 +958,7 @@ void OpenglPanel::startTracking()
 	cv::imshow("Video Frame",frame);
 	cv::imshow("Cropped Frame", currentFrame);
 	mode = CAMERA_TRACKING;
+	timer->setInterval(1);
 
 }
 
@@ -992,47 +994,84 @@ void OpenglPanel::poseEstimation()
 	flannMatcher.knnMatch(cur_descriptors,matches,2);*/
 	cv::Mat mask;
 	cv::Mat currentGrayFrame;
-	
+	// 1. DETECT KEYPOINT IN THE CURRENT FRAME
 	cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
-	cv::threshold(currentGrayFrame,mask,150,255,cv::THRESH_BINARY_INV);	
+	cv::threshold(currentGrayFrame,mask,140,255,cv::THRESH_BINARY_INV);	
 	cv::imshow("CUR MASK",mask);
 	tinit = cv::getTickCount();	
 	detector->detect(currentGrayFrame,cur_keypoints,mask);
 	qDebug()<<"Time to detect"<<(cv::getTickCount()-tinit)*freq;
+	qDebug()<<"Number of current KeyPoints = "<<cur_keypoints.size()<<"Number of fist keypoints ="<<first_ref_KeyPoints.size();
 
-	// hamming matcher case
+	// 2. CALCULATE THE FREAK & SURF DESCRIPTOR 
 	tinit = cv::getTickCount();	
-	hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);		
-	qDebug()<<"Time to compute descriptor "<<(cv::getTickCount()-tinit)*freq;
+	hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);	//FREAK descriptor 	
+	qDebug()<<"Time to compute BINARY descriptor "<<(cv::getTickCount()-tinit)*freq;	// 
+	tinit = cv::getTickCount();
+	l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors2);		// SURF descriptor
+	qDebug()<<"Time to compute Floating vector descriptor "<<(cv::getTickCount()-tinit)*freq;	// 
+
+	// 3. MATCHING keypoints
 	tinit = cv::getTickCount();	
 	hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);
-	qDebug()<<"Time to match descriptor"<<(cv::getTickCount()-tinit)*freq;
-	/*qDebug()<<"matches size = "<<matches.size();
-	freakMatches.clear();
-	for (int i = 0; i<matches.size();i++)
-	{
-		freakMatches.push_back(matches[i][0]);
-	}*/
+	qDebug()<<"Time to match Hamming descriptor"<<(cv::getTickCount()-tinit)*freq;
 
-	// L2 matcher case
-	/*l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);
-	l2Matcher->match(cur_descriptors,ref_descriptors,freakMatches,cv::Mat());*/
+	/*tinit = cv::getTickCount();
+	flannMatcher.knnMatch(cur_descriptors2,matches);
+	qDebug()<<"Time to match FLANN KNN 1 descriptor"<<(cv::getTickCount()-tinit)*freq;*/
 
+	tinit=cv::getTickCount();
+	l2Matcher->match(cur_descriptors2,first_ref_Descriptors,l2Matches);
+	qDebug()<<"Time to match Brute Force KNN 1 descriptor"<<(cv::getTickCount()-tinit)*freq;
+	//qDebug()<<"Size of matches = "<<matches.size()<<"; number of best matches[0] = "<<matches[0].size();
+
+	
 		
 	//freakMatches = cv::Mat(matches);
 	 //drawing the results
 	cv::Mat img_matches;
+	cv::Mat img_matches2;
 	cv::namedWindow("matches", 1);		
 	cv::drawMatches(currentFrame, cur_keypoints,referenceFrame, ref_keypoints, freakMatches, img_matches,cv::Scalar::all(-1),cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 	cv::imshow("matches", img_matches);
+	cv::namedWindow("matches2",1);
+	cv::drawMatches(currentFrame,cur_keypoints,firstFrame,first_ref_KeyPoints,l2Matches,img_matches2);
+	cv::imshow("matches2",img_matches2);
 
 	keyPoints_selected.clear();                                         
 	objPoints_selected.clear();		
-	for (int i = 0; i<freakMatches.size();i++)
+	//for (int i = 0; i<freakMatches.size();i++)
+	//{
+	//	objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);   // change freakMatches[i] to matches[i][0]
+	//	keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
+	//}
+		
+	// Matching using the fundamental matrix
+	std::vector<cv::Point2f> points1;
+	std::vector<cv::Point2f> points2;
+	//std::vector<cv::DMatch> newMatches;	
+	for (int i = 0; i<l2Matches.size();i++)
 	{
-		objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);   // change freakMatches[i] to matches[i][0]
-		keyPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
+		points1.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
+		points2.push_back(first_ref_KeyPoints[l2Matches[i].trainIdx].pt);
 	}
+	std::vector<cv::DMatch> outMatches;
+	std::vector<uchar> inliers(points1.size(),0);
+	cv::Mat fundemental = cv::findFundamentalMat(cv::Mat(points1),cv::Mat(points2),inliers,CV_FM_RANSAC_ONLY, 5.0, 0.95);
+	std::vector<uchar>::const_iterator itIn = inliers.begin();
+	std::vector<cv::DMatch>::const_iterator itM = l2Matches.begin();
+	for (;itIn!=inliers.end(); ++itIn, ++itM) {
+		if (*itIn) {// it is a valid match
+			outMatches.push_back(*itM);
+		}
+	}
+	// Add these new matches to concurrent matches;
+	for (int i =0; i<outMatches.size();i++)
+	{
+		objPoints_selected.push_back(first_ref_ObjPoints[outMatches[i].trainIdx]);
+		keyPoints_selected.push_back(cur_keypoints[outMatches[i].queryIdx].pt);
+	}
+
 	//for (int i = 0; i<matches.size();i++)
 	//{
 	//	objPoints_selected.push_back(refObjPoints[matches[i][0].trainIdx]);   // change freakMatches[i] to matches[i][0]
@@ -1046,7 +1085,7 @@ void OpenglPanel::poseEstimation()
 	tinit = cv::getTickCount();
 	solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(keyPoints_selected), 
 		camera_intrinsic, distCoeffs, rvec, tvec, 
-		true, 20, 5.0f,30,inliers,cv::EPNP);
+		true, 20, 8.0f,30,inliers,cv::EPNP);
 	qDebug()<<"Time to solve PnP Ransac"<<(cv::getTickCount()-tinit)*freq;
 	qDebug()<<"rvec rows = "<<rvec.rows<<"; cols = "<<rvec.cols<<";";
 	double *_r = rvec.ptr<double>();
@@ -1062,14 +1101,8 @@ void OpenglPanel::poseEstimation()
 		{
 			new_objPoints.push_back(objPoints_selected[inliers[i]]);
 			new_keyPoints.push_back(keyPoints_selected[inliers[i]]);
-		}
-		
-		/*solvePnP(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
-			camera_intrinsic, distCoeffs,rvec,tvec,true,CV_ITERATIVE);*/
-		/*n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
-		camera_intrinsic, distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,N2T_NOT_USE_JACOBIAN);*/
-		/*n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
-			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY,N2T_NOT_USE_JACOBIAN);*/
+		}			
+
 		tinit = cv::getTickCount();
 		n2tEstimator.estimate(cv::Mat(new_objPoints),cv::Mat(new_keyPoints),
 			camera_intrinsic, distCoeffs,rvec,tvec,N2T_TUKEY, N2T_USE_JACOBIAN);
@@ -1166,6 +1199,7 @@ void OpenglPanel::initialization()
 
 void OpenglPanel::generateKeypointsFromCalculatedPose()
 {
+
 	cur_descriptors.copyTo(ref_descriptors);
 	refObjPoints.clear();
 	for (int i = 0; i<cur_keypoints.size(); i++)
@@ -1193,7 +1227,7 @@ void OpenglPanel::testFeatureDetection()
 	cv::threshold(testGrayImg,mask,150,255,cv::THRESH_BINARY_INV);		
 	detector->detect(testGrayImg,testKeypoints,mask);
 	hammingExtractor->compute(testGrayImg,testKeypoints,testDescriptor);
-	hammingMatcher->match(testDescriptor,first_ref_Descriptors,matches);
+	hammingMatcher->match(testDescriptor,ref_descriptors,matches);
 	cv::Mat matchedImg;
 	cv::drawMatches(testImg,testKeypoints,referenceFrame,first_ref_KeyPoints,matches,matchedImg);
 	cv::imshow("Test Matches", matchedImg);
