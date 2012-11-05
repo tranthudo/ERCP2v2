@@ -43,7 +43,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	hammingExtractor = new cv::FREAK;
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
 
-	l2Extractor = new cv::SURF(300,2,2, false,false);
+	l2Extractor = new cv::SURF(100,2,2, false,false);
 	//l2Extractor = new cv::SIFT(1000,2,0.05,10.0,1.0);
 
 	l2Matcher = new cv::BFMatcher(cv::NORM_L1,true);
@@ -893,6 +893,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	cv::Mat referenceGrayImg;
 	cv::cvtColor(referenceFrame, referenceGrayImg,CV_RGB2GRAY);
 	cv::threshold(referenceGrayImg,mask,140,255,cv::THRESH_BINARY_INV);
+	cv::erode(mask,mask,cv::Mat());
 	cv::imshow("REF MASK",mask);
 	
 	// Test SIFT Feature detection
@@ -1009,6 +1010,7 @@ void OpenglPanel::updateGL()
 		// 1. DETECT KEYPOINT IN THE CURRENT FRAME
 		cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
 		cv::threshold(currentGrayFrame,mask,140,255,cv::THRESH_BINARY_INV);	
+		cv::erode(mask,mask,cv::Mat());
 		cv::imshow("CUR MASK",mask);
 		tinit = cv::getTickCount();	
 		detector->detect(currentGrayFrame,cur_keypoints,mask);
@@ -1051,11 +1053,11 @@ void OpenglPanel::updateGL()
 			cv::Mat temp_rvec,temp_tvec;
 			first_rvec.copyTo(temp_rvec);
 			first_tvec.copyTo(temp_tvec);
-			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,5.0f,30,inliers,cv::EPNP);
+			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,10.0f,30,inliers,cv::EPNP);
 			
 			if (inliers.size()>=15) {
 				qDebug()<<"===========================================";
-				qDebug()<<"POSE ESTIMATION FROM CURRENT FRAME ANS FIRST FRAME SEEM TO BE OK!";
+				qDebug()<<"POSE ESTIMATION FROM 1ST FRAME SEEM TO BE GOOD!";
 				qDebug()<<"===========================================";
 				temp_rvec.copyTo(rvec);
 				temp_tvec.copyTo(tvec);
@@ -1085,7 +1087,7 @@ void OpenglPanel::updateGL()
 			first_rvec.copyTo(temp_rvec);  // in order to back up them
 			first_rvec.copyTo(temp_tvec);	
 			// 4.2 CALCULATE FROM FIRST FRAME -> then calculate from previous frame
-			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,5.0f,30,inliers,cv::EPNP);	
+			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,10.0f,30,inliers,cv::EPNP);	
 			qDebug()<<"===========================================";
 			qDebug()<<"Number of inliers matching with 1st frame = "<<inliers.size();
 			if (inliers.size()>=15) {	
@@ -1100,7 +1102,7 @@ void OpenglPanel::updateGL()
 					new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
 				}
 				
-				if (++n_frame_success>=3)
+				if (++n_frame_success>=2)
 				{
 					qDebug()<<"YAHOO";
 					imgPoints_selected.clear();
@@ -1110,13 +1112,16 @@ void OpenglPanel::updateGL()
 						imgPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 						objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
 					}
-					cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,true,20,3.0,20,inliers,cv::EPNP);
+					cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,50,10.0,30,inliers,cv::EPNP);
 					if (inliers.size()>=20) {
+						qDebug()<<"GOOGLE";
 						for (int i = 0; i<inliers.size();i++){					
 						new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
 						new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
 						}
 					}
+					temp_tvec.copyTo(tvec);
+					temp_rvec.copyTo(rvec);
 				}
 				else {
 					temp_tvec.copyTo(tvec);
@@ -1143,7 +1148,7 @@ void OpenglPanel::updateGL()
 					imgPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 					objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
 				}
-				cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,30,3.0,50,inliers,cv::EPNP);
+				cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,50,8.0,50,inliers,cv::EPNP);
 				if (inliers.size()>=20)	{
 					// Refine pose by Robust estimator
 					// refine by m-estimator
@@ -1160,7 +1165,7 @@ void OpenglPanel::updateGL()
 					firstTime = false;					
 				}
 				else {
-					if (++number_of_continuos_failures>=5)
+					if (++number_of_continuos_failures>=2)
 						firstTime = true;
 					qDebug()<<"FAIL ===== POSE ESTIMATION USING PREVIOUS and CURRENT FRAME MATCHING ONLY";
 					qDebug()<<"===========================================";
