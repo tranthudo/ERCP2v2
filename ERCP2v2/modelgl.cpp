@@ -47,7 +47,7 @@ ModelGL::ModelGL(QObject *parent)
 	double captureDelay = 1000.0/captureRate;
 	// go to frame at (minute, second) of the video
 	int minute = 1;
-	int second = 21;
+	int second = 22;
 	double capturePosition = (double) (minute*60+second)*1000.0;
 	capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
 	// for all fames in video

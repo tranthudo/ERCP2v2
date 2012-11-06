@@ -4,6 +4,9 @@
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"
 
+#ifndef DEBUG 
+	#define QT_NO_DEBUG_OUTPUT
+#endif
 
 const float m_ROTSCALE = 90.0;
 
@@ -20,6 +23,7 @@ const float m_ROTSCALE = 90.0;
 OpenglPanel::OpenglPanel(QWidget *parent)
 	: QGLWidget(parent)
 {
+	
 	QGLFormat newFormat = this->format();
 	newFormat.setDoubleBuffer(false);
 	this->setFormat(newFormat);
@@ -37,16 +41,19 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
-	detector = new cv::SURF(100,2,2, false,false);
-	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);
 	
-	hammingExtractor = new cv::FREAK;
+	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);	
+	//detector = new cv::FastFeatureDetector;                                                                                                                                           
+	//detector->create("FAST");
+	detector = new cv::SURF(10,1,2,false,false);
+	hammingExtractor = new cv::FREAK(true, true, 10.0f,4,std::vector<int>());
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
-
-	l2Extractor = new cv::SURF(100,2,2, false,false);
+	l2Extractor = new cv::FREAK;
+	//l2Extractor = new cv::SURF(100,2,2, false,false);
 	//l2Extractor = new cv::SIFT(1000,2,0.05,10.0,1.0);
-
-	l2Matcher = new cv::BFMatcher(cv::NORM_L1,true);
+	
+	l2Matcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
+	//l2Matcher = new cv::BFMatcher(cv::NORM_L1,true);
 	//flannMatcher = new cv::FlannBasedMatcher;  // provide some 
 
 
@@ -66,11 +73,24 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	captureDelay = 1000.0/captureRate;
 	// go to frame at (minute, second) of the video
 	int minute = 1;
-	int second = 21;
+	int second = 22;
 	capturePosition = (double) (minute*60+second)*1000.0;
 	n_frame = 0;
 	number_of_continuos_failures = 0;
-
+	// Update the model
+	capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
+	// for all fames in video
+	capture.grab();
+	if (!capture.retrieve(frame))
+		return;		
+	//capture>>frame;
+	croppedImage = frame(cv::Rect(258,86,312,312));
+	currentFrame.copyTo(previousFrame);
+	croppedImage.copyTo(currentFrame);		
+	cv::imshow("Video Frame",frame);
+	cv::imshow("Cropped Frame", currentFrame);	
+	currentFrame.copyTo(model->textureImage);	
+	
 	freq = 1000./cv::getTickFrequency();
 	// Estimator	
 
@@ -194,15 +214,15 @@ void OpenglPanel::mousePressEvent( QMouseEvent *event )
 				mode = STOP;
 				qDebug()<<"Finish Selecting Point";		
 				
-				fs.open("data/realImagePoints.yml",cv::FileStorage::WRITE);
+				fs.open("data/firstFrame/realImagePoints.yml",cv::FileStorage::WRITE);
 				fs<<"realImagePoints"<<realImagePoints;
 				fs.release();
 				
-				fs.open("data/virtualImagePoints.yml",cv::FileStorage::WRITE);
+				fs.open("data/firstFrame/virtualImagePoints.yml",cv::FileStorage::WRITE);
 				fs<<"virtualImagePoints"<<virtualImagePoints;
 				fs.release();
 
-				fs.open("data/objPoints.yml", cv::FileStorage::WRITE);
+				fs.open("data/firstFrame/objPoints.yml", cv::FileStorage::WRITE);
 				fs<<"objPoints"<<objPoints;
 				fs.release();
 				//emit finishSelectingPoints();
@@ -550,7 +570,7 @@ void OpenglPanel::saveRenderedImage()
 	int width = this->width()/2-1;
 	int height = this->height()/2-1;
 	int x = 0;										// Specify the position of the window
-	int y = this->height()/2+1;						// Specify the postion of the window
+	int y = this->height()/2+1;						// Specify the position of the window
 
 	cv::Mat img(height, width, CV_8UC3);
 
@@ -583,7 +603,6 @@ void OpenglPanel::keyPressEvent( QKeyEvent * event )
 	else if (event->key()==Qt::Key_X) {
 		firstTime = true;
 	}
-
 }
 
 void OpenglPanel::timerEvent( QKeyEvent *event )
@@ -879,8 +898,8 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 		cv::solvePnP(objPoints,realImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, cv::EPNP); 
 		poseGLUpdate();
 		//((ERCP2v2*)((this->parent())->parent()))->resetModel();  // with origin obj position and orientation = (0,0,0) and (0,0,0)
-		// Read the current image extract keypoints, descriptors and corresponding 3D location
-		model->fixedImage.copyTo(referenceFrame);	
+		// Read the current image extract keypoints, descriptors and corresponding 3D location		
+		currentFrame.copyTo(referenceFrame);
 		referenceFrame.copyTo(firstFrame);
 		return;
 	}
@@ -892,7 +911,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	cv::Mat mask;
 	cv::Mat referenceGrayImg;
 	cv::cvtColor(referenceFrame, referenceGrayImg,CV_RGB2GRAY);
-	cv::threshold(referenceGrayImg,mask,140,255,cv::THRESH_BINARY_INV);
+	cv::threshold(referenceGrayImg,mask,180,255,cv::THRESH_BINARY_INV);
 	cv::erode(mask,mask,cv::Mat());
 	cv::imshow("REF MASK",mask);
 	
@@ -902,15 +921,19 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	
 	// detection
 	// can be any feature detection
+	//ref_descriptors.copyTo(first_ref_Descriptors);
+	ref_keypoints.clear();
+	refObjPoints.clear();
+	refImagePoints.clear();	
+	first_ref_ObjPoints.clear();
+	first_ref_KeyPoints.clear();
+	dbDescriptors.clear();
+
 	detector->detect(referenceGrayImg,ref_keypoints,mask);
 	// extraction of descriptor
 	hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
 	l2Extractor->compute(referenceGrayImg,ref_keypoints,first_ref_Descriptors);
-	//ref_descriptors.copyTo(first_ref_Descriptors);
-	refObjPoints.clear();
-	refImagePoints.clear();	
-	first_ref_KeyPoints.clear();
-	dbDescriptors.clear();
+	
 	qDebug()<<"Reference Keypoints size = "<<ref_keypoints.size();
 	for (int i = 0; i<ref_keypoints.size(); i++)
 	{
@@ -926,9 +949,9 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 		first_ref_KeyPoints.push_back(ref_keypoints[i]);
 	}
 	// Train the first frame descriptor
-	dbDescriptors.push_back(first_ref_Descriptors);	
+	/*dbDescriptors.push_back(first_ref_Descriptors);	
 	flannMatcher.add(dbDescriptors);
-	flannMatcher.train();	
+	flannMatcher.train();	*/
 	
 	// Save result to ref.yml;
 	fs.open("data/refImagePoints.yml",cv::FileStorage::WRITE);
@@ -940,14 +963,17 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	fs.release();
 
 	// Save firsttime output
-	fs.open("data/output/first_ref_ObjPoints.yml",cv::FileStorage::WRITE);
+	fs.open("data/firstFrame/first_ref_ObjPoints.yml",cv::FileStorage::WRITE);
 	fs<<"first_ref_ObjPoints"<<first_ref_ObjPoints;
 	fs.release();
-
-	fs.open("data/output/first_ref_KeyPoints.yml",cv::FileStorage::WRITE);
-	fs<<"first_ref_ObjPoints"<<first_ref_ObjPoints;
+	// Save first refernce keypoints
+	fs.open("data/firstFrame/first_ref_KeyPoints.yml",cv::FileStorage::WRITE);
+	fs<<"first_ref_KeyPoints"<<first_ref_KeyPoints;
 	fs.release();
-
+	// Save first reference image poitns (just location, not include rotation, octave ... of keypoints)
+	fs.open("data/firstFrame/refImagePoints.yml",cv::FileStorage::WRITE);
+	fs<<"refImagePoints"<<refImagePoints;
+	fs.release();
 	cv::imwrite("data/output/first_ref_Frame.png",referenceFrame);
 	
 }
@@ -991,7 +1017,7 @@ void OpenglPanel::updateGL()
 			}
 		}	
 		// grapb the next frame from video file;
-		capturePosition +=captureDelay;
+		
 		capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
 		// for all fames in video
 		capture.grab();
@@ -1012,18 +1038,21 @@ void OpenglPanel::updateGL()
 		cv::threshold(currentGrayFrame,mask,140,255,cv::THRESH_BINARY_INV);	
 		cv::erode(mask,mask,cv::Mat());
 		cv::imshow("CUR MASK",mask);
+		capturePosition +=captureDelay;
 		tinit = cv::getTickCount();	
+		cur_keypoints.clear();
 		detector->detect(currentGrayFrame,cur_keypoints,mask);
+		cur_keypoints2 = cur_keypoints;
 		qDebug()<<"Time to detect"<<(cv::getTickCount()-tinit)*freq;
 		qDebug()<<"Number of current KeyPoints = "<<cur_keypoints.size()<<"Number of fist keypoints ="<<first_ref_KeyPoints.size();
 
-		// 2. CALCULATE THE FREAK & SURF DESCRIPTOR 
-		tinit = cv::getTickCount();	
-		hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);	//FREAK descriptor 	
-		qDebug()<<"Time to compute BINARY descriptor "<<(cv::getTickCount()-tinit)*freq;	// 
+		// 2. CALCULATE THE FREAK & SURF DESCRIPTOR 		
 		tinit = cv::getTickCount();
 		l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors2);		// SURF descriptor
-		qDebug()<<"Time to compute Floating vector descriptor "<<(cv::getTickCount()-tinit)*freq;	// 
+		qDebug()<<"Time to compute Floating vector descriptor "<<(cv::getTickCount()-tinit)*freq<<"nkeys l2 ="<<cur_keypoints.size()<<"rows descriptor ="<<cur_descriptors2.rows;	// 
+		tinit = cv::getTickCount();	
+		hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);	//FREAK descriptor 	
+		qDebug()<<"Time to compute BINARY descriptor "<<(cv::getTickCount()-tinit)*freq<<"nkeys l2 ="<<cur_keypoints.size()<<"rows descriptor ="<<cur_descriptors.rows;	// 
 
 		// 3. MATCHING keypoints 
 		// between current descriptor and previous frame descriptor
@@ -1189,7 +1218,7 @@ void OpenglPanel::poseEstimation()
 	cv::Mat currentGrayFrame;
 	// 1. DETECT KEYPOINT IN THE CURRENT FRAME
 	cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
-	cv::threshold(currentGrayFrame,mask,140,255,cv::THRESH_BINARY_INV);	
+	cv::threshold(currentGrayFrame,mask,180,255,cv::THRESH_BINARY_INV);	
 	cv::imshow("CUR MASK",mask);
 	tinit = cv::getTickCount();	
 	detector->detect(currentGrayFrame,cur_keypoints,mask);

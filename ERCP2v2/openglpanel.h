@@ -105,8 +105,10 @@ private:
 	double captureDelay;		// delay = 1000/rate	
 	double capturePosition;		// position of frame
 	double captureMsec;			// position of frame at millisecond
-	cv::Mat referenceFrame;
-	cv::Mat firstFrame;;
+	cv::Mat referenceFrame;		
+	cv::Mat firstFrame;			// First frame
+	cv::Mat secondFrame;		// Second frame
+	int n2tIdx;					// if it's 1 the closest frame is 1st, if it's 2 the closest frame is 2nd
 	
 	cv::Mat frame;
 	cv::Mat croppedImage;
@@ -127,6 +129,7 @@ private:
 
 	std::vector<cv::KeyPoint> ref_keypoints;	// current reference keypoints
 	cv::Mat ref_descriptors;					// reference descriptor
+	std::vector<cv::KeyPoint> cur_keypoints;	// current keypoints
 	std::vector<cv::KeyPoint> cur_keypoints;	// current keypoints
 	cv::Mat cur_descriptors;					// current NORM_HAMMING descriptor
 	cv::Mat cur_descriptors2;					// current NORM_L2 descriptor

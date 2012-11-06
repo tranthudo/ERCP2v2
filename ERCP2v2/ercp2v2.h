@@ -3,7 +3,7 @@
 
 #pragma  once
 
-
+#define QT_NO_DEBUG_OUTPUT
 
 #include <QtGui/QMainWindow>
 #include "ui_ercp2v2.h"
