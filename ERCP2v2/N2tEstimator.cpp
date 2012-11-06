@@ -16,7 +16,7 @@ N2tEstimator::N2tEstimator()
 
 	// tukey function
 	int m = 6;
-	int n = 300;
+	int n = 500;
 	//n = 1;// if 1 measurement	
 	work = new double[(LM_DIF_WORKSZ(m, n)+m*m)*sizeof(double)];
 	covar = work +LM_DIF_WORKSZ(m,n);
@@ -29,7 +29,7 @@ N2tEstimator::~N2tEstimator()
 
 void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& camera_intrinsic, cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode, bool jac )
 {
-	assert(imgPoints.cols*imgPoints.rows<=300);
+	assert(imgPoints.cols*imgPoints.rows<=500);
 	cv::Mat errPoints;
 	cv::projectPoints(objPoints,rvec,tvec,camera_intrinsic,distCoeffs,errPoints);
 	errPoints = errPoints - imgPoints;
@@ -41,7 +41,7 @@ void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& ca
 			x[j*imgPoints.cols+i]  = (double)data[i];
 		}
 	}*/
-	double x[300] = {0};
+	double x[500] = {0};
 	int m = 6;
 	int n = imgPoints.cols*imgPoints.rows;
 	double opts[LM_OPTS_SZ], info[LM_INFO_SZ]; 
