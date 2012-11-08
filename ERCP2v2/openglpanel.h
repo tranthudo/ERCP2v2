@@ -70,6 +70,8 @@ private:
 	int number_of_continuos_failures;
 	int n_frame;
 	int n_frame_success;
+	int n_first_frame_success;
+
 
 	int currentVirtualPoint;
 	int currentRealPoint;

@@ -29,7 +29,7 @@ N2tEstimator::~N2tEstimator()
 
 void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& camera_intrinsic, cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode, bool jac )
 {
-	assert(imgPoints.cols*imgPoints.rows<=300);
+	assert(imgPoints.cols*imgPoints.rows<=1000);
 	cv::Mat errPoints;
 	cv::projectPoints(objPoints,rvec,tvec,camera_intrinsic,distCoeffs,errPoints);
 	errPoints = errPoints - imgPoints;
@@ -41,7 +41,7 @@ void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& ca
 			x[j*imgPoints.cols+i]  = (double)data[i];
 		}
 	}*/
-	double x[300] = {0};
+	double x[1000] = {0};
 	int m = 6;
 	int n = imgPoints.cols*imgPoints.rows;
 	double opts[LM_OPTS_SZ], info[LM_INFO_SZ]; 
@@ -77,7 +77,8 @@ void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& ca
 	case N2T_TUKEY:
 		if (jac == N2T_NOT_USE_JACOBIAN)
 			ret = dlevmar_dif(tukey,p,x,m,n,100,opts,info,work, covar,n2tData);
-		else ret = dlevmar_der(tukey,jaTukey,p,x,m,n,100,opts,info,work,covar,n2tData);
+		else 
+			ret = dlevmar_der(tukey,jaTukey,p,x,m,n,100,opts,info,work,covar,n2tData);
 		break;	
 	default:
 		break;

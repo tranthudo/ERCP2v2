@@ -92,26 +92,26 @@
     <ClCompile Include="N2tEstimator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="optimizer\levmar\misc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="optimizer\levmar\lmlec.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="optimizer\levmar\lmbleic.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="optimizer\levmar\lmblec.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="optimizer\levmar\lmbc.c">
-      <Filter>Source Files</Filter>
+      <Filter>Optimization\levmar</Filter>
     </ClCompile>
     <ClCompile Include="optimizer\levmar\lm.c">
-      <Filter>Source Files</Filter>
+      <Filter>Optimization\levmar</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\lmbc.c">
+      <Filter>Optimization\levmar</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\lmblec.c">
+      <Filter>Optimization\levmar</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\lmbleic.c">
+      <Filter>Optimization\levmar</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\levmar\misc.c">
+      <Filter>Optimization\levmar</Filter>
     </ClCompile>
     <ClCompile Include="optimizer\levmar\Axb.c">
-      <Filter>Source Files</Filter>
+      <Filter>Optimization\levmar</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

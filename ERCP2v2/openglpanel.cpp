@@ -37,10 +37,10 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
-	detector = new cv::SURF(100,1,3, false,false);
+	detector = new cv::SURF(70,1,3,false,false);
 	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);
 	
-	hammingExtractor = new cv::FREAK;
+	hammingExtractor = new cv::FREAK(false,true, 10.0f,4,std::vector<int>());
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
 
 	l2Extractor = new cv::SURF(100,1,3, false,false);
@@ -1067,8 +1067,9 @@ void OpenglPanel::updateGL()
 			cv::Mat temp_rvec,temp_tvec;
 			first_rvec.copyTo(temp_rvec);
 			first_tvec.copyTo(temp_tvec);
-			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,10.0f,30,inliers,cv::EPNP);
-			
+			tinit = cv::getTickCount();	
+			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,8.0f,30,inliers,cv::EPNP);
+			qDebug()<<"Time solve RANSAC 1st frame 1.2"<<(cv::getTickCount()-tinit)*freq;
 			if (inliers.size()>=15) {
 				qDebug()<<"===========================================";
 				qDebug()<<"POSE ESTIMATION FROM 1ST FRAME SEEM TO BE GOOD!";
@@ -1081,7 +1082,9 @@ void OpenglPanel::updateGL()
 					new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
 					new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
 				}
+				tinit = cv::getTickCount();	
 				n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);
+				qDebug()<<"Time solve TUKEY 1st frame"<<(cv::getTickCount()-tinit)*freq;
 				poseGLUpdate();
 				firstTime = false;
 			}
@@ -1098,13 +1101,15 @@ void OpenglPanel::updateGL()
 				imgPoints_selected.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
 			}
 			cv::Mat temp_rvec,temp_tvec;
-			first_rvec.copyTo(temp_rvec);  // in order to back up them
-			first_rvec.copyTo(temp_tvec);	
+			rvec.copyTo(temp_rvec);  // in order to back up them
+			tvec.copyTo(temp_tvec);	
 			// 4.2 CALCULATE FROM FIRST FRAME -> then calculate from previous frame
+			tinit = cv::getTickCount();	
 			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,10.0f,30,inliers,cv::EPNP);	
+			qDebug()<<"Time solve RANSAC 1st frame 2"<<(cv::getTickCount()-tinit)*freq;
 			qDebug()<<"===========================================";
 			qDebug()<<"Number of inliers matching with 1st frame = "<<inliers.size();
-			if (inliers.size()>=15) {	
+			if (inliers.size()>=20) {	
 				qDebug()<<"===========================================";
 				qDebug()<<"POSE ESTIMATION BY FIRST + ADJACENT";
 				qDebug()<<"===========================================";
@@ -1119,6 +1124,7 @@ void OpenglPanel::updateGL()
 				if (++n_frame_success>=2)
 				{
 					qDebug()<<"YAHOO";
+					//QMessageBox::critical(this,"Yahoo!", "Ok");
 					imgPoints_selected.clear();
 					objPoints_selected.clear();
 					// Adding the points from previous frame to the M-estimator;
@@ -1128,7 +1134,7 @@ void OpenglPanel::updateGL()
 					}
 					cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,50,10.0,30,inliers,cv::EPNP);
 					if (inliers.size()>=20) {
-						qDebug()<<"GOOGLE";
+						qDebug()<<"GOOGLE, number of inlier prom previous frame"<<inliers.size();
 						for (int i = 0; i<inliers.size();i++){					
 						new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
 						new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
@@ -1141,8 +1147,9 @@ void OpenglPanel::updateGL()
 					temp_tvec.copyTo(tvec);
 					temp_rvec.copyTo(rvec);
 				}
-				
+				tinit = cv::getTickCount();
 				n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);				
+				qDebug()<<"Time solve TUKEY 1st frame"<<(cv::getTickCount()-tinit)*freq;
 				poseGLUpdate();	
 				firstTime = false;
 			}			
@@ -1162,7 +1169,9 @@ void OpenglPanel::updateGL()
 					imgPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 					objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
 				}
+				tinit = cv::getTickCount();
 				cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,50,8.0,50,inliers,cv::EPNP);
+				qDebug()<<"Time solve RANSAC previous frame"<<(cv::getTickCount()-tinit)*freq;
 				if (inliers.size()>=20)	{
 					// Refine pose by Robust estimator
 					// refine by m-estimator
@@ -1173,7 +1182,9 @@ void OpenglPanel::updateGL()
 						new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
 					}
 					number_of_continuos_failures = 0;
+					tinit = cv::getTickCount();
 					n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,N2T_TUKEY,true);										
+					qDebug()<<"Time solve TUKEY previous frame"<<(cv::getTickCount()-tinit)*freq;
 					temp_rvec.copyTo(rvec);
 					temp_tvec.copyTo(tvec);
 					firstTime = false;					
@@ -1190,7 +1201,8 @@ void OpenglPanel::updateGL()
 		}
 		currentFrame.copyTo(referenceFrame);
 		currentFrame.copyTo(model->textureImage);
-		qDebug()<<"Frame"<<++n_frame<<"th";
+		qDebug()<<"Frame"<<++n_frame<<"th: rvec = "<<rvec.at<double>(0,0)<<","<<rvec.at<double>(1,0)<<","<<rvec.at<double>(2,0)
+			<<"tvec ="<<tvec.at<double>(0,0)<<","<<tvec.at<double>(1,0)<<","<<tvec.at<double>(2,0);
 	}	
 	return QGLWidget::updateGL();
 }

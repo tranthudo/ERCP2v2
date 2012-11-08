@@ -77,6 +77,9 @@ public:
 	void drawSub2();
 	void drawSub3();
 	void drawSub4();
+	void printw (float x, float y, float z, char* format, ...); // draw string
+	void drawFPS();
+
 	void drawAxis( float size );
 	void drawFrustum(float fovY, float aspectRatio, float nearPlane, float farPlane);
 	void drawGrid(float size, float step);
@@ -92,6 +95,7 @@ public:
 	cv::Mat fixedImage;
 	cv::Mat fixedFloat;
 	cv::Mat textureImage;
+	float fps;
 	void resetThirdView(){thirdPersonAngleX = 45.0f, thirdPersonAngleY = 45.0f, thirdPersonDistance = 100.f;}
 public slots:
 	void setCameraAngleX(double rx);
@@ -144,8 +148,8 @@ private:
 	CObj* m_Obj;
 	// Image
 	GLuint textureID;								// texture ID
+	GLvoid *font_style;// = GLUT_BITMAP_TIMES_ROMAN_24;
 	
-
 	// Private functions
 	void initLights();
 	void setViewport(int x, int y, int width, int height);
