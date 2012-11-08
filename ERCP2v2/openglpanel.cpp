@@ -6,7 +6,7 @@
 
 
 const float m_ROTSCALE = 90.0;
-#define HAVE_DEBUG false
+#define HAVE_DEBUG true
 //double Func::operator()( VecDoub &x )
 //{
 //	{
@@ -989,12 +989,16 @@ void OpenglPanel::startTracking()
 
 void OpenglPanel::updateGL()
 {
-	// Calculate frame rate
-	tinit = cv::getTickCount();
-	model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq);
-	n_frame_rate = tinit;
+	
+	
+	double pose_diff_max = 2.0;
+	double first_pose_diff_max = 10.0;
 	if (mode == CAMERA_TRACKING)
-	{		
+	{	
+		n_frame_rate = cv::getTickCount();
+		cv::Mat prev_rvec,prev_tvec;
+		rvec.copyTo(prev_rvec);
+		tvec.copyTo(prev_tvec);
 		// Recalculate keypoints 
 		if (!firstTime)
 		{//generateReferencePoints();
@@ -1096,14 +1100,19 @@ void OpenglPanel::updateGL()
 				}
 				tinit = cv::getTickCount();	
 				n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);
+				if ((cv::norm(temp_tvec-tvec)+cv::norm(temp_rvec-rvec))>first_pose_diff_max)
+				{
+					first_rvec.copyTo(rvec);
+					first_tvec.copyTo(tvec);
+				}
 				qDebug()<<"Time solve TUKEY 1st frame"<<(cv::getTickCount()-tinit)*freq;
-				poseGLUpdate();
+				//poseGLUpdate();
 				firstTime = false;
 			}
 			else{
 				qDebug()<<"POSE ESTIMATION FROM 1ST FRAME IS NOT OK because inliers = "<<inliers.size();			
-				temp_rvec.copyTo(rvec);
-				temp_tvec.copyTo(tvec);
+				/*temp_rvec.copyTo(rvec);
+				temp_tvec.copyTo(tvec);*/
 			}
 		}
 		else // not first time (not lost tracking)
@@ -1162,7 +1171,7 @@ void OpenglPanel::updateGL()
 				tinit = cv::getTickCount();
 				n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);				
 				qDebug()<<"Time solve TUKEY 1st frame"<<(cv::getTickCount()-tinit)*freq;
-				poseGLUpdate();	
+				//poseGLUpdate();	
 				firstTime = false;
 			}			
 			// 4.3 CALCULATE POSE ONLY BY using the previous frame information
@@ -1199,7 +1208,13 @@ void OpenglPanel::updateGL()
 					qDebug()<<"Time solve TUKEY previous frame"<<(cv::getTickCount()-tinit)*freq;
 					temp_rvec.copyTo(rvec);
 					temp_tvec.copyTo(tvec);
-					firstTime = false;					
+					if ((cv::norm(rvec-prev_rvec)+cv::norm(tvec-prev_tvec))>pose_diff_max)
+					{
+						qDebug()<< "DIFFERENCE TOO MUCH";
+						prev_rvec.copyTo(rvec);
+						prev_tvec.copyTo(tvec);							
+					}
+					firstTime = false;	
 				}
 				else {
 					if (++number_of_continuos_failures>=2)
@@ -1207,15 +1222,26 @@ void OpenglPanel::updateGL()
 					qDebug()<<"FAIL ===== POSE ESTIMATION USING PREVIOUS and CURRENT FRAME MATCHING ONLY";
 					qDebug()<<"===========================================";
 				}				
-				poseGLUpdate();	
+				//poseGLUpdate();	
 			}
-
-		}
+			
+		}	
+		qDebug()<<"Difference between 2 frame = "<<cv::norm(rvec-prev_rvec)+cv::norm(tvec-prev_tvec);
+		poseGLUpdate();
 		currentFrame.copyTo(referenceFrame);
 		currentFrame.copyTo(model->textureImage);
 		qDebug()<<"Frame"<<++n_frame<<"th: rvec = "<<rvec.at<double>(0,0)<<","<<rvec.at<double>(1,0)<<","<<rvec.at<double>(2,0)
 			<<"tvec ="<<tvec.at<double>(0,0)<<","<<tvec.at<double>(1,0)<<","<<tvec.at<double>(2,0);
+		// Calculate frame rate
+		tinit = cv::getTickCount();
+		model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq);
 	}	
+	else
+	{
+		tinit = cv::getTickCount();
+		model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq);
+		n_frame_rate = cv::getTickCount();
+	}
 	return QGLWidget::updateGL();
 }
 
