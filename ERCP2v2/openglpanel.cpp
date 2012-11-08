@@ -6,7 +6,7 @@
 
 
 const float m_ROTSCALE = 90.0;
-
+#define HAVE_DEBUG false
 //double Func::operator()( VecDoub &x )
 //{
 //	{
@@ -80,9 +80,13 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	//capture>>frame;
 	croppedImage = frame(cv::Rect(258,86,312,312));
 	currentFrame.copyTo(previousFrame);
-	croppedImage.copyTo(currentFrame);		
-	cv::imshow("Video Frame",frame);
-	cv::imshow("Cropped Frame", currentFrame);
+	croppedImage.copyTo(currentFrame);	
+	if (HAVE_DEBUG)
+	{
+		cv::imshow("Video Frame",frame);
+		cv::imshow("Cropped Frame", currentFrame);
+	}
+	
 	currentFrame.copyTo(model->textureImage);
 }
 
@@ -979,14 +983,18 @@ void OpenglPanel::startTracking()
 	cv::imshow("Video Frame",frame);
 	cv::imshow("Cropped Frame", currentFrame);
 	mode = CAMERA_TRACKING;
-	timer->setInterval(300);
+	timer->setInterval(1);
 
 }
 
 void OpenglPanel::updateGL()
 {
+	// Calculate frame rate
+	tinit = cv::getTickCount();
+	model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq);
+	n_frame_rate = tinit;
 	if (mode == CAMERA_TRACKING)
-	{
+	{		
 		// Recalculate keypoints 
 		if (!firstTime)
 		{//generateReferencePoints();
@@ -1013,9 +1021,12 @@ void OpenglPanel::updateGL()
 		//capture>>frame;
 		croppedImage = frame(cv::Rect(258,86,312,312));
 		currentFrame.copyTo(previousFrame);
-		croppedImage.copyTo(currentFrame);		
-		cv::imshow("Video Frame",frame);
-		cv::imshow("Cropped Frame", currentFrame);
+		croppedImage.copyTo(currentFrame);				
+		if (HAVE_DEBUG){
+			cv::imshow("Video Frame",frame);
+			cv::imshow("Cropped Frame", currentFrame);
+		}	
+		
 		
 		// Rewrite the Pose Estimation here
 		cv::Mat mask;
@@ -1024,7 +1035,8 @@ void OpenglPanel::updateGL()
 		cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
 		cv::threshold(currentGrayFrame,mask,180,255,cv::THRESH_BINARY_INV);	
 		cv::erode(mask,mask,cv::Mat());
-		cv::imshow("CUR MASK",mask);
+		if (HAVE_DEBUG)
+			cv::imshow("CUR MASK",mask);
 		tinit = cv::getTickCount();	
 		detector->detect(currentGrayFrame,cur_keypoints,mask);
 		qDebug()<<"Time to detect"<<(cv::getTickCount()-tinit)*freq;

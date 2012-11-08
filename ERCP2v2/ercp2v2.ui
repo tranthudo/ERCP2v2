@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../../../.designer/backup/data/n2t.jpg</normaloff>../../../.designer/backup/data/n2t.jpg</iconset>
+    <normaloff>data/n2t.jpg</normaloff>data/n2t.jpg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="OpenglPanel" name="widget" native="true">

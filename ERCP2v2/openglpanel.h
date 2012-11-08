@@ -71,7 +71,7 @@ private:
 	int n_frame;
 	int n_frame_success;
 	int n_first_frame_success;
-
+	int64 n_frame_rate;
 
 	int currentVirtualPoint;
 	int currentRealPoint;

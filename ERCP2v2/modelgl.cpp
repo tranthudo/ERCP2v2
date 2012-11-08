@@ -922,9 +922,10 @@ void ModelGL::drawSub3()
 	glPopMatrix();
 
 	glPopMatrix();
+	drawFPS();
 	glPopAttrib();
 	glEnable(GL_TEXTURE_2D);
-	drawFPS();
+	
 }
 
 void ModelGL::drawSub4()
@@ -1078,11 +1079,12 @@ void ModelGL::drawFPS()
 {
 	//  Load the identity matrix so that FPS string being drawn
 	//  won't get animates
+	
 	glLoadIdentity ();
 
 	//  Print the FPS to the window
-	glColor3f(1.0,1.0,1.0);
-	printw (-0.9, -0.9, 0, "FPS: %4.2f", fps);
+	glColor3f(1.0f,1.0f,1.0f);
+	printw (10, 30, -60, "FPS: %4.2f", fps);
 }
 
 
