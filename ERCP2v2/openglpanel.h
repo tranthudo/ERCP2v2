@@ -98,7 +98,7 @@ private:
 	glm::vec3 ref_camera_positions;
 	glm::vec3 ref_camera_angle;
 	bool calibrated;
-	std::vector<uchar> inliers;	
+	std::vector<int> inliers;	
 	// Feature detection matching stuff
 	cv::Mat currentFrame;
 	cv::Mat previousFrame;	
