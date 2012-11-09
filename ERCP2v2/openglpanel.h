@@ -63,7 +63,8 @@ private:
 	QTimer *timer;	
 	ProgramMode mode;
 	bool firstTime;
-	
+	bool load4Points;		// use to load 4points automatically
+
 	int64 tinit;
 	float freq;	
 

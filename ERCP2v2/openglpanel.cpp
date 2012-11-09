@@ -64,7 +64,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::namedWindow("Cropped Frame");
 	// Delay between each frame in ms
 	// corresponding to video frame rate
-	captureDelay = 1000.0/captureRate;
+	captureDelay = 950.0/captureRate;
 	// go to frame at (minute, second) of the video
 	int minute = 1;
 	int second = 22;
@@ -87,7 +87,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 		cv::imshow("Video Frame",frame);
 		cv::imshow("Cropped Frame", currentFrame);
 	}
-	
+	load4Points = false;
 	currentFrame.copyTo(model->textureImage);
 }
 
@@ -385,6 +385,34 @@ void OpenglPanel::testManualTracking()
 	{
 		selfCalibration();
 	}
+	if (load4Points)
+	{
+		// Load 4points here
+		// Save this point
+		fs.open("data/First4/objPoints.yml",cv::FileStorage::READ);
+		fs["objPoints"]>>objPoints;
+		fs.release();
+
+		fs.open("data/First4/virtualImagePoints.yml",cv::FileStorage::READ);
+		fs["virtualImagePoints"]>>virtualImagePoints;
+		fs.release();
+
+		fs.open("data/First4/realImagePoints.yml",cv::FileStorage::READ);
+		fs["realImagePoints"]>>realImagePoints;
+		fs.release();
+
+		mode = STOP;
+		qDebug()<<"Finish Selecting Point";		
+		
+		//emit finishSelectingPoints();
+		QMessageBox::critical(this,"Manual selecting points done!", "Ok");
+		initializeWithFourPoints();
+		updateGL();
+		updateGL();
+		generateReferncePoints();
+		firstTime = true;
+		return;
+	}
 	if (mode == MANUAL_TRACKING) {mode = STOP;}
 	else {
 		mode = MANUAL_TRACKING;
@@ -597,6 +625,10 @@ void OpenglPanel::keyPressEvent( QKeyEvent * event )
 	}
 	else if (event->key()==Qt::Key_X) {
 		firstTime = true;
+	}
+	else if (event->key()==Qt::Key_S){
+		load4Points = !load4Points;
+		qDebug()<<"Load4Points = "<<load4Points;
 	}
 
 }
@@ -889,8 +921,20 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 {
 	if (objPoints.size()==4 & virtualImagePoints.size()==4)  // for manual initialzation only
 	{
-		// calculate the initial position of the camera 
-		// cv::solvePnP(objPoints,virtualImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, cv::EPNP); // test accuracy
+		// Save this point
+		fs.open("data/First4/objPoints.yml",cv::FileStorage::WRITE);
+		fs<<"objPoints"<<objPoints;
+		fs.release();
+
+		fs.open("data/First4/virtualImagePoints.yml",cv::FileStorage::WRITE);
+		fs<<"virtualImagePoints"<<virtualImagePoints;
+		fs.release();
+
+		fs.open("data/First4/realImagePoints.yml",cv::FileStorage::WRITE);
+		fs<<"realImagePoints"<<realImagePoints;
+		fs.release();
+
+		// Get the pose of camera
 		cv::solvePnP(objPoints,realImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, cv::EPNP); 
 		rvec.copyTo(first_rvec);
 		tvec.copyTo(first_tvec);
@@ -901,6 +945,16 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 		referenceFrame.copyTo(firstFrame);*/
 		currentFrame.copyTo(referenceFrame);
 		referenceFrame.copyTo(firstFrame);
+
+		// draw some points in two images here
+		for (int i = 0; i<4;i++)
+		{
+			cv::circle(model->textureImage,realImagePoints[i],3,cv::Scalar(255,0,0),-1);
+			model->markerPoints.push_back(objPoints[i]);
+			
+		}
+
+
 		return;
 	}
 }
@@ -1000,7 +1054,7 @@ void OpenglPanel::startTracking()
 
 void OpenglPanel::updateGL()
 {	
-	double pose_diff_max = 1.0;
+	double pose_diff_max = 2.0;
 	double first_pose_diff_max = 10.0;
 	if (mode == CAMERA_TRACKING)
 	{			
@@ -1104,15 +1158,19 @@ void OpenglPanel::updateGL()
 		for (int i = 0; i<projectedPoints.size();i++)
 		{
 			cv::Point2f errPoint = new_imgPoints_selected1[i]-projectedPoints[i];
-			if (std::max(errPoint.x,errPoint.y)<=10){
+			errPoint.x = abs(errPoint.x);
+			errPoint.y = abs(errPoint.y);
+			if (std::max(errPoint.x,errPoint.y)<=20.0){
 				fun_inliers1.push_back(1);
 				new_matches1.push_back(l2Matches[i]);
 			}
 			else fun_inliers1.push_back(0);
 		}		
 		qDebug()<<"fun_inliers1.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
+		
 		if (new_matches1.size()<=5)// refine with fundamental matching
 		{
+			tinit = cv::getTickCount();
 			new_matches1.clear();
 			fun1 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,5.0,0.98,fun_inliers1);				
 			for (int i = 0; i<fun_inliers1.size();i++) {
@@ -1120,6 +1178,7 @@ void OpenglPanel::updateGL()
 					new_matches1.push_back(l2Matches[i]);
 				}
 			}
+			qDebug()<<"[refined]fun_inliers1.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
 		}
 		// add the matches between current frame and previous frame to the database
 		new_imgPoints_selected1.clear();
