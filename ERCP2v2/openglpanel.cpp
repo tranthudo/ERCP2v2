@@ -1065,12 +1065,12 @@ void OpenglPanel::updateGL()
 		// between current descriptor and previous frame descriptor
 		tinit = cv::getTickCount();	
 		hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);
-		qDebug()<<"Time to match Hamming descriptor"<<(cv::getTickCount()-tinit)*freq<<"number of hamming matches"<<freakMatches.size();
+		qDebug()<<"Time to match current & previous descriptor"<<(cv::getTickCount()-tinit)*freq<<"(ms), nMatches ="<<freakMatches.size();
 			
 		// between current descriptor and first descriptor
 		tinit=cv::getTickCount();
 		hammingMatcher->match(cur_descriptors,first_ref_Descriptors,l2Matches);
-		qDebug()<<"Time to match Brute Force KNN 1 descriptor"<<(cv::getTickCount()-tinit)*freq<<"Number of l2matches"<<l2Matches.size();
+		qDebug()<<"Time to match current & first descriptor"<<(cv::getTickCount()-tinit)*freq<<"(ms), nMatches ="<<l2Matches.size();
 		//qDebug()<<"Size of matches = "<<matches.size()<<"; number of best matches[0] = "<<matches[0].size();
 
 		// 4. CALCULATE POSE FROM THE FIST POSE
@@ -1170,7 +1170,7 @@ void OpenglPanel::updateGL()
 				}
 				// Refine by robust estimator
 				tinit = cv::getTickCount();
-				cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				//cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
 				qDebug()<<"Robust estimation time = "<<(cv::getTickCount()-tinit)*freq;
 				firstTime = false;
 			}
