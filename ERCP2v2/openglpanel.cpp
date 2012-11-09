@@ -38,10 +38,9 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
 	detector = new cv::SURF(70,1,3,false,false);
-	
 	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);
 	
-	hammingExtractor = new cv::FREAK(false,true, 10.0f,4,std::vector<int>());
+	hammingExtractor = new cv::FREAK(false,true, 10.0f,3,std::vector<int>());
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
 
 	l2Extractor = new cv::SURF(100,1,3, false,false);
@@ -1064,7 +1063,7 @@ void OpenglPanel::updateGL()
 		// 3. MATCHING keypoints 
 		// between current descriptor and previous frame descriptor
 		tinit = cv::getTickCount();	
-		hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);
+		hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);		
 		qDebug()<<"Time to match Hamming descriptor"<<(cv::getTickCount()-tinit)*freq<<"number of hamming matches"<<freakMatches.size();
 			
 		// between current descriptor and first descriptor
@@ -1104,39 +1103,45 @@ void OpenglPanel::updateGL()
 		for (int i = 0; i<projectedPoints.size();i++)
 		{
 			cv::Point2f errPoint = new_imgPoints_selected1[i]-projectedPoints[i];
-			if (std::max(errPoint.x,errPoint.y)<=10){
+			errPoint.x = std::abs(errPoint.x);
+			errPoint.y = std::abs(errPoint.y);
+			if (std::max(errPoint.x,errPoint.y)<=20.0){
 				fun_inliers1.push_back(1);
 				new_matches1.push_back(l2Matches[i]);
 			}
 			else fun_inliers1.push_back(0);
 		}		
 		qDebug()<<"fun_inliers1.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
+		
 		if (new_matches1.size()<=5)// refine with fundamental matching
 		{
+			tinit = cv::getTickCount();
 			new_matches1.clear();
+			fun_inliers1.clear();
 			fun1 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,5.0,0.98,fun_inliers1);				
 			for (int i = 0; i<fun_inliers1.size();i++) {
 				if (fun_inliers1[i]){
 					new_matches1.push_back(l2Matches[i]);
 				}
 			}
+			qDebug()<<"fun_inliners1 resolve time: "<<(cv::getTickCount()-tinit)*freq<<" size = "<<new_matches1.size()<<"/"<<fun_inliers1.size();
 		}
-		// add the matches between current frame and previous frame to the database
+		// add the matches between current frame and previous frame to the database		
+		tinit = cv::getTickCount();
 		new_imgPoints_selected1.clear();
 		new_imgPoints_selected2.clear();
-		for (int i = 0; i<freakMatches.size();i++)
+		for (int i = 0; i<freakMatches.size(); i++)
 		{
 			new_imgPoints_selected1.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 			new_imgPoints_selected2.push_back(ref_keypoints[freakMatches[i].trainIdx].pt);
 		}
-		
-		tinit = cv::getTickCount();
 		fun2 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,3.0,0.99,fun_inliers2);						
 		for (int i= 0; i<fun_inliers2.size();i++) {
 			if (fun_inliers2[i]) {
 				new_matches2.push_back(freakMatches[i]);
 			}
-		}		
+		}	
+				
 		qDebug()<<"fun_inliers2.size()"<<new_matches2.size()<<"/"<<new_imgPoints_selected2.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
 		// solve the pose estimation here
 		if (new_matches1.size()>=15)
@@ -1182,7 +1187,10 @@ void OpenglPanel::updateGL()
 		if ((diff1 > pose_diff_max) |(diff2>first_pose_diff_max)) {
 			prev_tvec.copyTo(tvec);
 			prev_rvec.copyTo(rvec);
+			ref_descriptors.copyTo(cur_descriptors);			
+			cur_keypoints  = ref_keypoints; // reserve the previous frame
 			number_of_continuos_failures +=1;
+			
 		}
 		else number_of_continuos_failures = 0;
 		
