@@ -9,7 +9,7 @@
 #include <GL/glu.h>
 #include <GL/glext.h>
 #include "modelgl.h"
-
+#include "opencv2/gpu/gpu.hpp"
 // Numerical Recipes
 #include "optimizer/nr3.h"
 #include "optimizer/mins.h"
@@ -92,6 +92,7 @@ private:
 	cv::Mat cv_Rvec;  // holding the Rodrigues result of the camera view matrix
 	cv::Mat cv_Tvec;  // holding the translation result of the camera view matrix
 
+
 	glm::mat4 glm_camera_exintrinsic;
 	glm::mat3 glm_camera_intrinsic;
 	glm::mat4 ref_camera_extrinsic;
@@ -120,6 +121,7 @@ private:
 	//cv::SurfFeatureDetector detector;
 	//cv::SiftFeatureDetector detector;
 	cv::FeatureDetector* detector;
+	
 	cv::DescriptorExtractor* hammingExtractor;
 	cv::DescriptorExtractor* l2Extractor;
 	cv::DescriptorMatcher* hammingMatcher;

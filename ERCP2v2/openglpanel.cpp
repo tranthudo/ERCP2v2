@@ -38,6 +38,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
 	detector = new cv::SURF(70,1,3,false,false);
+	
 	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);
 	
 	hammingExtractor = new cv::FREAK(false,true, 10.0f,4,std::vector<int>());
@@ -891,6 +892,8 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 		// calculate the initial position of the camera 
 		// cv::solvePnP(objPoints,virtualImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, cv::EPNP); // test accuracy
 		cv::solvePnP(objPoints,realImagePoints,camera_intrinsic,distCoeffs,rvec, tvec,true, cv::EPNP); 
+		rvec.copyTo(first_rvec);
+		tvec.copyTo(first_tvec);
 		poseGLUpdate();
 		//((ERCP2v2*)((this->parent())->parent()))->resetModel();  // with origin obj position and orientation = (0,0,0) and (0,0,0)
 		// Read the current image extract keypoints, descriptors and corresponding 3D location
@@ -919,6 +922,14 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	// detection
 	// can be any feature detection
 	detector->detect(referenceGrayImg,ref_keypoints,mask);
+	/*cv::gpu::GpuMat img_gpu;
+	cv::gpu::GpuMat mask_gpu;
+	cv::gpu::GpuMat ref_keypoints_gpu,descriptors_gpu;
+	cv::gpu::SURF_GPU surf_gpu(70,1,3,false,false);
+	img_gpu.upload(referenceGrayImg);
+	mask_gpu.upload(mask);
+	surf_gpu(img_gpu,mask_gpu,ref_keypoints);*/
+	
 	// extraction of descriptor
 	hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
 	ref_descriptors.copyTo(first_ref_Descriptors);
@@ -989,11 +1000,10 @@ void OpenglPanel::startTracking()
 
 void OpenglPanel::updateGL()
 {	
-	double pose_diff_max = 2.0;
+	double pose_diff_max = 1.0;
 	double first_pose_diff_max = 10.0;
 	if (mode == CAMERA_TRACKING)
-	{	
-		n_frame_rate = cv::getTickCount();
+	{			
 		cv::Mat prev_rvec,prev_tvec;
 		rvec.copyTo(prev_rvec);
 		tvec.copyTo(prev_tvec);
@@ -1008,12 +1018,11 @@ void OpenglPanel::updateGL()
 			{		
 				cv::Point3f objPoint;
 				glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
-				objPoint = GetOGLPos(cur_keypoints[i].pt,viewPort);
-				//TRACE("ObjPoint = [%f; %f; %f; 1]; ImgPoint = [%f;%f]\n",objPoint.x,objPoint.y,objPoint.z, x,y);
+				objPoint = GetOGLPos(cur_keypoints[i].pt,viewPort);				
 				refObjPoints.push_back(objPoint);	
 			}
 		}	
-		// grapb the next frame from video file;
+		// grab the next frame from video file;
 		capturePosition +=captureDelay;
 		capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
 		// for all fames in video
@@ -1027,8 +1036,7 @@ void OpenglPanel::updateGL()
 		if (HAVE_DEBUG){
 			cv::imshow("Video Frame",frame);
 			cv::imshow("Cropped Frame", currentFrame);
-		}	
-		
+		}		
 		
 		// Rewrite the Pose Estimation here
 		cv::Mat mask;
@@ -1081,16 +1089,38 @@ void OpenglPanel::updateGL()
 		{
 			new_imgPoints_selected1.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
 			new_imgPoints_selected2.push_back(first_ref_KeyPoints[l2Matches[i].trainIdx].pt);
+			new_objPoints_selected2.push_back(first_ref_ObjPoints[l2Matches[i].trainIdx]);
 		}
-		fun1 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,3.0,0.99,fun_inliers1);		
-		qDebug()<<"fun_inliers1.size()"<<fun_inliers1.size();
+		tinit = cv::getTickCount();		//
+
+		/*fun1 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,5.0,0.98,fun_inliers1);				
 		for (int i = 0; i<fun_inliers1.size();i++) {
 			if (fun_inliers1[i]){
 				new_matches1.push_back(l2Matches[i]);
 			}
+		}*/	
+		std::vector<cv::Point2f> projectedPoints;
+		cv::projectPoints(new_objPoints_selected2,rvec,tvec,camera_intrinsic,distCoeffs,projectedPoints);
+		for (int i = 0; i<projectedPoints.size();i++)
+		{
+			cv::Point2f errPoint = new_imgPoints_selected1[i]-projectedPoints[i];
+			if (std::max(errPoint.x,errPoint.y)<=10){
+				fun_inliers1.push_back(1);
+				new_matches1.push_back(l2Matches[i]);
+			}
+			else fun_inliers1.push_back(0);
+		}		
+		qDebug()<<"fun_inliers1.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
+		if (new_matches1.size()<=5)// refine with fundamental matching
+		{
+			new_matches1.clear();
+			fun1 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,5.0,0.98,fun_inliers1);				
+			for (int i = 0; i<fun_inliers1.size();i++) {
+				if (fun_inliers1[i]){
+					new_matches1.push_back(l2Matches[i]);
+				}
+			}
 		}
-		qDebug()<<"imgPoints_selected.size()"<<imgPoints_selected.size();
-		
 		// add the matches between current frame and previous frame to the database
 		new_imgPoints_selected1.clear();
 		new_imgPoints_selected2.clear();
@@ -1099,15 +1129,15 @@ void OpenglPanel::updateGL()
 			new_imgPoints_selected1.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
 			new_imgPoints_selected2.push_back(ref_keypoints[freakMatches[i].trainIdx].pt);
 		}
-		fun2 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,3.0,0.99,fun_inliers2);				
+		
+		tinit = cv::getTickCount();
+		fun2 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,3.0,0.99,fun_inliers2);						
 		for (int i= 0; i<fun_inliers2.size();i++) {
 			if (fun_inliers2[i]) {
 				new_matches2.push_back(freakMatches[i]);
 			}
-		}
-		
-		qDebug()<<"imgPoints_selected.size()"<<imgPoints_selected.size();
-		
+		}		
+		qDebug()<<"fun_inliers2.size()"<<new_matches2.size()<<"/"<<new_imgPoints_selected2.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
 		// solve the pose estimation here
 		if (new_matches1.size()>=15)
 		for (int i = 0; i<new_matches1.size();i++)
@@ -1121,12 +1151,15 @@ void OpenglPanel::updateGL()
 			imgPoints_selected.push_back(cur_keypoints[new_matches2[i].queryIdx].pt);
 			objPoints_selected.push_back(refObjPoints[new_matches2[i].trainIdx]);
 		}
+		
 		if (imgPoints_selected.size()>=30){
-			// 4.2 RANSAC				
+			// 4.2 RANSAC	
+			tinit = cv::getTickCount();
 			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,true,100,8.0f,30,inliers,cv::EPNP);
+			qDebug()<<"ransac_inliers2.size()"<<inliers.size()<<"/"<<imgPoints_selected.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
 			if (inliers.size()>=20)
 			{
-				qDebug()<<"PnPRansac inliers.size = "<<inliers.size();
+				
 				// Refine the solution
 				std::vector<cv::Point2f> refined_imgPoints;
 				std::vector<cv::Point3f> refined_objPoints;
@@ -1135,180 +1168,25 @@ void OpenglPanel::updateGL()
 					refined_imgPoints.push_back(imgPoints_selected[inliers[i]]);
 					refined_objPoints.push_back(objPoints_selected[inliers[i]]);
 				}
+				// Refine by robust estimator
+				tinit = cv::getTickCount();
 				cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				qDebug()<<"Robust estimation time = "<<(cv::getTickCount()-tinit)*freq;
 				firstTime = false;
 			}
 			
 		}// end solve the pose estimation		
-		double diff =cv::norm(prev_rvec-rvec)+cv::norm(prev_tvec-tvec);
-		qDebug()<<"NORM of DIFF between previous and current pose = "<<diff;
-		if (diff > pose_diff_max) {
+		double diff1 =cv::norm(prev_rvec-rvec)+cv::norm(prev_tvec-tvec);
+		double diff2 = cv::norm(first_rvec-rvec)+cv::norm(first_tvec-tvec);
+		qDebug()<<"NORM of DIFF between previous and current pose = "<<diff2<<"with first pose"<<diff2;
+		if ((diff1 > pose_diff_max) |(diff2>first_pose_diff_max)) {
 			prev_tvec.copyTo(tvec);
 			prev_rvec.copyTo(rvec);
 			number_of_continuos_failures +=1;
 		}
 		else number_of_continuos_failures = 0;
-
-			
-
 		
-		
-	
-	//	if (firstTime){ 
-	//		n_frame_success  =0;
-	//		// 4.1 CALCULATE POSE USING CURRENT FRAME AND FIRST FRAME ONLY
-	//		//qDebug()<<"POSE ESTIMATION: ";
-	//		for (int i = 0; i<l2Matches.size();i++) {
-	//			objPoints_selected.push_back(first_ref_ObjPoints[l2Matches[i].trainIdx]);
-	//			imgPoints_selected.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
-	//		}
-	//		cv::Mat temp_rvec,temp_tvec;
-	//		first_rvec.copyTo(temp_rvec);
-	//		first_tvec.copyTo(temp_tvec);
-	//		tinit = cv::getTickCount();	
-	//		solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,8.0f,30,inliers,cv::EPNP);
-	//		qDebug()<<"Time solve RANSAC 1st frame 1.2"<<(cv::getTickCount()-tinit)*freq;
-	//		if (inliers.size()>=15) {
-	//			qDebug()<<"===========================================";
-	//			qDebug()<<"POSE ESTIMATION FROM 1ST FRAME SEEM TO BE GOOD!";
-	//			qDebug()<<"===========================================";
-	//			temp_rvec.copyTo(rvec);
-	//			temp_tvec.copyTo(tvec);
-	//			// refine by m-estimator
-	//			for (int i = 0; i<inliers.size();i++)
-	//			{					
-	//				new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
-	//				new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
-	//			}
-	//			tinit = cv::getTickCount();	
-	//			n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);
-	//			if ((cv::norm(temp_tvec-tvec)+cv::norm(temp_rvec-rvec))>first_pose_diff_max)
-	//			{
-	//				first_rvec.copyTo(rvec);
-	//				first_tvec.copyTo(tvec);
-	//			}
-	//			qDebug()<<"Time solve TUKEY 1st frame"<<(cv::getTickCount()-tinit)*freq;
-	//			//poseGLUpdate();
-	//			firstTime = false;
-	//		}
-	//		else{
-	//			qDebug()<<"POSE ESTIMATION FROM 1ST FRAME IS NOT OK because inliers = "<<inliers.size();			
-	//			/*temp_rvec.copyTo(rvec);
-	//			temp_tvec.copyTo(tvec);*/
-	//		}
-	//	}
-	//	else // not first time (not lost tracking)
-	//	{
-	//		for (int i = 0; i<l2Matches.size();i++) {
-	//			objPoints_selected.push_back(first_ref_ObjPoints[l2Matches[i].trainIdx]);
-	//			imgPoints_selected.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
-	//		}
-	//		cv::Mat temp_rvec,temp_tvec;
-	//		rvec.copyTo(temp_rvec);  // in order to back up them
-	//		tvec.copyTo(temp_tvec);	
-	//		// 4.2 CALCULATE FROM FIRST FRAME -> then calculate from previous frame
-	//		tinit = cv::getTickCount();	
-	//		solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,10.0f,30,inliers,cv::EPNP);	
-	//		qDebug()<<"Time solve RANSAC 1st frame 2"<<(cv::getTickCount()-tinit)*freq;
-	//		qDebug()<<"===========================================";
-	//		qDebug()<<"Number of inliers matching with 1st frame = "<<inliers.size();
-	//		if (inliers.size()>=20) {	
-	//			qDebug()<<"===========================================";
-	//			qDebug()<<"POSE ESTIMATION BY FIRST + ADJACENT";
-	//			qDebug()<<"===========================================";
-	//			
-	//			// refine by m-estimator
-	//			for (int i = 0; i<inliers.size();i++)
-	//			{					
-	//				new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
-	//				new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
-	//			}
-	//			
-	//			if (++n_frame_success>=2)
-	//			{
-	//				qDebug()<<"YAHOO";
-	//				//QMessageBox::critical(this,"Yahoo!", "Ok");
-	//				imgPoints_selected.clear();
-	//				objPoints_selected.clear();
-	//				// Adding the points from previous frame to the M-estimator;
-	//				for (int i = 0; i<freakMatches.size();i++){
-	//					imgPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
-	//					objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
-	//				}
-	//				cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,50,10.0,30,inliers,cv::EPNP);
-	//				if (inliers.size()>=20) {
-	//					qDebug()<<"GOOGLE, number of inlier prom previous frame"<<inliers.size();
-	//					for (int i = 0; i<inliers.size();i++){					
-	//					new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
-	//					new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
-	//					}
-	//				}
-	//				temp_tvec.copyTo(tvec);
-	//				temp_rvec.copyTo(rvec);
-	//			}
-	//			else {
-	//				temp_tvec.copyTo(tvec);
-	//				temp_rvec.copyTo(rvec);
-	//			}
-	//			tinit = cv::getTickCount();
-	//			n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);				
-	//			qDebug()<<"Time solve TUKEY 1st frame"<<(cv::getTickCount()-tinit)*freq;
-	//			//poseGLUpdate();	
-	//			firstTime = false;
-	//		}			
-	//		// 4.3 CALCULATE POSE ONLY BY using the previous frame information
-	//		else {
-	//			n_frame_success = 0;
-	//			qDebug()<<"===========================================";
-	//			qDebug()<<"POSE ESTIMATION USING PREVIOUS and CURRENT FRAME MATCHING ONLY";
-	//			qDebug()<<"===========================================";
-	//			imgPoints_selected.clear();
-	//			objPoints_selected.clear();
-	//			new_imgPoints_selected.clear();
-	//			new_imgPoints_selected.clear();				
-	//			rvec.copyTo(temp_rvec);
-	//			tvec.copyTo(temp_tvec);
-	//			for (int i = 0; i<freakMatches.size();i++){
-	//				imgPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
-	//				objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
-	//			}
-	//			tinit = cv::getTickCount();
-	//			cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,50,8.0,50,inliers,cv::EPNP);
-	//			qDebug()<<"Time solve RANSAC previous frame"<<(cv::getTickCount()-tinit)*freq;
-	//			if (inliers.size()>=20)	{
-	//				// Refine pose by Robust estimator
-	//				// refine by m-estimator
-	//				qDebug()<<"RANSAC PRE AND CUR FRAME OK!";
-	//				for (int i = 0; i<inliers.size();i++)
-	//				{					
-	//					new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
-	//					new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
-	//				}
-	//				number_of_continuos_failures = 0;
-	//				tinit = cv::getTickCount();
-	//				n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,N2T_TUKEY,true);										
-	//				qDebug()<<"Time solve TUKEY previous frame"<<(cv::getTickCount()-tinit)*freq;
-	//				temp_rvec.copyTo(rvec);
-	//				temp_tvec.copyTo(tvec);
-	//				if ((cv::norm(rvec-prev_rvec)+cv::norm(tvec-prev_tvec))>pose_diff_max)
-	//				{
-	//					qDebug()<< "DIFFERENCE TOO MUCH";
-	//					prev_rvec.copyTo(rvec);
-	//					prev_tvec.copyTo(tvec);							
-	//				}
-	//				firstTime = false;	
-	//			}
-	//			else {
-	//				if (++number_of_continuos_failures>=2)
-	//					firstTime = true;
-	//				qDebug()<<"FAIL ===== POSE ESTIMATION USING PREVIOUS and CURRENT FRAME MATCHING ONLY";
-	//				qDebug()<<"===========================================";
-	//			}				
-	//			//poseGLUpdate();	
-	//		}
-	//		
-	//	}	
-	//	qDebug()<<"Difference between 2 frame = "<<cv::norm(rvec-prev_rvec)+cv::norm(tvec-prev_tvec);
+
 		poseGLUpdate();
 		currentFrame.copyTo(referenceFrame);
 		currentFrame.copyTo(model->textureImage);
@@ -1317,6 +1195,7 @@ void OpenglPanel::updateGL()
 		// Calculate frame rate
 		tinit = cv::getTickCount();
 		model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq);
+		n_frame_rate = cv::getTickCount();
 	}	
 	else
 	{
@@ -1706,3 +1585,167 @@ MIFunc::MIFunc( ModelGL *m, OpenglPanel* p )
 	Options opts = {BINS, BUFFER_LEN, 0, 0};
 	opt = opts;
 }
+
+
+
+
+			
+
+		
+		
+	
+	//	if (firstTime){ 
+	//		n_frame_success  =0;
+	//		// 4.1 CALCULATE POSE USING CURRENT FRAME AND FIRST FRAME ONLY
+	//		//qDebug()<<"POSE ESTIMATION: ";
+	//		for (int i = 0; i<l2Matches.size();i++) {
+	//			objPoints_selected.push_back(first_ref_ObjPoints[l2Matches[i].trainIdx]);
+	//			imgPoints_selected.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
+	//		}
+	//		cv::Mat temp_rvec,temp_tvec;
+	//		first_rvec.copyTo(temp_rvec);
+	//		first_tvec.copyTo(temp_tvec);
+	//		tinit = cv::getTickCount();	
+	//		solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,8.0f,30,inliers,cv::EPNP);
+	//		qDebug()<<"Time solve RANSAC 1st frame 1.2"<<(cv::getTickCount()-tinit)*freq;
+	//		if (inliers.size()>=15) {
+	//			qDebug()<<"===========================================";
+	//			qDebug()<<"POSE ESTIMATION FROM 1ST FRAME SEEM TO BE GOOD!";
+	//			qDebug()<<"===========================================";
+	//			temp_rvec.copyTo(rvec);
+	//			temp_tvec.copyTo(tvec);
+	//			// refine by m-estimator
+	//			for (int i = 0; i<inliers.size();i++)
+	//			{					
+	//				new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
+	//				new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
+	//			}
+	//			tinit = cv::getTickCount();	
+	//			n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);
+	//			if ((cv::norm(temp_tvec-tvec)+cv::norm(temp_rvec-rvec))>first_pose_diff_max)
+	//			{
+	//				first_rvec.copyTo(rvec);
+	//				first_tvec.copyTo(tvec);
+	//			}
+	//			qDebug()<<"Time solve TUKEY 1st frame"<<(cv::getTickCount()-tinit)*freq;
+	//			//poseGLUpdate();
+	//			firstTime = false;
+	//		}
+	//		else{
+	//			qDebug()<<"POSE ESTIMATION FROM 1ST FRAME IS NOT OK because inliers = "<<inliers.size();			
+	//			/*temp_rvec.copyTo(rvec);
+	//			temp_tvec.copyTo(tvec);*/
+	//		}
+	//	}
+	//	else // not first time (not lost tracking)
+	//	{
+	//		for (int i = 0; i<l2Matches.size();i++) {
+	//			objPoints_selected.push_back(first_ref_ObjPoints[l2Matches[i].trainIdx]);
+	//			imgPoints_selected.push_back(cur_keypoints[l2Matches[i].queryIdx].pt);
+	//		}
+	//		cv::Mat temp_rvec,temp_tvec;
+	//		rvec.copyTo(temp_rvec);  // in order to back up them
+	//		tvec.copyTo(temp_tvec);	
+	//		// 4.2 CALCULATE FROM FIRST FRAME -> then calculate from previous frame
+	//		tinit = cv::getTickCount();	
+	//		solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,10.0f,30,inliers,cv::EPNP);	
+	//		qDebug()<<"Time solve RANSAC 1st frame 2"<<(cv::getTickCount()-tinit)*freq;
+	//		qDebug()<<"===========================================";
+	//		qDebug()<<"Number of inliers matching with 1st frame = "<<inliers.size();
+	//		if (inliers.size()>=20) {	
+	//			qDebug()<<"===========================================";
+	//			qDebug()<<"POSE ESTIMATION BY FIRST + ADJACENT";
+	//			qDebug()<<"===========================================";
+	//			
+	//			// refine by m-estimator
+	//			for (int i = 0; i<inliers.size();i++)
+	//			{					
+	//				new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
+	//				new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
+	//			}
+	//			
+	//			if (++n_frame_success>=2)
+	//			{
+	//				qDebug()<<"YAHOO";
+	//				//QMessageBox::critical(this,"Yahoo!", "Ok");
+	//				imgPoints_selected.clear();
+	//				objPoints_selected.clear();
+	//				// Adding the points from previous frame to the M-estimator;
+	//				for (int i = 0; i<freakMatches.size();i++){
+	//					imgPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
+	//					objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
+	//				}
+	//				cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,50,10.0,30,inliers,cv::EPNP);
+	//				if (inliers.size()>=20) {
+	//					qDebug()<<"GOOGLE, number of inlier prom previous frame"<<inliers.size();
+	//					for (int i = 0; i<inliers.size();i++){					
+	//					new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
+	//					new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
+	//					}
+	//				}
+	//				temp_tvec.copyTo(tvec);
+	//				temp_rvec.copyTo(rvec);
+	//			}
+	//			else {
+	//				temp_tvec.copyTo(tvec);
+	//				temp_rvec.copyTo(rvec);
+	//			}
+	//			tinit = cv::getTickCount();
+	//			n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true);				
+	//			qDebug()<<"Time solve TUKEY 1st frame"<<(cv::getTickCount()-tinit)*freq;
+	//			//poseGLUpdate();	
+	//			firstTime = false;
+	//		}			
+	//		// 4.3 CALCULATE POSE ONLY BY using the previous frame information
+	//		else {
+	//			n_frame_success = 0;
+	//			qDebug()<<"===========================================";
+	//			qDebug()<<"POSE ESTIMATION USING PREVIOUS and CURRENT FRAME MATCHING ONLY";
+	//			qDebug()<<"===========================================";
+	//			imgPoints_selected.clear();
+	//			objPoints_selected.clear();
+	//			new_imgPoints_selected.clear();
+	//			new_imgPoints_selected.clear();				
+	//			rvec.copyTo(temp_rvec);
+	//			tvec.copyTo(temp_tvec);
+	//			for (int i = 0; i<freakMatches.size();i++){
+	//				imgPoints_selected.push_back(cur_keypoints[freakMatches[i].queryIdx].pt);
+	//				objPoints_selected.push_back(refObjPoints[freakMatches[i].trainIdx]);
+	//			}
+	//			tinit = cv::getTickCount();
+	//			cv::solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,50,8.0,50,inliers,cv::EPNP);
+	//			qDebug()<<"Time solve RANSAC previous frame"<<(cv::getTickCount()-tinit)*freq;
+	//			if (inliers.size()>=20)	{
+	//				// Refine pose by Robust estimator
+	//				// refine by m-estimator
+	//				qDebug()<<"RANSAC PRE AND CUR FRAME OK!";
+	//				for (int i = 0; i<inliers.size();i++)
+	//				{					
+	//					new_imgPoints_selected.push_back(imgPoints_selected[inliers[i]]);
+	//					new_objPoints_selected.push_back(objPoints_selected[inliers[i]]);
+	//				}
+	//				number_of_continuos_failures = 0;
+	//				tinit = cv::getTickCount();
+	//				n2tEstimator.estimate(cv::Mat(new_objPoints_selected),cv::Mat(new_imgPoints_selected),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,N2T_TUKEY,true);										
+	//				qDebug()<<"Time solve TUKEY previous frame"<<(cv::getTickCount()-tinit)*freq;
+	//				temp_rvec.copyTo(rvec);
+	//				temp_tvec.copyTo(tvec);
+	//				if ((cv::norm(rvec-prev_rvec)+cv::norm(tvec-prev_tvec))>pose_diff_max)
+	//				{
+	//					qDebug()<< "DIFFERENCE TOO MUCH";
+	//					prev_rvec.copyTo(rvec);
+	//					prev_tvec.copyTo(tvec);							
+	//				}
+	//				firstTime = false;	
+	//			}
+	//			else {
+	//				if (++number_of_continuos_failures>=2)
+	//					firstTime = true;
+	//				qDebug()<<"FAIL ===== POSE ESTIMATION USING PREVIOUS and CURRENT FRAME MATCHING ONLY";
+	//				qDebug()<<"===========================================";
+	//			}				
+	//			//poseGLUpdate();	
+	//		}
+	//		
+	//	}	
+	//	qDebug()<<"Difference between 2 frame = "<<cv::norm(rvec-prev_rvec)+cv::norm(tvec-prev_tvec);
