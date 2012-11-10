@@ -83,7 +83,7 @@ private:
 	std::vector<cv::Point3f> objPoints;
 	N2tEstimator n2tEstimator;
 	
-	cv::FileStorage fs;
+	cv::FileStorage fs;	
 	cv::Mat camera_intrinsic;
 	cv::Mat camera_extrinsic;
 	cv::Mat distCoeffs;

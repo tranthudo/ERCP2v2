@@ -9,6 +9,7 @@
 const float m_ROTSCALE = 90.0;
 const int max_keypoints = 500;
 const int max_previous_matches = 30;
+const int max_first_matches = 100;
 const double hessian_threshold = 75.0;
 #define HAVE_DEBUG true
 
@@ -1163,6 +1164,7 @@ void OpenglPanel::updateGL()
 		// 4.1 Calculate the fundemental matrix from the 1st pose
 		cv::Mat fun1,fun2;
 		std::vector<uchar> fun_inliers1,fun_inliers2;
+		std::vector<int> ran_inliers;
 		// add the matches between current frame to 1st frame to the database
 		std::vector<cv::DMatch> new_matches1, new_matches2;
 		for (int i = 0; i<l2Matches.size();i++)
@@ -1173,13 +1175,19 @@ void OpenglPanel::updateGL()
 		}
 		tinit = cv::getTickCount();		//
 
-		/*fun1 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,5.0,0.98,fun_inliers1);				
-		for (int i = 0; i<fun_inliers1.size();i++) {
-			if (fun_inliers1[i]){
-				new_matches1.push_back(l2Matches[i]);
+		cv::Mat temp_rvec,temp_tvec;
+		rvec.copyTo(temp_rvec);
+		tvec.copyTo(temp_tvec);
+		cv::solvePnPRansac(cv::Mat(new_objPoints_selected2),cv::Mat(new_imgPoints_selected1),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,10.0,40,ran_inliers,CV_EPNP);
+		for (int i = 0; i<ran_inliers.size();i++)
+		{
+			new_matches1.push_back(l2Matches[ran_inliers[i]]);
+			if (i>max_first_matches)
+			{
+				break;
 			}
-		}*/	
-		std::vector<cv::Point2f> projectedPoints;
+		}
+		/*std::vector<cv::Point2f> projectedPoints;
 		cv::projectPoints(new_objPoints_selected2,rvec,tvec,camera_intrinsic,distCoeffs,projectedPoints);
 		for (int i = 0; i<projectedPoints.size();i++)
 		{
@@ -1191,11 +1199,12 @@ void OpenglPanel::updateGL()
 				new_matches1.push_back(l2Matches[i]);
 			}
 			else fun_inliers1.push_back(0);
-		}		
+		}	*/	
 		qDebug()<<"fun_inliers1.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
 		
-		if (new_matches1.size()<=5)// refine with fundamental matching
-		{
+		//if (new_matches1.size()<=5)// refine with fundamental matching
+		//{
+			/*
 			tinit = cv::getTickCount();
 			new_matches1.clear();
 			fun1 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,5.0,0.98,fun_inliers1);				
@@ -1203,9 +1212,10 @@ void OpenglPanel::updateGL()
 				if (fun_inliers1[i]){
 					new_matches1.push_back(l2Matches[i]);
 				}
-			}
+			}			
 			qDebug()<<"[refined]fun_inliers1.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
-		}
+			*/
+		//}
 		// add the matches between current frame and previous frame to the database
 		new_imgPoints_selected1.clear();
 		new_imgPoints_selected2.clear();
@@ -1255,9 +1265,9 @@ void OpenglPanel::updateGL()
 					refined_objPoints.push_back(objPoints_selected[inliers[i]]);
 				}
 				// Refine by robust estimator
-				tinit = cv::getTickCount();
-				//n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,false);
+				tinit = cv::getTickCount();				
 				cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,false);
 				qDebug()<<"Robust estimation time = "<<(cv::getTickCount()-tinit)*freq;
 				firstTime = false;
 			}
