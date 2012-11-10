@@ -121,7 +121,7 @@ private:
 	/*cv::SIFT sift_cpu;
 	cv::SURF surf_cpu;*/
 	//cv::SurfFeatureDetector detector;
-	//cv::SiftFeatureDetector detector;
+	cv::gpu::SURF_GPU surf_gpu;
 	cv::FeatureDetector* detector;
 	
 	cv::DescriptorExtractor* hammingExtractor;

@@ -5,8 +5,13 @@
 #include "glm/gtx/transform.hpp"
 
 
+
 const float m_ROTSCALE = 90.0;
+const int max_keypoints = 500;
+const int max_previous_matches = 30;
+const double hessian_threshold = 75.0;
 #define HAVE_DEBUG true
+
 //double Func::operator()( VecDoub &x )
 //{
 //	{
@@ -18,7 +23,7 @@ const float m_ROTSCALE = 90.0;
 
 
 OpenglPanel::OpenglPanel(QWidget *parent)
-	: QGLWidget(parent)
+	: QGLWidget(parent),surf_gpu(hessian_threshold,1,3,false,0.01,false)
 {
 	QGLFormat newFormat = this->format();
 	newFormat.setDoubleBuffer(false);
@@ -87,7 +92,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 		cv::imshow("Video Frame",frame);
 		cv::imshow("Cropped Frame", currentFrame);
 	}
-	load4Points = false;
+	load4Points = true;
 	currentFrame.copyTo(model->textureImage);
 }
 
@@ -947,6 +952,7 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 		referenceFrame.copyTo(firstFrame);
 
 		// draw some points in two images here
+		model->markerPoints.clear();
 		for (int i = 0; i<4;i++)
 		{
 			cv::circle(model->textureImage,realImagePoints[i],3,cv::Scalar(255,0,0),-1);
@@ -975,15 +981,15 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	
 	// detection
 	// can be any feature detection
-	detector->detect(referenceGrayImg,ref_keypoints,mask);
-	/*cv::gpu::GpuMat img_gpu;
-	cv::gpu::GpuMat mask_gpu;
-	cv::gpu::GpuMat ref_keypoints_gpu,descriptors_gpu;
-	cv::gpu::SURF_GPU surf_gpu(70,1,3,false,false);
+	//detector->detect(referenceGrayImg,ref_keypoints,mask);
+	cv::gpu::GpuMat img_gpu, mask_gpu;	
 	img_gpu.upload(referenceGrayImg);
 	mask_gpu.upload(mask);
-	surf_gpu(img_gpu,mask_gpu,ref_keypoints);*/
-	
+	surf_gpu(img_gpu,mask_gpu,ref_keypoints);
+	if (ref_keypoints.size()>max_keypoints)
+	{
+		ref_keypoints.erase(ref_keypoints.begin()+max_keypoints,ref_keypoints.end());
+	}
 	// extraction of descriptor
 	hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
 	ref_descriptors.copyTo(first_ref_Descriptors);
@@ -1032,6 +1038,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 
 	cv::imwrite("data/output/first_ref_Frame.png",referenceFrame);
 	
+	
 }
 
 
@@ -1058,10 +1065,13 @@ void OpenglPanel::updateGL()
 	double first_pose_diff_max = 9.0;
 	if (mode == CAMERA_TRACKING)
 	{			
+		tinit = cv::getTickCount();
 		cv::Mat prev_rvec,prev_tvec;
 		rvec.copyTo(prev_rvec);
 		tvec.copyTo(prev_tvec);
+		qDebug()<<"Time to copy "<<(cv::getTickCount()-tinit)*freq;
 		// Recalculate keypoints 
+		tinit = cv::getTickCount();
 		if (!firstTime)
 		{//generateReferencePoints();
 			cur_descriptors.copyTo(ref_descriptors);
@@ -1076,14 +1086,18 @@ void OpenglPanel::updateGL()
 				refObjPoints.push_back(objPoint);	
 			}
 		}	
+		qDebug()<<"Time to back project "<<(cv::getTickCount()-tinit)*freq;
 		// grab the next frame from video file;
+		tinit = cv::getTickCount();
 		capturePosition +=captureDelay;
 		capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
 		// for all fames in video
 		capture.grab();
 		if (!capture.retrieve(frame))
 			return;		
+		qDebug()<<"Time to grab video "<<(cv::getTickCount()-tinit)*freq;
 		//capture>>frame;
+		tinit = cv::getTickCount();
 		croppedImage = frame(cv::Rect(258,86,312,312));
 		currentFrame.copyTo(previousFrame);
 		croppedImage.copyTo(currentFrame);				
@@ -1091,18 +1105,30 @@ void OpenglPanel::updateGL()
 			cv::imshow("Video Frame",frame);
 			cv::imshow("Cropped Frame", currentFrame);
 		}		
-		
+		qDebug()<<"Time to crop "<<(cv::getTickCount()-tinit)*freq;
+
+		tinit = cv::getTickCount();
 		// Rewrite the Pose Estimation here
 		cv::Mat mask;
 		cv::Mat currentGrayFrame;
 		// 1. DETECT KEYPOINT IN THE CURRENT FRAME
+
 		cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
 		cv::threshold(currentGrayFrame,mask,180,255,cv::THRESH_BINARY_INV);	
 		cv::erode(mask,mask,cv::Mat());
 		if (HAVE_DEBUG)
 			cv::imshow("CUR MASK",mask);
+		qDebug()<<"Time to threshold "<<(cv::getTickCount()-tinit)*freq;
+
 		tinit = cv::getTickCount();	
-		detector->detect(currentGrayFrame,cur_keypoints,mask);
+		cv::gpu::GpuMat img_gpu,mask_gpu;
+		img_gpu.upload(currentGrayFrame);
+		mask_gpu.upload(mask);
+		surf_gpu(img_gpu,mask_gpu,cur_keypoints);
+		if (cur_keypoints.size()>max_keypoints)
+		{
+			cur_keypoints.erase(cur_keypoints.begin()+max_keypoints,cur_keypoints.end());
+		}
 		qDebug()<<"Time to detect"<<(cv::getTickCount()-tinit)*freq;
 		
 
@@ -1209,6 +1235,7 @@ void OpenglPanel::updateGL()
 		{
 			imgPoints_selected.push_back(cur_keypoints[new_matches2[i].queryIdx].pt);
 			objPoints_selected.push_back(refObjPoints[new_matches2[i].trainIdx]);
+			if (i > max_previous_matches) break;
 		}
 		
 		if (imgPoints_selected.size()>=30){
