@@ -62,9 +62,9 @@ const int n_frame_to_skip = 1;
 OpenglPanel::OpenglPanel(QWidget *parent)
 	: QGLWidget(parent),surf_gpu(hessian_threshold,1,3,false,0.01,false)
 {
-	/*QGLFormat newFormat = this->format();
+	QGLFormat newFormat = this->format();
 	newFormat.setDoubleBuffer(false);
-	this->setFormat(newFormat);*/
+	this->setFormat(newFormat);
 	// Set the double buffer to false in order to get the Frame at each iteration
 	model = ((ERCP2v2*)((this->parent())->parent()))->getModelGL();
 	movement = NONE;
@@ -141,6 +141,7 @@ OpenglPanel::~OpenglPanel()
 
 void OpenglPanel::initializeGL()
 {
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4); 
 	if (model)
 		model->initCamera();
 }
@@ -556,15 +557,16 @@ void OpenglPanel::GetOGLPositions( std::vector<cv::KeyPoint>& points, glm::vec4&
 	glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, pboIds[nextIndex]);
 	GLfloat* depthz = (GLfloat*)glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB,GL_READ_ONLY_ARB);
 	if (depthz) {
+		qDebug()<<"depth read!";
 		glm::mat4 MV = model->getCameraModelViewMatrix();
 		glm::mat4 P = model->getCameraProjectionMatrix();
 		for (int i = 0; i<points.size();i++)
 		{
 			winX = points[i].pt.x;
 			winY = height-points[i].pt.y;
-			int index = (int) (winX+winY*width);
+			int p_index = (int) (winX+winY*width);
 			//qDebug()<<"x="<<winX<<" y="<<winY<<" index="<<index;
-			winZ = depthz[(int)index];
+			winZ = depthz[(int)p_index];
 			//qDebug()<<"winZ= "<<winZ;
 			glm::vec3 point3d = glm::unProject(glm::vec3(winX,winY,winZ),MV,P,viewPort);
 			//qDebug()<<"point3d="<<point3d.x<<","<<point3d.y<<","<<point3d.z;
