@@ -1096,8 +1096,11 @@ void ModelGL::drawFPS()
 	glLoadIdentity ();
 
 	//  Print the FPS to the window
+	glDisable(GL_BLEND);
 	glColor3f(1.0f,1.0f,1.0f);
-	printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
+	printw (5, 30, -60, "[FPS: %4.2f]", fps);
+	//printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
+	glEnable(GL_BLEND);
 }
 
 

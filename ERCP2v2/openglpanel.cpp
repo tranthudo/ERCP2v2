@@ -7,16 +7,16 @@
 
 
 const float m_ROTSCALE = 90.0;
-const int max_keypoints = 500;
+const int max_keypoints = 250;
 const int max_previous_matches = 30;
 const int max_first_matches = 100;
-const int min_num_first_matches  = 30;
-const double hessian_threshold = 75.0;
+const int min_num_first_matches  = 15;
+const double hessian_threshold = 80.0;
 const double pose_diff_max = 1.0;
-const double first_pose_diff_max = 8.0;
+const double first_pose_diff_max = 6.0;
 const int n_frame_to_skip = 1;
 
-#define HAVE_DEBUG true
+
 
 //double Func::operator()( VecDoub &x )
 //{
@@ -31,9 +31,9 @@ const int n_frame_to_skip = 1;
 OpenglPanel::OpenglPanel(QWidget *parent)
 	: QGLWidget(parent),surf_gpu(hessian_threshold,1,3,false,0.01,false)
 {
-	QGLFormat newFormat = this->format();
+	/*QGLFormat newFormat = this->format();
 	newFormat.setDoubleBuffer(false);
-	this->setFormat(newFormat);
+	this->setFormat(newFormat);*/
 	// Set the double buffer to false in order to get the Frame at each iteration
 	model = ((ERCP2v2*)((this->parent())->parent()))->getModelGL();
 	movement = NONE;
@@ -92,12 +92,13 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	//capture>>frame;
 	croppedImage = frame(cv::Rect(258,86,312,312));
 	currentFrame.copyTo(previousFrame);
-	croppedImage.copyTo(currentFrame);	
-	if (HAVE_DEBUG)
-	{
-		cv::imshow("Video Frame",frame);
+	croppedImage.copyTo(currentFrame);
+
+	cv::imshow("Video Frame",frame);
+	#ifdef _DEBUG		
 		cv::imshow("Cropped Frame", currentFrame);
-	}
+	#endif // _DEBUG
+	
 	load4Points = true;
 	currentFrame.copyTo(model->textureImage);
 }
@@ -452,6 +453,21 @@ cv::Point3f OpenglPanel::GetOGLPos( cv::Point2f point, glm::vec4 viewPort)
 	return cv::Point3f(point3d.x,point3d.y,point3d.z); 
 }
 
+void OpenglPanel::GetOGLPositions( std::vector<cv::KeyPoint>& img_points, glm::vec4 &viewPort, std::vector<cv::Point3f>& obj_points )
+{
+	obj_points.clear();
+	glm::mat4 MV = model->getCameraModelViewMatrix();
+	glm::mat4 P = model->getCameraProjectionMatrix();
+	for (int i = 0; i<img_points.size();i++)
+	{
+		GLfloat winX, winY, winZ;	
+		winX = img_points[i].pt.x;
+		winY = (float)this->height() - (float)img_points[i].pt.y;
+		glReadPixels( (int)winX, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ );	
+		glm::vec3 point3d = glm::unProject(glm::vec3(winX,winY,winZ),MV,P,viewPort);
+		obj_points.push_back(cv::Point3f(point3d.x,point3d.y,point3d.z)); 
+	}
+}
 
 
 void OpenglPanel::setNumberOfPoints( int n )
@@ -1083,28 +1099,30 @@ void OpenglPanel::updateGL()
 
 	if (mode == CAMERA_TRACKING)
 	{	
+		//n_frame_rate = cv::getTickCount();
 		// grabbing the video 		
-		tinit = cv::getTickCount();
+		n_frame_rate=tinit = cv::getTickCount();
+
 		//capturePosition +=captureDelay*n_frame_to_skip;
 		//capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
 		//// for all fames in video
 		//capture.grab();
 		//if (!capture.retrieve(frame))
 		//	return;		
-		capture>>frame;
+		capture>>frame;		
 		qDebug()<<"Time to grab video "<<(cv::getTickCount()-tinit)*freq;
 		//capture>>frame;
 		tinit = cv::getTickCount();
 		croppedImage = frame(cv::Rect(258,86,312,312));
 		currentFrame.copyTo(previousFrame);
-		croppedImage.copyTo(currentFrame);				
-		if (HAVE_DEBUG){
-			//cv::imshow("Video Frame",frame);
-			//cv::imshow("Cropped Frame", currentFrame);
-		}		
+		croppedImage.copyTo(currentFrame);	
+	#ifdef _DEBUG		
+		cv::imshow("Video Frame",frame);
+		cv::imshow("Cropped Frame", currentFrame);			
+	#endif // _DEBUG
+	
 		qDebug()<<"Time to crop "<<(cv::getTickCount()-tinit)*freq;
 		// end grabbing the video
-
 
 		tinit = cv::getTickCount();
 		cv::Mat prev_rvec,prev_tvec;
@@ -1119,13 +1137,15 @@ void OpenglPanel::updateGL()
 			refObjPoints.clear();
 			ref_keypoints.clear();
 			ref_keypoints = cur_keypoints;
-			for (int i = 0; i<cur_keypoints.size(); i++)
+			glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+			GetOGLPositions(cur_keypoints,viewPort,refObjPoints);
+			/*for (int i = 0; i<cur_keypoints.size(); i++)
 			{		
 				cv::Point3f objPoint;
 				glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
 				objPoint = GetOGLPos(cur_keypoints[i].pt,viewPort);				
 				refObjPoints.push_back(objPoint);	
-			}
+			}*/
 		}	
 		qDebug()<<"Time to back project "<<(cv::getTickCount()-tinit)*freq;
 		
@@ -1139,8 +1159,10 @@ void OpenglPanel::updateGL()
 		cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
 		cv::threshold(currentGrayFrame,mask,180,255,cv::THRESH_BINARY_INV);	
 		cv::erode(mask,mask,cv::Mat());
-		if (HAVE_DEBUG)
-			//cv::imshow("CUR MASK",mask);
+		//cv::imshow("CUR MASK",mask);
+		//#ifdef _DEBUG
+		//	cv::imshow("CUR MASK",mask);
+		//#endif // _DEBUG			
 		qDebug()<<"Time to threshold "<<(cv::getTickCount()-tinit)*freq;
 
 		tinit = cv::getTickCount();	
@@ -1339,19 +1361,19 @@ void OpenglPanel::updateGL()
 		else number_of_continuos_failures = 0;
 		// end calculate error between previous and current frame
 
+		// Calculate frame rate
+		tinit = cv::getTickCount();
+		model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq)*(double)n_frame_to_skip;
+		n_frame_rate = cv::getTickCount();
+		// end calculate frame rate
+
 		poseGLUpdate();
 		currentFrame.copyTo(referenceFrame);
 		currentFrame.copyTo(model->textureImage);
 		n_frame+=n_frame_to_skip;
 		qDebug()<<"Frame"<<n_frame<<"th: rvec = "<<rvec.at<double>(0,0)<<","<<rvec.at<double>(1,0)<<","<<rvec.at<double>(2,0)
 			<<"tvec ="<<tvec.at<double>(0,0)<<","<<tvec.at<double>(1,0)<<","<<tvec.at<double>(2,0);
-		model->nth_frame = n_frame;
-
-		// Calculate frame rate
-		tinit = cv::getTickCount();
-		model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq)*(double)n_frame_to_skip;
-		n_frame_rate = cv::getTickCount();
-		// end calculate frame rate
+		model->nth_frame = n_frame;		
 		
 		// record data here
 		if (fr.isOpened()){
@@ -1687,6 +1709,8 @@ void OpenglPanel::testFeatureDetection()
 	}
 	
 }
+
+
 
 
 
