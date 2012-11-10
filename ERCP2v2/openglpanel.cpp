@@ -1055,7 +1055,7 @@ void OpenglPanel::startTracking()
 void OpenglPanel::updateGL()
 {	
 	double pose_diff_max = 2.0;
-	double first_pose_diff_max = 10.0;
+	double first_pose_diff_max = 9.0;
 	if (mode == CAMERA_TRACKING)
 	{			
 		cv::Mat prev_rvec,prev_tvec;
@@ -1190,7 +1190,7 @@ void OpenglPanel::updateGL()
 		}
 		
 		tinit = cv::getTickCount();
-		fun2 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,3.0,0.99,fun_inliers2);						
+		fun2 = cv::findFundamentalMat(new_imgPoints_selected1,new_imgPoints_selected2,CV_RANSAC,2.0,0.99,fun_inliers2);						
 		for (int i= 0; i<fun_inliers2.size();i++) {
 			if (fun_inliers2[i]) {
 				new_matches2.push_back(freakMatches[i]);
@@ -1229,7 +1229,8 @@ void OpenglPanel::updateGL()
 				}
 				// Refine by robust estimator
 				tinit = cv::getTickCount();
-				//cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				//n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,false);
+				cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
 				qDebug()<<"Robust estimation time = "<<(cv::getTickCount()-tinit)*freq;
 				firstTime = false;
 			}
