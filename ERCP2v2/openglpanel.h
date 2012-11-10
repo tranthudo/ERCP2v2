@@ -21,6 +21,7 @@
 #include "glInfo.h"                             // glInfo struct
 #define  number_of_frames_to_record 50
 
+const int PBO_COUNT = 2;
 
 struct Func {
 	Doub operator() (VecDoub &x)
@@ -70,7 +71,7 @@ private:
 	//GLfloat* depthz;
 	int64 tinit;
 	float freq;	
-	GLuint pboId;
+	GLuint pboIds[2];
 	// get OpenGL info
 	glInfo glInfo;
 	bool pboSupported;

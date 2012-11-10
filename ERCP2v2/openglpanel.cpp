@@ -46,6 +46,7 @@ const double pose_diff_max = 1.0;
 const double first_pose_diff_max = 8.0;
 const int n_frame_to_skip = 1;
 
+
 #define HAVE_DEBUG true
 
 //double Func::operator()( VecDoub &x )
@@ -129,42 +130,8 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 		cv::imshow("Cropped Frame", currentFrame);
 	}
 	load4Points = true;
-	currentFrame.copyTo(model->textureImage);	 
+	currentFrame.copyTo(model->textureImage);	 	
 
-	// Init some gl
-	glInfo.getInfo();
-	glInfo.printSelf();
-
-#ifdef _WIN32
-	// check PBO is supported by your video card
-	if(glInfo.isExtensionSupported("GL_ARB_pixel_buffer_object"))
-	{
-		// get pointers to GL functions
-		glGenBuffersARB = (PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
-		glBindBufferARB = (PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
-		glBufferDataARB = (PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
-		glBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
-		glDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
-		glGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
-		glMapBufferARB = (PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
-		glUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
-
-		// check once again PBO extension
-		if(glGenBuffersARB && glBindBufferARB && glBufferDataARB && glBufferSubDataARB &&
-			glMapBufferARB && glUnmapBufferARB && glDeleteBuffersARB && glGetBufferParameterivARB)
-		{
-			pboSupported = pboUsed = true;
-			qDebug() << "Video card supports GL_ARB_pixel_buffer_object." << endl;
-		}
-		else
-		{
-			pboSupported = pboUsed = false;
-			qDebug() << "Video card does NOT support GL_ARB_pixel_buffer_object." << endl;
-		}
-	}
-#endif
-	glGenBuffersARB(1, &pboId);
-	
 }
 
 OpenglPanel::~OpenglPanel()
@@ -457,6 +424,51 @@ void OpenglPanel::startManualCalibration()
 
 void OpenglPanel::testManualTracking()
 {
+	// Init some gl
+	glInfo.getInfo();
+	glInfo.printSelf();
+
+#ifdef _WIN32
+	// check PBO is supported by your video card
+	if(glInfo.isExtensionSupported("GL_ARB_pixel_buffer_object"))
+	{
+		// get pointers to GL functions
+		glGenBuffersARB = (PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
+		glBindBufferARB = (PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
+		glBufferDataARB = (PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
+		glBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
+		glDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
+		glGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
+		glMapBufferARB = (PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
+		glUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
+
+		// check once again PBO extension
+		if(glGenBuffersARB && glBindBufferARB && glBufferDataARB && glBufferSubDataARB &&
+			glMapBufferARB && glUnmapBufferARB && glDeleteBuffersARB && glGetBufferParameterivARB)
+		{
+			pboSupported = pboUsed = true;
+			qDebug() << "Video card supports GL_ARB_pixel_buffer_object." << endl;
+		}
+		else
+		{
+			pboSupported = pboUsed = false;
+			qDebug() << "Video card does NOT support GL_ARB_pixel_buffer_object." << endl;
+		}
+	}
+#endif
+	if(pboSupported)
+	{
+		// create 2 pixel buffer objects, you need to delete them when program exits.
+		// glBufferDataARB with NULL pointer reserves only memory space.
+		glGenBuffersARB(PBO_COUNT, pboIds);
+		glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, pboIds[0]);
+		glBufferDataARB(GL_PIXEL_PACK_BUFFER_ARB, DATA_SIZE, 0, GL_STREAM_READ_ARB);
+		glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, pboIds[1]);
+		glBufferDataARB(GL_PIXEL_PACK_BUFFER_ARB, DATA_SIZE, 0, GL_STREAM_READ_ARB);
+
+		glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0);
+	}
+
 	if (!calibrated)
 	{
 		selfCalibration();
@@ -499,7 +511,7 @@ void OpenglPanel::testManualTracking()
 		realImagePoints.clear();
 		objPoints.clear();
 	}
-
+	
 }
 
 
@@ -520,7 +532,15 @@ cv::Point3f OpenglPanel::GetOGLPos( cv::Point2f point, glm::vec4 viewPort)
 void OpenglPanel::GetOGLPositions( std::vector<cv::KeyPoint>& points, glm::vec4& viewPort, std::vector<cv::Point3f>& obj_points )
 {
 	obj_points.clear();
-	
+	static int index = 0;
+	int nextIndex = 0;                  // pbo index used for next frame
+
+	// increment current index first then get the next index
+	// "index" is used to read pixels from a framebuffer to a PBO
+	// "nextIndex" is used to process pixels in the other PBO
+	index = (index + 1) % 2;
+	nextIndex = (index + 1) % 2;
+
 	// convert image coordinates to opengl window coordinates !! viewport(x,y,w,h)
 	float height = viewPort.w;
 	float width = viewPort.z;
@@ -528,24 +548,29 @@ void OpenglPanel::GetOGLPositions( std::vector<cv::KeyPoint>& points, glm::vec4&
 	
 	// read the GL buffer here
 	glReadBuffer(GL_FRONT);
-	glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, pboId);
+	glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, pboIds[index]);
 	glReadPixels(viewPort.x,viewPort.y,viewPort.z,viewPort.w, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	
+	
+	// map the PBO that contain framebuffer pixels before processing it
+	glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, pboIds[nextIndex]);
 	GLfloat* depthz = (GLfloat*)glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB,GL_READ_ONLY_ARB);
-	// end read GL buffer
-
-	glm::mat4 MV = model->getCameraModelViewMatrix();
-	glm::mat4 P = model->getCameraProjectionMatrix();
-	for (int i = 0; i<points.size();i++)
-	{
-		winX = points[i].pt.x;
-		winY = height-points[i].pt.y;
-		int index = (int) (winX+winY*width);
-		//qDebug()<<"x="<<winX<<" y="<<winY<<" index="<<index;
-		winZ = depthz[(int)index];
-		//qDebug()<<"winZ= "<<winZ;
-		glm::vec3 point3d = glm::unProject(glm::vec3(winX,winY,winZ),MV,P,viewPort);
-		//qDebug()<<"point3d="<<point3d.x<<","<<point3d.y<<","<<point3d.z;
-		obj_points.push_back(cv::Point3f(point3d.x,point3d.y,point3d.z));
+	if (depthz) {
+		glm::mat4 MV = model->getCameraModelViewMatrix();
+		glm::mat4 P = model->getCameraProjectionMatrix();
+		for (int i = 0; i<points.size();i++)
+		{
+			winX = points[i].pt.x;
+			winY = height-points[i].pt.y;
+			int index = (int) (winX+winY*width);
+			//qDebug()<<"x="<<winX<<" y="<<winY<<" index="<<index;
+			winZ = depthz[(int)index];
+			//qDebug()<<"winZ= "<<winZ;
+			glm::vec3 point3d = glm::unProject(glm::vec3(winX,winY,winZ),MV,P,viewPort);
+			//qDebug()<<"point3d="<<point3d.x<<","<<point3d.y<<","<<point3d.z;
+			obj_points.push_back(cv::Point3f(point3d.x,point3d.y,point3d.z));
+		}
+		glUnmapBufferARB(GL_PIXEL_PACK_BUFFER_ARB);     // release pointer to the mapped buffer
 	}
 }
 
