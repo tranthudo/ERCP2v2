@@ -67,7 +67,7 @@ private:
 	ProgramMode mode;
 	bool firstTime;
 	bool load4Points;		// use to load 4points automatically
-
+	GLfloat* depthz;
 	int64 tinit;
 	float freq;	
 
@@ -161,7 +161,7 @@ private:
 private:
 	QVector3D trackBallMapping(QPoint point, int width, int height);
 	cv::Point3f GetOGLPos(cv::Point2f point, glm::vec4 viewPort);
-	std::vector<cv::Point2f> GetOGLPos(std::vector<cv::Point2f>point, glm::vec4 viewPort);
+	void GetOGLPositions(std::vector<cv::KeyPoint> &key_points, glm::vec4& viewPort, std::vector<cv::Point3f>& obj_points);
 	void initializeWithFourPoints();
 	void generateReferncePoints(); // extract reference keypoitns and descriptors and train them
 	void poseEstimation();

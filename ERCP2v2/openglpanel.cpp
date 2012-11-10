@@ -31,9 +31,9 @@ const int n_frame_to_skip = 1;
 OpenglPanel::OpenglPanel(QWidget *parent)
 	: QGLWidget(parent),surf_gpu(hessian_threshold,1,3,false,0.01,false)
 {
-	QGLFormat newFormat = this->format();
+	/*QGLFormat newFormat = this->format();
 	newFormat.setDoubleBuffer(false);
-	this->setFormat(newFormat);
+	this->setFormat(newFormat);*/
 	// Set the double buffer to false in order to get the Frame at each iteration
 	model = ((ERCP2v2*)((this->parent())->parent()))->getModelGL();
 	movement = NONE;
@@ -100,6 +100,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	}
 	load4Points = true;
 	currentFrame.copyTo(model->textureImage);
+	 depthz= new GLfloat[312*312];
 }
 
 OpenglPanel::~OpenglPanel()
@@ -195,7 +196,7 @@ void OpenglPanel::mousePressEvent( QMouseEvent *event )
 					// Get the obj 2d points and corresponding 3 locations and add to the list (vector of points)
 					cv::Point2f virtualImagePoint = cv::Point2f(point.x(),point.y());
 					virtualImagePoints.push_back(virtualImagePoint);
-					glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+					glm::vec4 viewPort(0,this->height()/2+1,this->width()/2-1,this->height()/2-1);
 					cv::Point3f objPoint = GetOGLPos(virtualImagePoint,viewPort);
 					objPoints.push_back(objPoint);
 					qDebug()<<"Virtual Point "<<currentVirtualPoint<<"th";
@@ -251,7 +252,7 @@ void OpenglPanel::mousePressEvent( QMouseEvent *event )
 					// Get the obj 2d points and corresponding 3 locations and add to the list (vector of points)
 					cv::Point2f virtualImagePoint = cv::Point2f(point.x(),point.y());
 					virtualImagePoints.push_back(cv::Point2f(point.x(),point.y()));
-					glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+					glm::vec4 viewPort(0,this->height()/2+1,this->width()/2-1,this->height()/2-1);
 					cv::Point3f objPoint = GetOGLPos(virtualImagePoint,viewPort);
 					objPoints.push_back(objPoint);
 					qDebug()<<"Virtual Point "<<currentVirtualPoint<<"th";
@@ -450,6 +451,31 @@ cv::Point3f OpenglPanel::GetOGLPos( cv::Point2f point, glm::vec4 viewPort)
 	glm::vec3 point3d = glm::unProject(glm::vec3(winX,winY,winZ),model->getCameraModelViewMatrix(),model->getCameraProjectionMatrix(),viewPort);
 
 	return cv::Point3f(point3d.x,point3d.y,point3d.z); 
+}
+
+void OpenglPanel::GetOGLPositions( std::vector<cv::KeyPoint>& points, glm::vec4& viewPort, std::vector<cv::Point3f>& obj_points )
+{
+	obj_points.clear();
+	
+	// convert image coordinates to opengl window coordinates !! viewport(x,y,w,h)
+	float height = viewPort.w;
+	float width = viewPort.z;
+	GLfloat winX, winY, winZ;		
+	glReadPixels(viewPort.x,viewPort.y,viewPort.z,viewPort.w, GL_DEPTH_COMPONENT, GL_FLOAT, depthz);
+	glm::mat4 MV = model->getCameraModelViewMatrix();
+	glm::mat4 P = model->getCameraProjectionMatrix();
+	for (int i = 0; i<points.size();i++)
+	{
+		winX = points[i].pt.x;
+		winY = height-points[i].pt.y;
+		int index = (int) (winX+winY*width);
+		//qDebug()<<"x="<<winX<<" y="<<winY<<" index="<<index;
+		winZ = depthz[(int)index];
+		//qDebug()<<"winZ= "<<winZ;
+		glm::vec3 point3d = glm::unProject(glm::vec3(winX,winY,winZ),MV,P,viewPort);
+		//qDebug()<<"point3d="<<point3d.x<<","<<point3d.y<<","<<point3d.z;
+		obj_points.push_back(cv::Point3f(point3d.x,point3d.y,point3d.z));
+	}
 }
 
 
@@ -751,7 +777,7 @@ void OpenglPanel::selfCalibration()
 			// get the position of camera			
 			y =stepx*(j+1);
 			virtualImagePoints.push_back(cv::Point2f(x,y));
-			glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+			glm::vec4 viewPort(0,this->height()/2+1,this->width()/2-1,this->height()/2-1);
 			cv::Point3f objPoint = GetOGLPos(cv::Point2f(x,y),viewPort);
 			objPoints.push_back(objPoint);
 		}
@@ -1013,7 +1039,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 		float x = ref_keypoints[i].pt.x;
 		float y = ref_keypoints[i].pt.y;
 		cv::Point3f objPoint;
-		glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+		glm::vec4 viewPort(0,this->height()/2+1,this->width()/2-1,this->height()/2-1);
 		objPoint = GetOGLPos(ref_keypoints[i].pt,viewPort);
 		//TRACE("ObjPoint = [%f; %f; %f; 1]; ImgPoint = [%f;%f]\n",objPoint.x,objPoint.y,objPoint.z, x,y);
 		refObjPoints.push_back(objPoint);
@@ -1119,13 +1145,15 @@ void OpenglPanel::updateGL()
 			refObjPoints.clear();
 			ref_keypoints.clear();
 			ref_keypoints = cur_keypoints;
-			for (int i = 0; i<cur_keypoints.size(); i++)
+			glm::vec4 viewPort(0,this->height()/2+1,this->width()/2-1,this->height()/2-1);
+			GetOGLPositions(cur_keypoints,viewPort,refObjPoints);
+			/*for (int i = 0; i<cur_keypoints.size(); i++)
 			{		
 				cv::Point3f objPoint;
-				glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+				glm::vec4 viewPort(0,this->height()/2+1,this->width()/2-1,this->height()/2-1);
 				objPoint = GetOGLPos(cur_keypoints[i].pt,viewPort);				
 				refObjPoints.push_back(objPoint);	
-			}
+			}*/
 		}	
 		qDebug()<<"Time to back project "<<(cv::getTickCount()-tinit)*freq;
 		
@@ -1586,7 +1614,7 @@ void OpenglPanel::generateKeypointsFromCalculatedPose()
 	for (int i = 0; i<cur_keypoints.size(); i++)
 	{		
 		cv::Point3f objPoint;
-		glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+		glm::vec4 viewPort(0,this->height()/2+1,this->width()/2-1,this->height()/2-1);
 		objPoint = GetOGLPos(cur_keypoints[i].pt,viewPort);
 		//TRACE("ObjPoint = [%f; %f; %f; 1]; ImgPoint = [%f;%f]\n",objPoint.x,objPoint.y,objPoint.z, x,y);
 		refObjPoints.push_back(objPoint);	
