@@ -871,6 +871,7 @@ void ModelGL::drawSub2()
 
 	glLoadMatrixf(glm::value_ptr(modelViewMatrix));
 	//drawModel();	
+	glColor3f(0.0,1.0,0.0);
 	m_Obj->DrawWireframe();	
 
 	glPopMatrix();

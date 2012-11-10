@@ -133,8 +133,7 @@ void tukey( double *p, double *x, int m, int n, void*adata )
 	cv::Mat tvec(3,1,CV_64F,p+3);
 	cv::Mat errPoints;
 	cv::projectPoints(n2tData->ObjPoints,rvec,tvec,n2tData->camera_intrinsic,n2tData->distCoeffs,errPoints);	
-	errPoints = errPoints-n2tData->ImgPoints;
-
+	errPoints = errPoints-n2tData->ImgPoints;	
 	double c = 0.01;
 	for (int j = 0; j<errPoints.rows;j++)
 	{

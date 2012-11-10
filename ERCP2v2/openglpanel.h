@@ -19,6 +19,9 @@
 #include "mi.h"
 #include "N2tEstimator.h"
 
+#define  number_of_frames_to_record 50
+
+
 struct Func {
 	Doub operator() (VecDoub &x)
 	{
@@ -83,7 +86,8 @@ private:
 	std::vector<cv::Point3f> objPoints;
 	N2tEstimator n2tEstimator;
 	
-	cv::FileStorage fs;	
+	cv::FileStorage fs;
+	cv::FileStorage fr;				//record data to make report
 	cv::Mat camera_intrinsic;
 	cv::Mat camera_extrinsic;
 	cv::Mat distCoeffs;
@@ -93,6 +97,8 @@ private:
 	cv::Mat first_tvec;
 	cv::Mat cv_Rvec;  // holding the Rodrigues result of the camera view matrix
 	cv::Mat cv_Tvec;  // holding the translation result of the camera view matrix
+	
+	std::vector<cv::Mat> rvec_Record, tvec_Record;
 
 
 	glm::mat4 glm_camera_exintrinsic;
