@@ -3,9 +3,39 @@
 #include "geometry.h"
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"
+#define GL_GLEXT_PROTOTYPES
+#include <cstdlib>
+#include <GL/glut.h>
+#include <GL/glext.h>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 
+//#include "glInfo.h"                             // glInfo struct
+//#include "Timer.h"
+// function pointers for PBO Extension
+// Windows needs to get function pointers from ICD OpenGL drivers,
+// because opengl32.dll does not support extensions higher than v1.1.
+#ifdef _WIN32
+PFNGLGENBUFFERSARBPROC pglGenBuffersARB = 0;                     // VBO Name Generation Procedure
+PFNGLBINDBUFFERARBPROC pglBindBufferARB = 0;                     // VBO Bind Procedure
+PFNGLBUFFERDATAARBPROC pglBufferDataARB = 0;                     // VBO Data Loading Procedure
+PFNGLBUFFERSUBDATAARBPROC pglBufferSubDataARB = 0;               // VBO Sub Data Loading Procedure
+PFNGLDELETEBUFFERSARBPROC pglDeleteBuffersARB = 0;               // VBO Deletion Procedure
+PFNGLGETBUFFERPARAMETERIVARBPROC pglGetBufferParameterivARB = 0; // return various parameters of VBO
+PFNGLMAPBUFFERARBPROC pglMapBufferARB = 0;                       // map VBO procedure
+PFNGLUNMAPBUFFERARBPROC pglUnmapBufferARB = 0;                   // unmap VBO procedure
+#define glGenBuffersARB           pglGenBuffersARB
+#define glBindBufferARB           pglBindBufferARB
+#define glBufferDataARB           pglBufferDataARB
+#define glBufferSubDataARB        pglBufferSubDataARB
+#define glDeleteBuffersARB        pglDeleteBuffersARB
+#define glGetBufferParameterivARB pglGetBufferParameterivARB
+#define glMapBufferARB            pglMapBufferARB
+#define glUnmapBufferARB          pglUnmapBufferARB
+#endif
 
-
+const int DATA_SIZE = 312*312;
 const float m_ROTSCALE = 90.0;
 const int max_keypoints = 500;
 const int max_previous_matches = 30;
@@ -99,8 +129,42 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 		cv::imshow("Cropped Frame", currentFrame);
 	}
 	load4Points = true;
-	currentFrame.copyTo(model->textureImage);
-	 depthz= new GLfloat[312*312];
+	currentFrame.copyTo(model->textureImage);	 
+
+	// Init some gl
+	glInfo.getInfo();
+	glInfo.printSelf();
+
+#ifdef _WIN32
+	// check PBO is supported by your video card
+	if(glInfo.isExtensionSupported("GL_ARB_pixel_buffer_object"))
+	{
+		// get pointers to GL functions
+		glGenBuffersARB = (PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
+		glBindBufferARB = (PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
+		glBufferDataARB = (PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
+		glBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
+		glDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
+		glGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
+		glMapBufferARB = (PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
+		glUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
+
+		// check once again PBO extension
+		if(glGenBuffersARB && glBindBufferARB && glBufferDataARB && glBufferSubDataARB &&
+			glMapBufferARB && glUnmapBufferARB && glDeleteBuffersARB && glGetBufferParameterivARB)
+		{
+			pboSupported = pboUsed = true;
+			qDebug() << "Video card supports GL_ARB_pixel_buffer_object." << endl;
+		}
+		else
+		{
+			pboSupported = pboUsed = false;
+			qDebug() << "Video card does NOT support GL_ARB_pixel_buffer_object." << endl;
+		}
+	}
+#endif
+	glGenBuffersARB(1, &pboId);
+	
 }
 
 OpenglPanel::~OpenglPanel()
@@ -461,7 +525,14 @@ void OpenglPanel::GetOGLPositions( std::vector<cv::KeyPoint>& points, glm::vec4&
 	float height = viewPort.w;
 	float width = viewPort.z;
 	GLfloat winX, winY, winZ;		
-	glReadPixels(viewPort.x,viewPort.y,viewPort.z,viewPort.w, GL_DEPTH_COMPONENT, GL_FLOAT, depthz);
+	
+	// read the GL buffer here
+	glReadBuffer(GL_FRONT);
+	glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, pboId);
+	glReadPixels(viewPort.x,viewPort.y,viewPort.z,viewPort.w, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	GLfloat* depthz = (GLfloat*)glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB,GL_READ_ONLY_ARB);
+	// end read GL buffer
+
 	glm::mat4 MV = model->getCameraModelViewMatrix();
 	glm::mat4 P = model->getCameraProjectionMatrix();
 	for (int i = 0; i<points.size();i++)

@@ -113,6 +113,9 @@
     <ClCompile Include="optimizer\levmar\Axb.c">
       <Filter>Optimization\levmar</Filter>
     </ClCompile>
+    <ClCompile Include="glInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="ercp2v2.h">
@@ -191,6 +194,9 @@
     </ClInclude>
     <ClInclude Include="optimizer\levmar\misc.h">
       <Filter>Optimization\levmar</Filter>
+    </ClInclude>
+    <ClInclude Include="glInfo.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

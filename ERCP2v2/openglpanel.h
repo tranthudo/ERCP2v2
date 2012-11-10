@@ -18,7 +18,7 @@
 #include "img_process.h"
 #include "mi.h"
 #include "N2tEstimator.h"
-
+#include "glInfo.h"                             // glInfo struct
 #define  number_of_frames_to_record 50
 
 
@@ -67,9 +67,14 @@ private:
 	ProgramMode mode;
 	bool firstTime;
 	bool load4Points;		// use to load 4points automatically
-	GLfloat* depthz;
+	//GLfloat* depthz;
 	int64 tinit;
 	float freq;	
+	GLuint pboId;
+	// get OpenGL info
+	glInfo glInfo;
+	bool pboSupported;
+	bool pboUsed;
 
 	int number_of_continuos_failures;
 	int n_frame;
