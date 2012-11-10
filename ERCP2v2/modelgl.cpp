@@ -70,6 +70,7 @@ ModelGL::ModelGL(QObject *parent)
 	m_Obj->ReadObjData("data/duodenum.uni2.obj");
 	//vec3d mid=mobj->m_MidPoint;
 	fps = 0;
+	nth_frame = 0;
 }
 
 ModelGL::~ModelGL()
@@ -1096,7 +1097,7 @@ void ModelGL::drawFPS()
 
 	//  Print the FPS to the window
 	glColor3f(1.0f,1.0f,1.0f);
-	printw (10, 30, -60, "FPS: %4.2f", fps);
+	printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
 }
 
 

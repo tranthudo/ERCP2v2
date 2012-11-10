@@ -10,7 +10,11 @@ const float m_ROTSCALE = 90.0;
 const int max_keypoints = 500;
 const int max_previous_matches = 30;
 const int max_first_matches = 100;
+const int min_num_first_matches  = 30;
 const double hessian_threshold = 75.0;
+const double pose_diff_max = 1.0;
+const double first_pose_diff_max = 8.0;
+const int n_frame_to_skip = 1;
 
 #define HAVE_DEBUG true
 
@@ -447,6 +451,8 @@ cv::Point3f OpenglPanel::GetOGLPos( cv::Point2f point, glm::vec4 viewPort)
 
 	return cv::Point3f(point3d.x,point3d.y,point3d.z); 
 }
+
+
 
 void OpenglPanel::setNumberOfPoints( int n )
 {
@@ -1058,24 +1064,48 @@ void OpenglPanel::startTracking()
 	cv::imshow("Cropped Frame", currentFrame);*/
 	if (mode!=CAMERA_TRACKING) {
 		mode = CAMERA_TRACKING;
-		timer->setInterval(1);
+		timer->setInterval(0);
 		if (!fr.isOpened())
-		fr.open("data/output/data.yml",cv::FileStorage::APPEND);				
+		fr.open("data/output/data.yml",cv::FileStorage::APPEND);
+		capture>>frame;
 	}
 	else{
 		mode = STOP;
 		if (fr.isOpened())
 			fr.release();
+		timer->setInterval(100);
 	}
 
 }
 
 void OpenglPanel::updateGL()
 {	
-	double pose_diff_max = 1.0;
-	double first_pose_diff_max = 9.0;
+
 	if (mode == CAMERA_TRACKING)
-	{			
+	{	
+		// grabbing the video 		
+		tinit = cv::getTickCount();
+		//capturePosition +=captureDelay*n_frame_to_skip;
+		//capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
+		//// for all fames in video
+		//capture.grab();
+		//if (!capture.retrieve(frame))
+		//	return;		
+		capture>>frame;
+		qDebug()<<"Time to grab video "<<(cv::getTickCount()-tinit)*freq;
+		//capture>>frame;
+		tinit = cv::getTickCount();
+		croppedImage = frame(cv::Rect(258,86,312,312));
+		currentFrame.copyTo(previousFrame);
+		croppedImage.copyTo(currentFrame);				
+		if (HAVE_DEBUG){
+			//cv::imshow("Video Frame",frame);
+			//cv::imshow("Cropped Frame", currentFrame);
+		}		
+		qDebug()<<"Time to crop "<<(cv::getTickCount()-tinit)*freq;
+		// end grabbing the video
+
+
 		tinit = cv::getTickCount();
 		cv::Mat prev_rvec,prev_tvec;
 		rvec.copyTo(prev_rvec);
@@ -1098,25 +1128,7 @@ void OpenglPanel::updateGL()
 			}
 		}	
 		qDebug()<<"Time to back project "<<(cv::getTickCount()-tinit)*freq;
-		// grab the next frame from video file;
-		tinit = cv::getTickCount();
-		capturePosition +=captureDelay;
-		capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
-		// for all fames in video
-		capture.grab();
-		if (!capture.retrieve(frame))
-			return;		
-		qDebug()<<"Time to grab video "<<(cv::getTickCount()-tinit)*freq;
-		//capture>>frame;
-		tinit = cv::getTickCount();
-		croppedImage = frame(cv::Rect(258,86,312,312));
-		currentFrame.copyTo(previousFrame);
-		croppedImage.copyTo(currentFrame);				
-		if (HAVE_DEBUG){
-			//cv::imshow("Video Frame",frame);
-			//cv::imshow("Cropped Frame", currentFrame);
-		}		
-		qDebug()<<"Time to crop "<<(cv::getTickCount()-tinit)*freq;
+		
 
 		tinit = cv::getTickCount();
 		// Rewrite the Pose Estimation here
@@ -1142,6 +1154,28 @@ void OpenglPanel::updateGL()
 		}
 		qDebug()<<"Time to detect"<<(cv::getTickCount()-tinit)*freq;
 		
+		if (cur_keypoints.size()<10)
+		{
+			cur_keypoints = ref_keypoints;	
+			poseGLUpdate();
+			currentFrame.copyTo(referenceFrame);
+			currentFrame.copyTo(model->textureImage);
+			qDebug()<<"Frame"<<++n_frame<<"th: rvec = "<<rvec.at<double>(0,0)<<","<<rvec.at<double>(1,0)<<","<<rvec.at<double>(2,0)
+				<<"tvec ="<<tvec.at<double>(0,0)<<","<<tvec.at<double>(1,0)<<","<<tvec.at<double>(2,0);
+			model->nth_frame = n_frame;
+
+			// Calculate frame rate
+			tinit = cv::getTickCount();
+			model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq);
+			n_frame_rate = cv::getTickCount();
+			// end calculate frame rate
+
+			// record data here
+			if (fr.isOpened()){
+				fr<<"fps"<<model->fps;
+			}
+			return QGLWidget::updateGL(); 
+		}
 
 		// 2. CALCULATE THE FREAK & SURF DESCRIPTOR 
 		tinit = cv::getTickCount();	
@@ -1186,11 +1220,11 @@ void OpenglPanel::updateGL()
 		tinit = cv::getTickCount();		//
 		// End add the matches between current frame to 1st frame to the database
 
-		// solvePnpRansac to find the matches between current frame and previous frame
+		// solvePnpRansac to find the matches between current frame and very first frame
 		cv::Mat temp_rvec,temp_tvec;
 		rvec.copyTo(temp_rvec);
 		tvec.copyTo(temp_tvec);
-		cv::solvePnPRansac(cv::Mat(new_objPoints_selected2),cv::Mat(new_imgPoints_selected1),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,10.0,40,ran_inliers,CV_EPNP);
+		cv::solvePnPRansac(cv::Mat(new_objPoints_selected2),cv::Mat(new_imgPoints_selected1),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,20.0,40,ran_inliers,CV_EPNP);
 		for (int i = 0; i<ran_inliers.size();i++)
 		{
 			new_matches1.push_back(l2Matches[ran_inliers[i]]);
@@ -1297,7 +1331,7 @@ void OpenglPanel::updateGL()
 		double diff1 =cv::norm(prev_rvec-rvec)+cv::norm(prev_tvec-tvec);
 		double diff2 = cv::norm(first_rvec-rvec)+cv::norm(first_tvec-tvec);
 		qDebug()<<"NORM of DIFF between previous and current pose = "<<diff1<<"with first pose"<<diff2;
-		if (((diff1 > pose_diff_max) |(diff2>first_pose_diff_max))&(new_matches1.size()<10)) {
+		if (((diff1 > pose_diff_max) |(diff2>first_pose_diff_max))&(new_matches1.size()<min_num_first_matches)) {
 			prev_tvec.copyTo(tvec);
 			prev_rvec.copyTo(rvec);
 			number_of_continuos_failures +=1;
@@ -1308,13 +1342,14 @@ void OpenglPanel::updateGL()
 		poseGLUpdate();
 		currentFrame.copyTo(referenceFrame);
 		currentFrame.copyTo(model->textureImage);
-		qDebug()<<"Frame"<<++n_frame<<"th: rvec = "<<rvec.at<double>(0,0)<<","<<rvec.at<double>(1,0)<<","<<rvec.at<double>(2,0)
+		n_frame+=n_frame_to_skip;
+		qDebug()<<"Frame"<<n_frame<<"th: rvec = "<<rvec.at<double>(0,0)<<","<<rvec.at<double>(1,0)<<","<<rvec.at<double>(2,0)
 			<<"tvec ="<<tvec.at<double>(0,0)<<","<<tvec.at<double>(1,0)<<","<<tvec.at<double>(2,0);
-
+		model->nth_frame = n_frame;
 
 		// Calculate frame rate
 		tinit = cv::getTickCount();
-		model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq);
+		model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq)*(double)n_frame_to_skip;
 		n_frame_rate = cv::getTickCount();
 		// end calculate frame rate
 		
