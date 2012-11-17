@@ -18,6 +18,7 @@
 #include "img_process.h"
 #include "mi.h"
 #include "N2tEstimator.h"
+#include "N2TFREAK.h"
 
 #define  number_of_frames_to_record 50
 
@@ -88,6 +89,13 @@ private:
 	
 	cv::FileStorage fs;
 	cv::FileStorage fr;				//record data to make report
+	std::vector<double> rvec_Record, tvec_Record;
+	std::vector<float> fps_record;
+	std::vector<int> matches1_ransac_record;		
+	std::vector<int> matches1_record;
+
+
+
 	cv::Mat camera_intrinsic;
 	cv::Mat camera_extrinsic;
 	cv::Mat distCoeffs;
@@ -98,7 +106,7 @@ private:
 	cv::Mat cv_Rvec;  // holding the Rodrigues result of the camera view matrix
 	cv::Mat cv_Tvec;  // holding the translation result of the camera view matrix
 	
-	std::vector<cv::Mat> rvec_Record, tvec_Record;
+	
 
 
 	glm::mat4 glm_camera_exintrinsic;

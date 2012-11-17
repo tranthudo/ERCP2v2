@@ -113,6 +113,9 @@
     <ClCompile Include="optimizer\levmar\Axb.c">
       <Filter>Optimization\levmar</Filter>
     </ClCompile>
+    <ClCompile Include="N2TFREAK.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="ercp2v2.h">
@@ -191,6 +194,9 @@
     </ClInclude>
     <ClInclude Include="optimizer\levmar\misc.h">
       <Filter>Optimization\levmar</Filter>
+    </ClInclude>
+    <ClInclude Include="N2TFREAK.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

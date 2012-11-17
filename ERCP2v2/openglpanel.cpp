@@ -7,7 +7,7 @@
 
 
 const float m_ROTSCALE = 90.0;
-const int max_keypoints = 250;
+const int max_keypoints = 300;
 const int max_previous_matches = 30;
 const int max_first_matches = 100;
 const int min_num_first_matches  = 15;
@@ -48,11 +48,13 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
-	detector = new cv::SURF(70,1,3,false,false);
-	
+	//detector = new cv::FastFeatureDetector(10,false);//
+	detector = new cv::SURF(60,2,2,true,true);
+	//detector = new cv::FastFeatureDetector;
 	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);
 	
-	hammingExtractor = new cv::FREAK(false,true, 10.0f,4,std::vector<int>());
+	//hammingExtractor = new cv::FREAK(false,true, 10.0f,4,std::vector<int>());
+	hammingExtractor = new cv::N2TFREAK(false,false, 10.0f,4,std::vector<int>());
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
 
 	l2Extractor = new cv::SURF(100,1,3, false,false);
@@ -94,7 +96,6 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	currentFrame.copyTo(previousFrame);
 	croppedImage.copyTo(currentFrame);
 
-	cv::imshow("Video Frame",frame);
 	#ifdef _DEBUG		
 		cv::imshow("Cropped Frame", currentFrame);
 	#endif // _DEBUG
@@ -105,7 +106,8 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 
 OpenglPanel::~OpenglPanel()
 {
-
+	if (fr.isOpened())
+		fr.release();
 }
 
 void OpenglPanel::initializeGL()
@@ -1069,7 +1071,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 void OpenglPanel::startTracking()
 {		
 	capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
-	capturePosition+=captureDelay;
+	capturePosition+=25*captureDelay;
 	// for all fames in video
 	capture.grab();
 	capture.retrieve(frame);
@@ -1082,13 +1084,19 @@ void OpenglPanel::startTracking()
 		mode = CAMERA_TRACKING;
 		timer->setInterval(0);
 		if (!fr.isOpened())
-		fr.open("data/output/data.yml",cv::FileStorage::APPEND);
+		fr.open("data/output/data.yml",cv::FileStorage::WRITE);
 		capture>>frame;
 	}
 	else{
 		mode = STOP;
-		if (fr.isOpened())
+		if (fr.isOpened()){
+			fr<<"fps"<<fps_record;
+			fr<<"rvec"<<rvec_Record;
+			fr<<"tvec"<<tvec_Record;
+			fr<<"matches1"<<matches1_record;
+			fr<<"matches1_ransac"<<matches1_ransac_record;
 			fr.release();
+		}			
 		timer->setInterval(100);
 	}
 
@@ -1241,7 +1249,8 @@ void OpenglPanel::updateGL()
 		}
 		tinit = cv::getTickCount();		//
 		// End add the matches between current frame to 1st frame to the database
-
+		if (n_frame<=30)
+			matches1_record.push_back(l2Matches.size());
 		// solvePnpRansac to find the matches between current frame and very first frame
 		cv::Mat temp_rvec,temp_tvec;
 		rvec.copyTo(temp_rvec);
@@ -1255,6 +1264,8 @@ void OpenglPanel::updateGL()
 				break;
 			}
 		}
+		if (n_frame<=30)
+			matches1_ransac_record.push_back(ran_inliers.size());
 		//End solvePnpRansac to find the matches between current frame and previous frame
 
 		/*std::vector<cv::Point2f> projectedPoints;
@@ -1270,7 +1281,7 @@ void OpenglPanel::updateGL()
 			}
 			else fun_inliers1.push_back(0);
 		}	*/	
-		qDebug()<<"fun_inliers1.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
+		qDebug()<<"first matches.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
 		
 		//if (new_matches1.size()<=5)// refine with fundamental matching
 		//{
@@ -1305,7 +1316,7 @@ void OpenglPanel::updateGL()
 				new_matches2.push_back(freakMatches[i]);
 			}
 		}		
-		qDebug()<<"fun_inliers2.size()"<<new_matches2.size()<<"/"<<new_imgPoints_selected2.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
+		qDebug()<<"current matches.size()"<<new_matches2.size()<<"/"<<new_imgPoints_selected2.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
 		// end finding matches of previous frame and current frame
 
 		// Prepare data to solve the pose estimation
@@ -1360,6 +1371,15 @@ void OpenglPanel::updateGL()
 		}
 		else number_of_continuos_failures = 0;
 		// end calculate error between previous and current frame
+		//qDebug()<<"Size of rvec"<<rvec.cols;
+		if (n_frame<=30){
+			rvec_Record.push_back(rvec.at<double>(0,0));
+			rvec_Record.push_back(rvec.at<double>(1,0));
+			rvec_Record.push_back(rvec.at<double>(2,0));
+			tvec_Record.push_back(tvec.at<double>(0,0));
+			tvec_Record.push_back(tvec.at<double>(1,0));
+			tvec_Record.push_back(tvec.at<double>(2,0));
+		}
 
 		// Calculate frame rate
 		tinit = cv::getTickCount();
@@ -1374,12 +1394,15 @@ void OpenglPanel::updateGL()
 		qDebug()<<"Frame"<<n_frame<<"th: rvec = "<<rvec.at<double>(0,0)<<","<<rvec.at<double>(1,0)<<","<<rvec.at<double>(2,0)
 			<<"tvec ="<<tvec.at<double>(0,0)<<","<<tvec.at<double>(1,0)<<","<<tvec.at<double>(2,0);
 		model->nth_frame = n_frame;		
-		
-		// record data here
-		if (fr.isOpened()){
-			fr<<"fps"<<model->fps;
-		}
-		// end record data
+		if (n_frame<=30)
+			fps_record.push_back(model->fps);
+		//// record data here
+		//if (fr.isOpened()){
+		//	fr<<"fps"<<model->fps;
+		//}
+		//if (n_frame>=30)
+		//	fr.release();
+		//// end record data
 
 	}	
 	else
@@ -1612,8 +1635,7 @@ void OpenglPanel::generateKeypointsFromCalculatedPose()
 		objPoint = GetOGLPos(cur_keypoints[i].pt,viewPort);
 		//TRACE("ObjPoint = [%f; %f; %f; 1]; ImgPoint = [%f;%f]\n",objPoint.x,objPoint.y,objPoint.z, x,y);
 		refObjPoints.push_back(objPoint);	
-		ref_keypoints.push_back(cur_keypoints[i]);
-		
+		ref_keypoints.push_back(cur_keypoints[i]);		
 	}
 }
 
