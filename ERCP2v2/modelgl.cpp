@@ -854,6 +854,17 @@ void ModelGL::drawSub1()
 		}
 		glEnd();
 	}
+	if (keypoint2Draw.size()>0)
+	{
+		glPointSize(5.0);
+		glColor3f(1.0,0,0);
+		glBegin(GL_POINTS);
+		for (int i = 0; i<keypoint2Draw.size();i++)
+		{
+			glVertex3f(keypoint2Draw[i].x,keypoint2Draw[i].y,keypoint2Draw[i].z);
+		}
+		glEnd();
+	}
 	glPopMatrix();
 	glPopAttrib();
 }
@@ -917,6 +928,17 @@ void ModelGL::drawSub3()
 	//setUpDraw();
 	//glDisable(GL_Mat)
 	vec3d color(.8,0.5,0.7);
+	if (keypoint2Draw.size()>0)
+	{
+		glPointSize(2.0);
+		glColor3f(0.0,0,1.0);
+		glBegin(GL_POINTS);
+		for (int i = 0; i<keypoint2Draw.size();i++)
+		{
+			glVertex3f(keypoint2Draw[i].x,keypoint2Draw[i].y,keypoint2Draw[i].z);
+		}
+		glEnd();
+	}
 	m_Obj->DrawObject(false, color);
 	glPopMatrix();
 
@@ -1098,8 +1120,8 @@ void ModelGL::drawFPS()
 	//  Print the FPS to the window
 	glDisable(GL_BLEND);
 	glColor3f(1.0f,1.0f,1.0f);
-	printw (5, 30, -60, "[FPS: %4.2f]", fps);
-	//printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
+	//printw (5, 30, -60, "[FPS: %4.2f]", fps);
+	printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
 	glEnable(GL_BLEND);
 }
 

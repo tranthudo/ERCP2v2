@@ -90,10 +90,17 @@ private:
 	cv::FileStorage fs;
 	cv::FileStorage fr;				//record data to make report
 	std::vector<double> rvec_Record, tvec_Record;
+	std::vector<cv::Mat> rvecs_record,tvecs_record;
 	std::vector<float> fps_record;
 	std::vector<int> matches1_ransac_record;		
 	std::vector<int> matches1_record;
-
+	std::vector<double> ransac1_times_record;
+	std::vector<double> ransac2_times_record;
+	std::vector<double> mean_squared_error_record;
+	std::vector<int> number_of_previous_matches_record;
+	std::vector<double> back_projection_time_record;
+	std::vector<double> robust_estimation_time_record;
+	
 
 
 	cv::Mat camera_intrinsic;
@@ -105,8 +112,8 @@ private:
 	cv::Mat first_tvec;
 	cv::Mat cv_Rvec;  // holding the Rodrigues result of the camera view matrix
 	cv::Mat cv_Tvec;  // holding the translation result of the camera view matrix
-	
-	
+	int number_first_matches;
+	double mse_max;
 
 
 	glm::mat4 glm_camera_exintrinsic;

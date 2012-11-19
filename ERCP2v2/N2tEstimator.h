@@ -30,6 +30,7 @@ struct N2tEstimatorData
 	cv::Mat ImgPoints;
 	cv::Mat distCoeffs;
 	cv::Mat camera_intrinsic;	
+	int number_of_first_matches;
 };
 
 class N2tEstimator
@@ -39,7 +40,7 @@ public:
 	//N2tEstimator(std::vector<cv::Point3f>* oPoints, std::vector<cv::Point2f>* iPoints);
 	~N2tEstimator();
 	void estimate(cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& camera_intrinsic, 
-		cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode = 0, bool jac=false);
+		cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode = 0, bool jac=false, int number_first_matches=0);
 
 private:	
 	std::vector<cv::Point3f> objPoints;

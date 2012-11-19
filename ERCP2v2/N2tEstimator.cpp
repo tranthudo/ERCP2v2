@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <assert.h>
 
+const int N_MIN = 10;
+const int N_MAX = 20;
+
 N2tEstimator::N2tEstimator()
 {
 	
@@ -27,7 +30,7 @@ N2tEstimator::~N2tEstimator()
 
 }
 
-void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& camera_intrinsic, cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode, bool jac )
+void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& camera_intrinsic, cv::Mat& distCoeffs,cv::Mat& rvec,cv::Mat& tvec, int mode, bool jac, int number_first_matches )
 {
 	assert(imgPoints.cols*imgPoints.rows<=1000);
 	cv::Mat errPoints;
@@ -56,6 +59,7 @@ void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& ca
 	imgPoints.copyTo(n2tData->ImgPoints);
 	camera_intrinsic.copyTo(n2tData->camera_intrinsic);
 	distCoeffs.copyTo(n2tData->distCoeffs);
+	n2tData->number_of_first_matches = number_first_matches;
 	
 	n2tData->distCoeffs = distCoeffs;
 	cv::Mat _rvec;
@@ -90,8 +94,7 @@ void N2tEstimator::estimate( cv::Mat& objPoints, cv::Mat& imgPoints, cv::Mat& ca
 	_rvec = cv::Mat(3,1,CV_64F,p);
 	_tvec = cv::Mat(3,1,CV_64F,p+3);
 	_rvec.copyTo(rvec);
-	_tvec.copyTo(tvec);
-	
+	_tvec.copyTo(tvec);	
 }
 
 
@@ -134,7 +137,20 @@ void tukey( double *p, double *x, int m, int n, void*adata )
 	cv::Mat errPoints;
 	cv::projectPoints(n2tData->ObjPoints,rvec,tvec,n2tData->camera_intrinsic,n2tData->distCoeffs,errPoints);	
 	errPoints = errPoints-n2tData->ImgPoints;	
-	double c = 0.01;
+	double c = 2.0;
+	double w1;
+	if (n2tData->number_of_first_matches<N_MIN)
+		w1 = 1.0;
+	else if (n2tData->number_of_first_matches<N_MAX){
+		double dd = (n2tData->number_of_first_matches-N_MIN)/N_MAX;
+		w1 = 1+dd*dd;
+	}
+	else {
+		double dd = (N_MAX-N_MIN)/N_MAX;
+		w1 = 1+dd*dd;
+	}
+		
+
 	for (int j = 0; j<errPoints.rows;j++)
 	{
 		float* data = errPoints.ptr<float>(j);
@@ -145,7 +161,9 @@ void tukey( double *p, double *x, int m, int n, void*adata )
 			else if (data[i]>c) 
 				x[j*errPoints.cols+i] = c;
 			else 
-				x[j*errPoints.cols+i] = data[i];			
+				x[j*errPoints.cols+i] = data[i];	
+			if (i<n2tData->number_of_first_matches)
+				x[j*errPoints.cols+i] *=w1;
 		}
 	}
 }
@@ -182,10 +200,14 @@ void jaTukey( double *p, double *jac, int m, int n, void* adata )
 	cv::projectPoints(n2tData->ObjPoints,rvec,tvec,n2tData->camera_intrinsic,n2tData->distCoeffs,errPoints,jacobian);	
 	errPoints = errPoints-n2tData->ImgPoints;		
 	//qDebug()<<"m = "<<m<<"; n= "<<n<<"; size of jacobian=("<<jacobian.rows<<","<<jacobian.cols<<")";	
+	float c = 2.0;
 	for (int j = 0; j<m; j++){
+		float* data1 = errPoints.ptr<float>(j);
 		double* data= jacobian.ptr<double>(j);		
-		for (int i = 0; i <n; i++){					
-			jac[n*j+i] = data[i];			
+		for (int i = 0; i <n; i++){
+			if (abs(data1[i])<c)				
+				jac[n*j+i] = data[i];			
+			else jac[n*j+i] = 0;
 		}		
 	}
 

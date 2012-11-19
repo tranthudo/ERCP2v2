@@ -98,6 +98,7 @@ public:
 	float fps;
 	int nth_frame;
 	std::vector<cv::Point3f> markerPoints;
+	std::vector<cv::Point3f> keypoint2Draw;
 	void resetThirdView(){thirdPersonAngleX = 45.0f, thirdPersonAngleY = 45.0f, thirdPersonDistance = 100.f;}
 public slots:
 	void setCameraAngleX(double rx);

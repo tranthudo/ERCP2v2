@@ -15,7 +15,8 @@ const double hessian_threshold = 80.0;
 const double pose_diff_max = 1.0;
 const double first_pose_diff_max = 6.0;
 const int n_frame_to_skip = 1;
-
+const int start_record_frame = 0;
+const int stop_record_frame = 1000;
 
 
 //double Func::operator()( VecDoub &x )
@@ -31,6 +32,7 @@ const int n_frame_to_skip = 1;
 OpenglPanel::OpenglPanel(QWidget *parent)
 	: QGLWidget(parent),surf_gpu(hessian_threshold,1,3,false,0.01,false)
 {
+	mse_max = 20.0;
 	/*QGLFormat newFormat = this->format();
 	newFormat.setDoubleBuffer(false);
 	this->setFormat(newFormat);*/
@@ -1095,6 +1097,10 @@ void OpenglPanel::startTracking()
 			fr<<"tvec"<<tvec_Record;
 			fr<<"matches1"<<matches1_record;
 			fr<<"matches1_ransac"<<matches1_ransac_record;
+			fr<<"mean_squared_error_record"<<mean_squared_error_record;
+			fr<<"number_of_previous_matches_record"<<number_of_previous_matches_record;
+			fr<<"back_projection_time"<<back_projection_time_record;
+			fr<<"robust_estimation_time"<<robust_estimation_time_record;
 			fr.release();
 		}			
 		timer->setInterval(100);
@@ -1140,12 +1146,13 @@ void OpenglPanel::updateGL()
 		// Recalculate keypoints 
 		tinit = cv::getTickCount();
 		if (!firstTime)
-		{//generateReferencePoints();
+		{//generateReferencePoints();			
 			cur_descriptors.copyTo(ref_descriptors);
 			refObjPoints.clear();
 			ref_keypoints.clear();
 			ref_keypoints = cur_keypoints;
 			glm::vec4 viewPort(0,this->height()/2+1,this->width()/2,this->height()/2);
+			qDebug()<<"\n number of unporjection points"<<cur_keypoints.size();			
 			GetOGLPositions(cur_keypoints,viewPort,refObjPoints);
 			/*for (int i = 0; i<cur_keypoints.size(); i++)
 			{		
@@ -1154,8 +1161,14 @@ void OpenglPanel::updateGL()
 				objPoint = GetOGLPos(cur_keypoints[i].pt,viewPort);				
 				refObjPoints.push_back(objPoint);	
 			}*/
+			//model->keypoint2Draw = refObjPoints;
 		}	
-		qDebug()<<"Time to back project "<<(cv::getTickCount()-tinit)*freq;
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+			number_of_previous_matches_record.push_back(ref_keypoints.size());
+		double time_back_projection  = (cv::getTickCount()-tinit)*freq;
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+			back_projection_time_record.push_back(time_back_projection);
+		qDebug()<<"Time to back project "<<time_back_projection;
 		
 
 		tinit = cv::getTickCount();
@@ -1200,7 +1213,7 @@ void OpenglPanel::updateGL()
 			n_frame_rate = cv::getTickCount();
 			// end calculate frame rate
 
-			// record data here
+			// record data m
 			if (fr.isOpened()){
 				fr<<"fps"<<model->fps;
 			}
@@ -1249,7 +1262,7 @@ void OpenglPanel::updateGL()
 		}
 		tinit = cv::getTickCount();		//
 		// End add the matches between current frame to 1st frame to the database
-		if (n_frame<=30)
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
 			matches1_record.push_back(l2Matches.size());
 		// solvePnpRansac to find the matches between current frame and very first frame
 		cv::Mat temp_rvec,temp_tvec;
@@ -1264,7 +1277,7 @@ void OpenglPanel::updateGL()
 				break;
 			}
 		}
-		if (n_frame<=30)
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
 			matches1_ransac_record.push_back(ran_inliers.size());
 		//End solvePnpRansac to find the matches between current frame and previous frame
 
@@ -1320,12 +1333,15 @@ void OpenglPanel::updateGL()
 		// end finding matches of previous frame and current frame
 
 		// Prepare data to solve the pose estimation
-		if (new_matches1.size()>=15)
-		for (int i = 0; i<new_matches1.size();i++)
-		{
-			imgPoints_selected.push_back(cur_keypoints[new_matches1[i].queryIdx].pt);
-			objPoints_selected.push_back(first_ref_ObjPoints[new_matches1[i].trainIdx]);
+		if (new_matches1.size()>=11){
+			number_first_matches = new_matches1.size();
+			for (int i = 0; i<new_matches1.size();i++)
+			{			
+				imgPoints_selected.push_back(cur_keypoints[new_matches1[i].queryIdx].pt);
+				objPoints_selected.push_back(first_ref_ObjPoints[new_matches1[i].trainIdx]);
+			}
 		}
+		
 		if (new_matches2.size()>=15)
 		for (int i = 0; i<new_matches2.size();i++)
 		{
@@ -1345,20 +1361,63 @@ void OpenglPanel::updateGL()
 				// Refine the solution
 				std::vector<cv::Point2f> refined_imgPoints;
 				std::vector<cv::Point3f> refined_objPoints;
+				int new_num_first_matches=0;
 				for (int i = 0; i<inliers.size();i++)
 				{
+					if (inliers[i]<number_first_matches)
+						new_num_first_matches++;
 					refined_imgPoints.push_back(imgPoints_selected[inliers[i]]);
 					refined_objPoints.push_back(objPoints_selected[inliers[i]]);
 				}
 				// Refine by robust estimator
 				tinit = cv::getTickCount();				
-				cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
-				n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,false);
-				qDebug()<<"Robust estimation time = "<<(cv::getTickCount()-tinit)*freq;
+				
+				//cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				//n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,true,new_num_first_matches);
+				n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true,0);
+				std::vector<cv::Point2f> new_projectPoints;
+				cv::projectPoints(refined_objPoints,rvec,tvec,camera_intrinsic, distCoeffs,new_projectPoints);
+				double mse = cv::norm(new_projectPoints,refined_imgPoints); 
+				mse = mse*mse/(refined_imgPoints.size()*2);
+				
+				////cv::solvePnP(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				////n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,true,number_first_matches);
+				//n2tEstimator.estimate(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true,0);
+				//std::vector<cv::Point2f> new_projectPoints;
+				//cv::projectPoints(refined_objPoints,rvec,tvec,camera_intrinsic, distCoeffs,new_projectPoints);				
+				//double mse = cv::norm(new_projectPoints,refined_imgPoints);
+				//mse = mse*mse/(refined_imgPoints.size()*2);				
+				
+				if (mse>mse_max)
+					mse = mse_max;
+				double robust_estimation_time = (cv::getTickCount()-tinit)*freq;
+				qDebug()<<"Robust estimation time = "<<robust_estimation_time;
 				firstTime = false;
+				if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+				{
+					mean_squared_error_record.push_back(mse);
+					robust_estimation_time_record.push_back(robust_estimation_time);
+				}
+			}
+			else {// just for print  the mse		
+				double mse = mse_max;
+
+				if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+				{
+					mean_squared_error_record.push_back(mse);
+					robust_estimation_time_record.push_back(0.0);
+				}
 			}
 			
 		}// end solve the pose estimation	
+		else {// just for print  the mse
+			double mse = mse_max;
+			if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+			{
+				mean_squared_error_record.push_back(mse);
+				robust_estimation_time_record.push_back(0.0);
+			}
+		}
 
 		// calculate error between previous and current frame
 		double diff1 =cv::norm(prev_rvec-rvec)+cv::norm(prev_tvec-tvec);
@@ -1372,7 +1431,7 @@ void OpenglPanel::updateGL()
 		else number_of_continuos_failures = 0;
 		// end calculate error between previous and current frame
 		//qDebug()<<"Size of rvec"<<rvec.cols;
-		if (n_frame<=30){
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame){			
 			rvec_Record.push_back(rvec.at<double>(0,0));
 			rvec_Record.push_back(rvec.at<double>(1,0));
 			rvec_Record.push_back(rvec.at<double>(2,0));
@@ -1390,12 +1449,13 @@ void OpenglPanel::updateGL()
 		poseGLUpdate();
 		currentFrame.copyTo(referenceFrame);
 		currentFrame.copyTo(model->textureImage);
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+			fps_record.push_back(model->fps);
 		n_frame+=n_frame_to_skip;
 		qDebug()<<"Frame"<<n_frame<<"th: rvec = "<<rvec.at<double>(0,0)<<","<<rvec.at<double>(1,0)<<","<<rvec.at<double>(2,0)
 			<<"tvec ="<<tvec.at<double>(0,0)<<","<<tvec.at<double>(1,0)<<","<<tvec.at<double>(2,0);
 		model->nth_frame = n_frame;		
-		if (n_frame<=30)
-			fps_record.push_back(model->fps);
+		
 		//// record data here
 		//if (fr.isOpened()){
 		//	fr<<"fps"<<model->fps;
@@ -1403,6 +1463,14 @@ void OpenglPanel::updateGL()
 		//if (n_frame>=30)
 		//	fr.release();
 		//// end record data
+		
+		cv::Mat keypoint_img;
+		cv::drawKeypoints(currentFrame,cur_keypoints,keypoint_img,cv::Scalar(255,0,0));
+		cv::imshow("keypoint_img", keypoint_img);
+		if (n_frame > stop_record_frame)
+		{			
+			startTracking();
+		}
 
 	}	
 	else
