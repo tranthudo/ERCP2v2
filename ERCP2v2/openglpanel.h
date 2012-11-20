@@ -100,8 +100,9 @@ private:
 	std::vector<int> number_of_previous_matches_record;
 	std::vector<double> back_projection_time_record;
 	std::vector<double> robust_estimation_time_record;
-	
-
+	std::vector<double> detection_time_record;
+	std::vector<double> extraction_time_record;
+	std::vector<double> matching_time_record;
 
 	cv::Mat camera_intrinsic;
 	cv::Mat camera_extrinsic;

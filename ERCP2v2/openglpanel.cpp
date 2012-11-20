@@ -11,7 +11,7 @@ const int max_keypoints = 300;
 const int max_previous_matches = 30;
 const int max_first_matches = 100;
 const int min_num_first_matches  = 15;
-const double hessian_threshold = 80.0;
+const double hessian_threshold = 60.0;
 const double pose_diff_max = 1.0;
 const double first_pose_diff_max = 6.0;
 const int n_frame_to_skip = 1;
@@ -30,7 +30,7 @@ const int stop_record_frame = 1000;
 
 
 OpenglPanel::OpenglPanel(QWidget *parent)
-	: QGLWidget(parent),surf_gpu(hessian_threshold,1,3,false,0.01,false)
+	: QGLWidget(parent),surf_gpu(hessian_threshold,2,2,false,0.01,false)
 {
 	mse_max = 20.0;
 	/*QGLFormat newFormat = this->format();
@@ -1101,6 +1101,10 @@ void OpenglPanel::startTracking()
 			fr<<"number_of_previous_matches_record"<<number_of_previous_matches_record;
 			fr<<"back_projection_time"<<back_projection_time_record;
 			fr<<"robust_estimation_time"<<robust_estimation_time_record;
+			fr<<"detection_time_record"<<detection_time_record;
+			fr<<"extraction_time_record"<<extraction_time_record;
+			fr<<"matching_time_record"<<matching_time_record;
+			fr<<"ransac1_times_record"<<ransac1_times_record;
 			fr.release();
 		}			
 		timer->setInterval(100);
@@ -1195,7 +1199,10 @@ void OpenglPanel::updateGL()
 		{
 			cur_keypoints.erase(cur_keypoints.begin()+max_keypoints,cur_keypoints.end());
 		}
-		qDebug()<<"Time to detect"<<(cv::getTickCount()-tinit)*freq;
+		double detectionTime = (cv::getTickCount()-tinit)*freq;
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+			detection_time_record.push_back(detectionTime);
+		qDebug()<<"Time to detect"<<detectionTime;
 		
 		if (cur_keypoints.size()<10)
 		{
@@ -1223,15 +1230,20 @@ void OpenglPanel::updateGL()
 		// 2. CALCULATE THE FREAK & SURF DESCRIPTOR 
 		tinit = cv::getTickCount();	
 		hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);	//FREAK descriptor 	
-		qDebug()<<"Time to compute BINARY descriptor "<<(cv::getTickCount()-tinit)*freq;	// 
+		double extration_time = (cv::getTickCount()-tinit)*freq;
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+			extraction_time_record.push_back(extration_time);
+		qDebug()<<"Time to compute BINARY descriptor "<<extration_time;	// 
 		/*tinit = cv::getTickCount();*/
 		//l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors2);		// SURF descriptor
 		//cur_descriptors.copyTo(cur_descriptors2);
 		qDebug()<<"Number of current KeyPoints = "<<cur_keypoints.size()<<"Number of fist keypoints ="<<first_ref_KeyPoints.size();
 
+		
 		// 3. MATCHING keypoints 
 		// between current descriptor and previous frame descriptor
 		tinit = cv::getTickCount();	
+		double matching_time = tinit;
 		hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);
 		qDebug()<<"Time to match current & previous descriptor"<<(cv::getTickCount()-tinit)*freq<<"(ms), nMatches ="<<freakMatches.size();
 			
@@ -1240,7 +1252,9 @@ void OpenglPanel::updateGL()
 		hammingMatcher->match(cur_descriptors,first_ref_Descriptors,l2Matches);
 		qDebug()<<"Time to match current & first descriptor"<<(cv::getTickCount()-tinit)*freq<<"(ms), nMatches ="<<l2Matches.size();
 		//qDebug()<<"Size of matches = "<<matches.size()<<"; number of best matches[0] = "<<matches[0].size();
-
+		matching_time = (cv::getTickCount()-matching_time)*freq;
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+			matching_time_record.push_back(matching_time);
 		// 4. CALCULATE POSE FROM THE FIST POSE
 		imgPoints_selected.clear();                                         
 		objPoints_selected.clear();	
@@ -1294,7 +1308,10 @@ void OpenglPanel::updateGL()
 			}
 			else fun_inliers1.push_back(0);
 		}	*/	
-		qDebug()<<"first matches.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
+		double ransac1_time = (cv::getTickCount()-tinit)*freq;
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
+		ransac1_times_record.push_back(ransac1_time);
+		qDebug()<<"first matches.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<ransac1_time;
 		
 		//if (new_matches1.size()<=5)// refine with fundamental matching
 		//{
@@ -1372,9 +1389,9 @@ void OpenglPanel::updateGL()
 				// Refine by robust estimator
 				tinit = cv::getTickCount();				
 				
-				//cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
 				//n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,true,new_num_first_matches);
-				n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true,0);
+				n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true,new_num_first_matches);
 				std::vector<cv::Point2f> new_projectPoints;
 				cv::projectPoints(refined_objPoints,rvec,tvec,camera_intrinsic, distCoeffs,new_projectPoints);
 				double mse = cv::norm(new_projectPoints,refined_imgPoints); 
