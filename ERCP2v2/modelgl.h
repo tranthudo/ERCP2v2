@@ -123,7 +123,8 @@ public slots:
 
 	void setWidth(int width);
 	void setHeight(int height);
-
+	void toggleDrawWireFrame();
+	void toogleDrawHiddenOrgan();
 
 private:
 	float thirdPersonDistance;
@@ -149,6 +150,9 @@ private:
 	float bgColor[3];
 	//GLMmodel* object;
 	CObj* m_Obj;
+	CObj* m_Obj_Pancreas;
+	bool draw_wire_frame;
+	bool draw_hidden_organ;
 	// Image
 	GLuint textureID;								// texture ID
 	GLvoid *font_style;// = GLUT_BITMAP_TIMES_ROMAN_24;

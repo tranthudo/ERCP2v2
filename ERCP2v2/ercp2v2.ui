@@ -915,6 +915,41 @@
      <string>Test Feature Detection</string>
     </property>
    </widget>
+   <widget class="QCheckBox" name="checkBoxDrawHiddenOrgan">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>680</y>
+      <width>141</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Draw Hidden Organ</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBoxDrawWireFrame">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>680</y>
+      <width>151</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Draw Wire Frame</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+    <property name="tristate">
+     <bool>false</bool>
+    </property>
+   </widget>
    <zorder>groupBox</zorder>
    <zorder>groupBox_2</zorder>
    <zorder>groupBox_3</zorder>
@@ -931,6 +966,8 @@
    <zorder>pushButtonStartTracking</zorder>
    <zorder>pushButtonTestFeatureDetection</zorder>
    <zorder>widget</zorder>
+   <zorder>checkBoxDrawHiddenOrgan</zorder>
+   <zorder>checkBoxDrawWireFrame</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -975,6 +1012,8 @@
     <slot>prepareTracking()</slot>
     <slot>initialization()</slot>
     <slot>testFeatureDetection()</slot>
+    <slot>toogleDrawWireFrame()</slot>
+    <slot>toggleDrawHiddenOrgan()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -989,8 +1028,8 @@
    <slot>resetCamera()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1061</x>
-     <y>97</y>
+     <x>980</x>
+     <y>95</y>
     </hint>
     <hint type="destinationlabel">
      <x>1161</x>
@@ -1005,8 +1044,8 @@
    <slot>resetModel()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1067</x>
-     <y>352</y>
+     <x>974</x>
+     <y>355</y>
     </hint>
     <hint type="destinationlabel">
      <x>1199</x>
@@ -1021,8 +1060,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1244</x>
-     <y>832</y>
+     <x>1144</x>
+     <y>835</y>
     </hint>
     <hint type="destinationlabel">
      <x>1291</x>
@@ -1037,8 +1076,8 @@
    <slot>startManualCalibration()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1258</x>
-     <y>620</y>
+     <x>1220</x>
+     <y>625</y>
     </hint>
     <hint type="destinationlabel">
      <x>655</x>
@@ -1053,8 +1092,8 @@
    <slot>setNumberOfPoints(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1311</x>
-     <y>656</y>
+     <x>1211</x>
+     <y>654</y>
     </hint>
     <hint type="destinationlabel">
      <x>655</x>
@@ -1085,8 +1124,8 @@
    <slot>pushButtonCalculateCalibrationClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1328</x>
-     <y>684</y>
+     <x>1220</x>
+     <y>685</y>
     </hint>
     <hint type="destinationlabel">
      <x>1329</x>
@@ -1133,8 +1172,8 @@
    <slot>testOptimization()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1280</x>
-     <y>334</y>
+     <x>1230</x>
+     <y>345</y>
     </hint>
     <hint type="destinationlabel">
      <x>655</x>
@@ -1149,8 +1188,8 @@
    <slot>testNewMutualInformation()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1253</x>
-     <y>380</y>
+     <x>1230</x>
+     <y>375</y>
     </hint>
     <hint type="destinationlabel">
      <x>640</x>
@@ -1181,8 +1220,8 @@
    <slot>objOrigin()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1063</x>
-     <y>131</y>
+     <x>974</x>
+     <y>135</y>
     </hint>
     <hint type="destinationlabel">
      <x>1131</x>
@@ -1197,8 +1236,8 @@
    <slot>pushButtonCalculateCalibrationClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1035</x>
-     <y>354</y>
+     <x>974</x>
+     <y>355</y>
     </hint>
     <hint type="destinationlabel">
      <x>1043</x>
@@ -1213,8 +1252,8 @@
    <slot>selfCalibration()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1290</x>
-     <y>726</y>
+     <x>1220</x>
+     <y>725</y>
     </hint>
     <hint type="destinationlabel">
      <x>279</x>
@@ -1230,7 +1269,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>1164</x>
-     <y>439</y>
+     <y>435</y>
     </hint>
     <hint type="destinationlabel">
      <x>337</x>
@@ -1261,8 +1300,8 @@
    <slot>initialization()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1071</x>
-     <y>664</y>
+     <x>1030</x>
+     <y>665</y>
     </hint>
     <hint type="destinationlabel">
      <x>625</x>
@@ -1278,7 +1317,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>1226</x>
-     <y>530</y>
+     <y>525</y>
     </hint>
     <hint type="destinationlabel">
      <x>647</x>
@@ -1286,9 +1325,42 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>checkBoxDrawWireFrame</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>widget</receiver>
+   <slot>toogleDrawWireFrame()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>437</x>
+     <y>724</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>450</x>
+     <y>670</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxDrawHiddenOrgan</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>widget</receiver>
+   <slot>toggleDrawHiddenOrgan()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>120</x>
+     <y>716</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>131</x>
+     <y>676</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <signal>saveOpenGLImage()</signal>
+  <signal>toogleDrawWireFrame()</signal>
   <slot>updateCameraUI()</slot>
   <slot>updateCameraPose()</slot>
   <slot>resetCamera()</slot>

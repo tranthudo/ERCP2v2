@@ -68,9 +68,14 @@ ModelGL::ModelGL(QObject *parent)
 	m_Obj=NULL;
 	m_Obj=new CObj;
 	m_Obj->ReadObjData("data/duodenum.uni2.obj");
+	m_Obj_Pancreas=NULL;
+	m_Obj_Pancreas = new CObj;
+	m_Obj_Pancreas->ReadObjData("data/bileduct.a.obj");
 	//vec3d mid=mobj->m_MidPoint;
 	fps = 0;
 	nth_frame = 0;
+	draw_hidden_organ = true;
+	draw_wire_frame = true;
 }
 
 ModelGL::~ModelGL()
@@ -883,9 +888,19 @@ void ModelGL::drawSub2()
 
 	glLoadMatrixf(glm::value_ptr(modelViewMatrix));
 	//drawModel();	
-	glColor3f(0.0,1.0,0.0);
-	m_Obj->DrawWireframe();	
-
+	if (draw_wire_frame) {
+		glColor3f(0,1.0,0.0);
+		m_Obj->DrawWireframe();	
+	}
+	if (draw_hidden_organ)
+	{
+		vec3d color2(1,1.0,0);		
+		glScalef(3,3,3);
+		glRotatef(40,1,0,0);
+		//glRotatef(30,0,1,0);
+		glTranslatef(11,2,0);
+		m_Obj_Pancreas->DrawObject(true,color2);
+	}	
 	glPopMatrix();
 	glPopAttrib();
 }
@@ -940,6 +955,12 @@ void ModelGL::drawSub3()
 		glEnd();
 	}
 	m_Obj->DrawObject(false, color);
+	vec3d color2(1,1,0.0);
+		
+	glScalef(3,3,3);
+	glRotatef(40,1,0,0);
+	glTranslatef(11,2,0);
+	m_Obj_Pancreas->DrawObject(true,color2);
 	glPopMatrix();
 
 	// draw the camera
@@ -1120,9 +1141,19 @@ void ModelGL::drawFPS()
 	//  Print the FPS to the window
 	glDisable(GL_BLEND);
 	glColor3f(1.0f,1.0f,1.0f);
-	//printw (5, 30, -60, "[FPS: %4.2f]", fps);
-	printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
+	printw (5, 30, -60, "[FPS: %4.2f]", fps);
+//	printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
 	glEnable(GL_BLEND);
+}
+
+void ModelGL::toggleDrawWireFrame()
+{
+	draw_wire_frame = !draw_wire_frame;
+}
+
+void ModelGL::toogleDrawHiddenOrgan()
+{
+	draw_hidden_organ = !draw_hidden_organ;
 }
 
 

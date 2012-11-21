@@ -414,7 +414,7 @@ void N2TFREAK::computeImpl( const Mat& image, std::vector<KeyPoint>& keypoints, 
                     for(int kk = nm+15*8; kk >= nm; kk-=8, ++cnt)
                     {
                         //ptr->set(kk, pointsValue[descriptionPairs[cnt].i] >= pointsValue[descriptionPairs[cnt].j]);
-						ptr->set(kk,((pointsValue[descriptionPairs[cnt].i] - pointsValue[descriptionPairs[cnt].j])<30)&(pointsValue[descriptionPairs[cnt].i] > pointsValue[descriptionPairs[cnt].j]));
+						ptr->set(kk,((pointsValue[descriptionPairs[cnt].i] - pointsValue[descriptionPairs[cnt].j])<20)&(pointsValue[descriptionPairs[cnt].i] > pointsValue[descriptionPairs[cnt].j]));
                     }
                 }
             }

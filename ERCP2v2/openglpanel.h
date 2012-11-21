@@ -188,6 +188,8 @@ public:
 	cv::Mat getCurrentOpenGLImage();
 
 private slots:
+	void toogleDrawWireFrame();
+	void toggleDrawHiddenOrgan();
 	void startManualCalibration();
 	void setNumberOfPoints(int n);
 	void calculateCalibration();

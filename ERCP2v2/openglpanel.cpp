@@ -16,8 +16,8 @@ const double pose_diff_max = 1.0;
 const double first_pose_diff_max = 6.0;
 const int n_frame_to_skip = 1;
 const int start_record_frame = 0;
-const int stop_record_frame = 1000;
-
+const int stop_record_frame = 1050;
+const bool record = false;
 
 //double Func::operator()( VecDoub &x )
 //{
@@ -32,11 +32,14 @@ const int stop_record_frame = 1000;
 OpenglPanel::OpenglPanel(QWidget *parent)
 	: QGLWidget(parent),surf_gpu(hessian_threshold,2,2,false,0.01,false)
 {
+	surf_gpu.upright = true;
 	mse_max = 20.0;
-	/*QGLFormat newFormat = this->format();
-	newFormat.setDoubleBuffer(false);
-	this->setFormat(newFormat);*/
+
 	// Set the double buffer to false in order to get the Frame at each iteration
+	QGLFormat newFormat = this->format();
+	newFormat.setDoubleBuffer(false);
+	this->setFormat(newFormat);
+	
 	model = ((ERCP2v2*)((this->parent())->parent()))->getModelGL();
 	movement = NONE;
 	mode = STOP;
@@ -438,6 +441,7 @@ void OpenglPanel::testManualTracking()
 		virtualImagePoints.clear();
 		realImagePoints.clear();
 		objPoints.clear();
+		model->markerPoints.clear();
 	}
 
 }
@@ -978,14 +982,14 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 		referenceFrame.copyTo(firstFrame);*/
 		currentFrame.copyTo(referenceFrame);
 		referenceFrame.copyTo(firstFrame);
-
+		currentFrame.copyTo(model->textureImage);
 		// draw some points in two images here
 		model->markerPoints.clear();
+		
 		for (int i = 0; i<4;i++)
 		{
 			cv::circle(model->textureImage,realImagePoints[i],3,cv::Scalar(255,0,0),-1);
-			model->markerPoints.push_back(objPoints[i]);
-			
+			model->markerPoints.push_back(objPoints[i]);			
 		}
 
 
@@ -1815,6 +1819,16 @@ void OpenglPanel::testFeatureDetection()
 	cv::imshow("New Matched Img",new_matches_img);
 	}
 	
+}
+
+void OpenglPanel::toogleDrawWireFrame()
+{
+	model->toggleDrawWireFrame();
+}
+
+void OpenglPanel::toggleDrawHiddenOrgan()
+{
+	model->toogleDrawHiddenOrgan();
 }
 
 
