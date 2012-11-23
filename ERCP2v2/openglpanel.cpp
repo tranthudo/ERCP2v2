@@ -11,13 +11,14 @@ const int max_keypoints = 300;
 const int max_previous_matches = 30;
 const int max_first_matches = 100;
 const int min_num_first_matches  = 15;
-const double hessian_threshold = 60.0;
+const double hessian_threshold = 50.0;
 const double pose_diff_max = 1.0;
-const double first_pose_diff_max = 6.0;
+const double first_pose_diff_max = 8.0;
 const int n_frame_to_skip = 1;
 const int start_record_frame = 0;
-const int stop_record_frame = 1050;
+const int stop_record_frame = 10;
 const bool record = false;
+const double gray_threshold = 229;
 
 //double Func::operator()( VecDoub &x )
 //{
@@ -30,7 +31,7 @@ const bool record = false;
 
 
 OpenglPanel::OpenglPanel(QWidget *parent)
-	: QGLWidget(parent),surf_gpu(hessian_threshold,2,2,false,0.01,false)
+	: QGLWidget(parent),surf_gpu(hessian_threshold,2,2,false,0.05)
 {
 	surf_gpu.upright = true;
 	mse_max = 20.0;
@@ -53,16 +54,16 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
-	//detector = new cv::FastFeatureDetector(10,false);//
-	detector = new cv::SURF(60,2,2,true,true);
+	//detector = new cv::FastFeatureDetector(10, false);//
+	detector = new cv::SURF(50,1,2,false,true);
 	//detector = new cv::FastFeatureDetector;
 	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);
 	
-	//hammingExtractor = new cv::FREAK(false,true, 10.0f,4,std::vector<int>());
+	//hammingExtractor = new cv::FREAK(false,false, 10.0f,4,std::vector<int>());
 	hammingExtractor = new cv::N2TFREAK(false,false, 10.0f,4,std::vector<int>());
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
 
-	l2Extractor = new cv::SURF(100,1,3, false,false);
+	l2Extractor = new cv::SURF(70,1,3, false,false);
 	//l2Extractor = new cv::SIFT(1000,2,0.05,10.0,1.0);
 
 	l2Matcher = new cv::BFMatcher(cv::NORM_L1,true);
@@ -78,11 +79,14 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::Mat croppedImage;
 	captureRate = capture.get(CV_CAP_PROP_FPS);// get the frame per second
 	bool stop(false);
-	cv::namedWindow("Video Frame");
-	cv::namedWindow("Cropped Frame");
+	//cv::namedWindow("Video Frame");
+	cv::namedWindow("Current frame keypoints");
+	cv::namedWindow("Previous frame keypoints");
+	cv::namedWindow("Matches between first frame and current frame");
+	cv::namedWindow("Matches between previous frame and current frame");
 	// Delay between each frame in ms
 	// corresponding to video frame rate
-	captureDelay = 950.0/captureRate;
+	captureDelay = 1000.0/captureRate;
 	// go to frame at (minute, second) of the video
 	int minute = 1;
 	int second = 22;
@@ -1027,13 +1031,20 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	ref_descriptors.copyTo(first_ref_Descriptors);
 	//l2Extractor->compute(referenceGrayImg,ref_keypoints,first_ref_Descriptors);
 	//ref_descriptors.copyTo(first_ref_Descriptors);
+	
+	// draw reference keypoints
+	/*cv::Mat keypoint_ref_img;
+	cv::drawKeypoints(currentFrame,ref_keypoints,keypoint_ref_img,cv::Scalar(255,0,0));
+	cv::imshow("REFERENCE KEYPOINTS", keypoint_ref_img);*/
+	// end draw Reference keypoint
 	refObjPoints.clear();
 	refImagePoints.clear();	
 	first_ref_KeyPoints.clear();
 	dbDescriptors.clear();
 	qDebug()<<"Reference Keypoints size = "<<ref_keypoints.size();
-	for (int i = 0; i<ref_keypoints.size(); i++)
-	{
+	
+	for (int i = 0; i<ref_keypoints.size(); i++)	{
+		
 		float x = ref_keypoints[i].pt.x;
 		float y = ref_keypoints[i].pt.y;
 		cv::Point3f objPoint;
@@ -1045,6 +1056,11 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 		first_ref_ObjPoints.push_back(objPoint);
 		first_ref_KeyPoints.push_back(ref_keypoints[i]);
 	}
+	
+	//model->keypoint2Draw = refObjPoints;
+
+
+
 	// Train the first frame descriptor
 	/*dbDescriptors.push_back(first_ref_Descriptors);	
 	flannMatcher.add(dbDescriptors);
@@ -1077,7 +1093,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 void OpenglPanel::startTracking()
 {		
 	capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
-	capturePosition+=25*captureDelay;
+	capturePosition+=captureDelay;
 	// for all fames in video
 	capture.grab();
 	capture.retrieve(frame);
@@ -1092,6 +1108,14 @@ void OpenglPanel::startTracking()
 		if (!fr.isOpened())
 		fr.open("data/output/data.yml",cv::FileStorage::WRITE);
 		capture>>frame;
+		//capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
+		//capturePosition+=captureDelay;
+		//// for all fames in video
+		//capture.grab();
+		//capture.retrieve(frame);
+		//croppedImage = frame(cv::Rect(258,86,312,312));
+		//croppedImage.copyTo(currentFrame);
+		//currentFrame.copyTo(previousFrame);
 	}
 	else{
 		mode = STOP;
@@ -1123,8 +1147,8 @@ void OpenglPanel::updateGL()
 	{	
 		//n_frame_rate = cv::getTickCount();
 		// grabbing the video 		
-		n_frame_rate=tinit = cv::getTickCount();
-
+		
+		tinit = cv::getTickCount();
 		//capturePosition +=captureDelay*n_frame_to_skip;
 		//capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
 		//// for all fames in video
@@ -1133,6 +1157,7 @@ void OpenglPanel::updateGL()
 		//	return;		
 		capture>>frame;		
 		qDebug()<<"Time to grab video "<<(cv::getTickCount()-tinit)*freq;
+		n_frame_rate=tinit = cv::getTickCount();
 		//capture>>frame;
 		tinit = cv::getTickCount();
 		croppedImage = frame(cv::Rect(258,86,312,312));
@@ -1169,7 +1194,7 @@ void OpenglPanel::updateGL()
 				objPoint = GetOGLPos(cur_keypoints[i].pt,viewPort);				
 				refObjPoints.push_back(objPoint);	
 			}*/
-			//model->keypoint2Draw = refObjPoints;
+			model->keypoint2Draw = refObjPoints;
 		}	
 		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
 			number_of_previous_matches_record.push_back(ref_keypoints.size());
@@ -1186,7 +1211,7 @@ void OpenglPanel::updateGL()
 		// 1. DETECT KEYPOINT IN THE CURRENT FRAME
 
 		cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
-		cv::threshold(currentGrayFrame,mask,180,255,cv::THRESH_BINARY_INV);	
+		cv::threshold(currentGrayFrame,mask,gray_threshold,255,cv::THRESH_BINARY_INV);	
 		cv::erode(mask,mask,cv::Mat());
 		//cv::imshow("CUR MASK",mask);
 		//#ifdef _DEBUG
@@ -1199,6 +1224,7 @@ void OpenglPanel::updateGL()
 		img_gpu.upload(currentGrayFrame);
 		mask_gpu.upload(mask);
 		surf_gpu(img_gpu,mask_gpu,cur_keypoints);
+		//detector->detect(currentGrayFrame,cur_keypoints,mask);
 		if (cur_keypoints.size()>max_keypoints)
 		{
 			cur_keypoints.erase(cur_keypoints.begin()+max_keypoints,cur_keypoints.end());
@@ -1286,7 +1312,7 @@ void OpenglPanel::updateGL()
 		cv::Mat temp_rvec,temp_tvec;
 		rvec.copyTo(temp_rvec);
 		tvec.copyTo(temp_tvec);
-		cv::solvePnPRansac(cv::Mat(new_objPoints_selected2),cv::Mat(new_imgPoints_selected1),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,20.0,40,ran_inliers,CV_EPNP);
+		cv::solvePnPRansac(cv::Mat(new_objPoints_selected2),cv::Mat(new_imgPoints_selected1),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,20.0,40,ran_inliers,CV_EPNP);		
 		for (int i = 0; i<ran_inliers.size();i++)
 		{
 			new_matches1.push_back(l2Matches[ran_inliers[i]]);
@@ -1294,7 +1320,8 @@ void OpenglPanel::updateGL()
 			{
 				break;
 			}
-		}
+		}		
+		
 		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
 			matches1_ransac_record.push_back(ran_inliers.size());
 		//End solvePnpRansac to find the matches between current frame and previous frame
@@ -1441,8 +1468,8 @@ void OpenglPanel::updateGL()
 		}
 
 		// calculate error between previous and current frame
-		double diff1 =cv::norm(prev_rvec-rvec)+cv::norm(prev_tvec-tvec);
-		double diff2 = cv::norm(first_rvec-rvec)+cv::norm(first_tvec-tvec);
+		double diff1 =2*cv::norm(prev_rvec-rvec)+cv::norm(prev_tvec-tvec);
+		double diff2 = 2*cv::norm(first_rvec-rvec)+cv::norm(first_tvec-tvec);
 		qDebug()<<"NORM of DIFF between previous and current pose = "<<diff1<<"with first pose"<<diff2;
 		if (((diff1 > pose_diff_max) |(diff2>first_pose_diff_max))&(new_matches1.size()<min_num_first_matches)) {
 			prev_tvec.copyTo(tvec);
@@ -1466,6 +1493,23 @@ void OpenglPanel::updateGL()
 		model->fps = 1000.0/((double)(tinit-n_frame_rate)*freq)*(double)n_frame_to_skip;
 		n_frame_rate = cv::getTickCount();
 		// end calculate frame rate
+		
+		
+		// Drawing the matches here
+		cv::Mat previousFrameKeypoint;
+		
+		cv::drawKeypoints(referenceFrame,ref_keypoints,previousFrameKeypoint,cv::Scalar(255,0,0));
+		cv::imshow("Previous frame keypoints",previousFrameKeypoint);
+		cv::Mat match1,match2;
+		cv::drawMatches(currentFrame,cur_keypoints,firstFrame,first_ref_KeyPoints,new_matches1,match1,cv::Scalar(0,255,0),cv::Scalar(255,0,0));
+		
+		cv::imshow("Matches between first frame and current frame", match1);
+		cv::drawMatches(currentFrame,cur_keypoints,referenceFrame,ref_keypoints,new_matches2,match2,cv::Scalar(0,255,0),cv::Scalar(255,0,0));
+		
+		cv::imshow("Matches between previous frame and current frame", match2);
+		cv::Mat keypoint_img;
+		cv::drawKeypoints(currentFrame,cur_keypoints,keypoint_img,cv::Scalar(255,0,0));
+		cv::imshow("Current frame keypoints", keypoint_img);
 
 		poseGLUpdate();
 		currentFrame.copyTo(referenceFrame);
@@ -1485,10 +1529,10 @@ void OpenglPanel::updateGL()
 		//	fr.release();
 		//// end record data
 		
-		cv::Mat keypoint_img;
-		cv::drawKeypoints(currentFrame,cur_keypoints,keypoint_img,cv::Scalar(255,0,0));
-		cv::imshow("keypoint_img", keypoint_img);
-		if (n_frame > stop_record_frame)
+		
+
+		cv::Mat matches1,matches2;
+		if (n_frame > 1050)
 		{			
 			startTracking();
 		}

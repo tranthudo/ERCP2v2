@@ -143,11 +143,11 @@ void tukey( double *p, double *x, int m, int n, void*adata )
 		w1 = 1.0;
 	else if (n2tData->number_of_first_matches<N_MAX){
 		double dd = (n2tData->number_of_first_matches-N_MIN)/N_MAX;
-		w1 = 1+dd*dd;
+		w1 = 1.0+dd*dd;
 	}
 	else {
 		double dd = (N_MAX-N_MIN)/N_MAX;
-		w1 = 1+dd*dd;
+		w1 = 1.0+dd*dd;
 	}
 		
 
