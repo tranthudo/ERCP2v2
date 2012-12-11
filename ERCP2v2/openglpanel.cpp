@@ -11,14 +11,14 @@ const int max_keypoints = 300;
 const int max_previous_matches = 30;
 const int max_first_matches = 100;
 const int min_num_first_matches  = 15;
-const double hessian_threshold = 50.0;
+const double hessian_threshold = 60.0;
 const double pose_diff_max = 1.0;
-const double first_pose_diff_max = 8.0;
+const double first_pose_diff_max = 10.0;
 const int n_frame_to_skip = 1;
 const int start_record_frame = 0;
-const int stop_record_frame = 10;
+const int stop_record_frame = 500;
 const bool record = false;
-const double gray_threshold = 229;
+const double gray_threshold = 230;
 
 //double Func::operator()( VecDoub &x )
 //{
@@ -31,7 +31,7 @@ const double gray_threshold = 229;
 
 
 OpenglPanel::OpenglPanel(QWidget *parent)
-	: QGLWidget(parent),surf_gpu(hessian_threshold,2,2,false,0.05)
+	: QGLWidget(parent),surf_gpu(hessian_threshold,2,2,false,0.01)
 {
 	surf_gpu.upright = true;
 	mse_max = 20.0;
@@ -54,8 +54,8 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	cv::Mat distCoeffsTemp(1,4,CV_64FC1,__d);
 	distCoeffsTemp.copyTo(distCoeffs);
 	// Initialize feature detections
-	//detector = new cv::FastFeatureDetector(10, false);//
-	detector = new cv::SURF(50,1,2,false,true);
+	detector = new cv::FastFeatureDetector(10, false);//
+	//detector = new cv::SURF(50,1,2,false,true);
 	//detector = new cv::FastFeatureDetector;
 	//detector = new cv::SIFT(1000,2,0.05,10.0,1.0);
 	
@@ -985,6 +985,7 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 		/*model->fixedImage.copyTo(referenceFrame);	
 		referenceFrame.copyTo(firstFrame);*/
 		currentFrame.copyTo(referenceFrame);
+		//cv::imwrite("img/duo_img000.png",referenceFrame);
 		referenceFrame.copyTo(firstFrame);
 		currentFrame.copyTo(model->textureImage);
 		// draw some points in two images here
@@ -1006,6 +1007,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	// Create a mask to eliminate the specular point
 	cv::Mat mask;
 	cv::Mat referenceGrayImg;
+	
 	cv::cvtColor(referenceFrame, referenceGrayImg,CV_RGB2GRAY);
 	cv::threshold(referenceGrayImg,mask,140,255,cv::THRESH_BINARY_INV);
 	cv::erode(mask,mask,cv::Mat());
@@ -1123,6 +1125,8 @@ void OpenglPanel::startTracking()
 			fr<<"fps"<<fps_record;
 			fr<<"rvec"<<rvec_Record;
 			fr<<"tvec"<<tvec_Record;
+			fr<<"rvec_rodrigues"<<rvec_Record_Rodrigues;
+			fr<<"tvec_rodrigues"<<tvec_Record_Rodrigues;
 			fr<<"matches1"<<matches1_record;
 			fr<<"matches1_ransac"<<matches1_ransac_record;
 			fr<<"mean_squared_error_record"<<mean_squared_error_record;
@@ -1212,7 +1216,8 @@ void OpenglPanel::updateGL()
 
 		cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
 		cv::threshold(currentGrayFrame,mask,gray_threshold,255,cv::THRESH_BINARY_INV);	
-		cv::erode(mask,mask,cv::Mat());
+		cv::Mat element(3,3,1);
+		cv::erode(mask,mask,element);
 		//cv::imshow("CUR MASK",mask);
 		//#ifdef _DEBUG
 		//	cv::imshow("CUR MASK",mask);
@@ -1310,9 +1315,11 @@ void OpenglPanel::updateGL()
 			matches1_record.push_back(l2Matches.size());
 		// solvePnpRansac to find the matches between current frame and very first frame
 		cv::Mat temp_rvec,temp_tvec;
+		/*first_rvec.copyTo(temp_rvec);
+		first_tvec.copyTo(temp_tvec);*/
 		rvec.copyTo(temp_rvec);
 		tvec.copyTo(temp_tvec);
-		cv::solvePnPRansac(cv::Mat(new_objPoints_selected2),cv::Mat(new_imgPoints_selected1),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,20.0,40,ran_inliers,CV_EPNP);		
+		cv::solvePnPRansac(cv::Mat(new_objPoints_selected2),cv::Mat(new_imgPoints_selected1),camera_intrinsic,distCoeffs,temp_rvec,temp_tvec,true,100,16.0,50,ran_inliers,CV_EPNP);		
 		for (int i = 0; i<ran_inliers.size();i++)
 		{
 			new_matches1.push_back(l2Matches[ran_inliers[i]]);
@@ -1340,6 +1347,8 @@ void OpenglPanel::updateGL()
 			else fun_inliers1.push_back(0);
 		}	*/	
 		double ransac1_time = (cv::getTickCount()-tinit)*freq;
+		/*if (n_frame == 300 | n_frame == 400)
+			QMessageBox::critical(this,"300-400", "Ok");;*/
 		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
 		ransac1_times_record.push_back(ransac1_time);
 		qDebug()<<"first matches.size()"<<new_matches1.size()<<"/"<<new_imgPoints_selected1.size()<<" points; time to solve = "<<ransac1_time;
@@ -1381,7 +1390,7 @@ void OpenglPanel::updateGL()
 		// end finding matches of previous frame and current frame
 
 		// Prepare data to solve the pose estimation
-		if (new_matches1.size()>=11){
+		if (new_matches1.size()>=10){
 			number_first_matches = new_matches1.size();
 			for (int i = 0; i<new_matches1.size();i++)
 			{			
@@ -1401,7 +1410,7 @@ void OpenglPanel::updateGL()
 		if (imgPoints_selected.size()>=30){
 			// 4.2 RANSAC	
 			tinit = cv::getTickCount();
-			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,true,100,8.0f,30,inliers,cv::EPNP);
+			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,true,90,8.0f,50,inliers,cv::EPNP);
 			qDebug()<<"ransac_inliers2.size()"<<inliers.size()<<"/"<<imgPoints_selected.size()<<" points; time to solve = "<<(cv::getTickCount()-tinit)*freq;
 			if (inliers.size()>=20)
 			{
@@ -1479,14 +1488,7 @@ void OpenglPanel::updateGL()
 		else number_of_continuos_failures = 0;
 		// end calculate error between previous and current frame
 		//qDebug()<<"Size of rvec"<<rvec.cols;
-		if (n_frame>=start_record_frame && n_frame<=stop_record_frame){			
-			rvec_Record.push_back(rvec.at<double>(0,0));
-			rvec_Record.push_back(rvec.at<double>(1,0));
-			rvec_Record.push_back(rvec.at<double>(2,0));
-			tvec_Record.push_back(tvec.at<double>(0,0));
-			tvec_Record.push_back(tvec.at<double>(1,0));
-			tvec_Record.push_back(tvec.at<double>(2,0));
-		}
+		
 
 		// Calculate frame rate
 		tinit = cv::getTickCount();
@@ -1496,7 +1498,7 @@ void OpenglPanel::updateGL()
 		
 		
 		// Drawing the matches here
-		cv::Mat previousFrameKeypoint;
+		/*cv::Mat previousFrameKeypoint;
 		
 		cv::drawKeypoints(referenceFrame,ref_keypoints,previousFrameKeypoint,cv::Scalar(255,0,0));
 		cv::imshow("Previous frame keypoints",previousFrameKeypoint);
@@ -1509,8 +1511,15 @@ void OpenglPanel::updateGL()
 		cv::imshow("Matches between previous frame and current frame", match2);
 		cv::Mat keypoint_img;
 		cv::drawKeypoints(currentFrame,cur_keypoints,keypoint_img,cv::Scalar(255,0,0));
-		cv::imshow("Current frame keypoints", keypoint_img);
-
+		cv::imshow("Current frame keypoints", keypoint_img);*/
+		if (n_frame>=start_record_frame && n_frame<=stop_record_frame){			
+			rvec_Record_Rodrigues.push_back(rvec.at<double>(0,0));
+			rvec_Record_Rodrigues.push_back(rvec.at<double>(1,0));
+			rvec_Record_Rodrigues.push_back(rvec.at<double>(2,0));
+			tvec_Record_Rodrigues.push_back(tvec.at<double>(0,0));
+			tvec_Record_Rodrigues.push_back(tvec.at<double>(1,0));
+			tvec_Record_Rodrigues.push_back(tvec.at<double>(2,0));
+		}
 		poseGLUpdate();
 		currentFrame.copyTo(referenceFrame);
 		currentFrame.copyTo(model->textureImage);
@@ -1532,7 +1541,10 @@ void OpenglPanel::updateGL()
 		
 
 		cv::Mat matches1,matches2;
-		if (n_frame > 1050)
+		/*char duo_img_name[50];
+		sprintf(duo_img_name,"img/duo_img%.3d.png",n_frame);
+		cv::imwrite(duo_img_name,croppedImage);*/
+		if (n_frame > 500)
 		{			
 			startTracking();
 		}
@@ -1745,9 +1757,19 @@ void OpenglPanel::poseGLUpdate()
 	glm::vec3 camAng = getEulerFromRotationMatrix(glm::mat3(glm_camera_exintrinsic),model->getCameraAngles());	
 	ref_camera_positions = camPos;
 	ref_camera_angle = camAng;
-	((ERCP2v2*)((this->parent())->parent()))->updateUICamPosition(camPos);
+	glm::vec3 temp_tvec = glm::vec3(_t[0],_t[1],_t[2]);
+	((ERCP2v2*)((this->parent())->parent()))->updateUICamPosition(camPos);  // should be correct here to update the camPos instead!!
 	((ERCP2v2*)((this->parent())->parent()))->updateUICamAngles(camAng);
+	((ERCP2v2*)((this->parent())->parent()))->update();
 	model->setViewMatrix(camAng,camPos);	
+	if (n_frame>=start_record_frame && n_frame<=stop_record_frame){			
+		rvec_Record.push_back(camAng[0]);
+		rvec_Record.push_back(camAng[1]);
+		rvec_Record.push_back(camAng[2]);
+		tvec_Record.push_back(camPos[0]);
+		tvec_Record.push_back(camPos[1]);
+		tvec_Record.push_back(camPos[2]);
+	}
 }
 
 void OpenglPanel::initialization()

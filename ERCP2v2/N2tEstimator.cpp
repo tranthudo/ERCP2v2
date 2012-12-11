@@ -3,13 +3,11 @@
 #include <stdio.h>
 #include <assert.h>
 
-const int N_MIN = 10;
+const int N_MIN = 8;
 const int N_MAX = 20;
 
 N2tEstimator::N2tEstimator()
 {
-	
-
 	double opts[LM_OPTS_SZ], info[LM_INFO_SZ]; 
 	opts[0] = LM_INIT_MU;// tau = LM_INIT_MU = 1E-3;
 	opts[1] = 1E-15;
@@ -137,11 +135,12 @@ void tukey( double *p, double *x, int m, int n, void*adata )
 	cv::Mat errPoints;
 	cv::projectPoints(n2tData->ObjPoints,rvec,tvec,n2tData->camera_intrinsic,n2tData->distCoeffs,errPoints);	
 	errPoints = errPoints-n2tData->ImgPoints;	
-	double c = 2.0;
+	double c = 1.5;
 	double w1;
-	if (n2tData->number_of_first_matches<N_MIN)
-		w1 = 1.0;
-	else if (n2tData->number_of_first_matches<N_MAX){
+	if (n2tData->number_of_first_matches<N_MIN){
+		double dd = (N_MIN-n2tData->number_of_first_matches)/N_MAX;
+		w1 = 1.0-0.1*dd*dd;
+	}	else if (n2tData->number_of_first_matches<N_MAX){
 		double dd = (n2tData->number_of_first_matches-N_MIN)/N_MAX;
 		w1 = 1.0+dd*dd;
 	}

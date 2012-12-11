@@ -74,7 +74,7 @@ ModelGL::ModelGL(QObject *parent)
 	//vec3d mid=mobj->m_MidPoint;
 	fps = 0;
 	nth_frame = 0;
-	draw_hidden_organ = true;
+	draw_hidden_organ = false;
 	draw_wire_frame = true;
 }
 
@@ -936,7 +936,7 @@ void ModelGL::drawSub3()
 	glRotatef(objAngles[0], 1, 0, 0);
 	glRotatef(objAngles[1], 0, 1, 0);
 	glRotatef(objAngles[2], 0, 0, 1);
-	drawAxis(4);
+	//drawAxis(4);
 	/*drawTeapot();*/
 
 	//drawModel();	
@@ -955,12 +955,15 @@ void ModelGL::drawSub3()
 		glEnd();
 	}
 	m_Obj->DrawObject(false, color);
-	vec3d color2(1,1,0.0);
-		
-	glScalef(3,3,3);
-	glRotatef(40,1,0,0);
-	glTranslatef(11,2,0);
-	m_Obj_Pancreas->DrawObject(true,color2);
+
+	if (draw_hidden_organ)
+	{
+		vec3d color2(1,1,0.0);		
+		glScalef(3,3,3);
+		glRotatef(40,1,0,0);
+		glTranslatef(11,2,0);
+		m_Obj_Pancreas->DrawObject(true,color2);
+	}
 	glPopMatrix();
 
 	// draw the camera
@@ -1141,8 +1144,8 @@ void ModelGL::drawFPS()
 	//  Print the FPS to the window
 	glDisable(GL_BLEND);
 	glColor3f(1.0f,1.0f,1.0f);
-	printw (5, 30, -60, "[FPS: %4.2f]", fps);
-//	printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
+	//printw (5, 30, -60, "[FPS: %4.2f]", fps);
+	printw (-20, 30, -60, "[FPS: %4.2f] frame %dth", fps,nth_frame);
 	glEnable(GL_BLEND);
 }
 

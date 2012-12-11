@@ -109,7 +109,7 @@ void ERCP2v2::updateUICamAngles(glm::vec3 ang)
 {
 	QObject::disconnect(ui.doubleSpinBoxCamAngX, SIGNAL(valueChanged(double)),model,SLOT(setCameraAngleX(double)));
 	QObject::disconnect(ui.doubleSpinBoxCamAngY, SIGNAL(valueChanged(double)),model,SLOT(setCameraAngleY(double)));
-	QObject::disconnect(ui.doubleSpinBoxCamAngZ, SIGNAL(valueChanged(double)),model,SLOT(setObjAngleZ(double)));
+	QObject::disconnect(ui.doubleSpinBoxCamAngZ, SIGNAL(valueChanged(double)),model,SLOT(setCameraAngleZ(double)));
 
 	ui.doubleSpinBoxCamAngX->setValue(ang.x);
 	ui.doubleSpinBoxCamAngY->setValue(ang.y);

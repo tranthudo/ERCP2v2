@@ -90,6 +90,7 @@ private:
 	cv::FileStorage fs;
 	cv::FileStorage fr;				//record data to make report
 	std::vector<double> rvec_Record, tvec_Record;
+	std::vector<double> rvec_Record_Rodrigues, tvec_Record_Rodrigues;
 	std::vector<cv::Mat> rvecs_record,tvecs_record;
 	std::vector<float> fps_record;
 	std::vector<int> matches1_ransac_record;		
