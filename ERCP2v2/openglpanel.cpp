@@ -65,7 +65,7 @@ OpenglPanel::OpenglPanel(QWidget *parent)
 	hammingExtractor = new cv::N2TFREAK(false,false, 10.0f,4,std::vector<int>());
 	hammingMatcher = new cv::BFMatcher(cv::NORM_HAMMING,true);
 
-	l2Extractor = new cv::SURF(70,1,3, false,false);
+	l2Extractor = new cv::SURF(true,2,2, false,true);
 	//l2Extractor = new cv::SIFT(1000,2,0.05,10.0,1.0);
 
 	l2Matcher = new cv::BFMatcher(cv::NORM_L1,true);
@@ -1031,10 +1031,10 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 		ref_keypoints.erase(ref_keypoints.begin()+max_keypoints,ref_keypoints.end());
 	}
 	// extraction of descriptor
-	hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
+	/*hammingExtractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
+	ref_descriptors.copyTo(first_ref_Descriptors);*/
+	l2Extractor->compute(referenceGrayImg,ref_keypoints,ref_descriptors);
 	ref_descriptors.copyTo(first_ref_Descriptors);
-	//l2Extractor->compute(referenceGrayImg,ref_keypoints,first_ref_Descriptors);
-	//ref_descriptors.copyTo(first_ref_Descriptors);
 	
 	// draw reference keypoints
 	/*cv::Mat keypoint_ref_img;
@@ -1186,7 +1186,8 @@ void OpenglPanel::updateGL()
 		tinit = cv::getTickCount();
 		if (!firstTime)
 		{//generateReferencePoints();			
-			cur_descriptors.copyTo(ref_descriptors);
+			//cur_descriptors.copyTo(ref_descriptors);
+			cur_descriptors2.copyTo(ref_descriptors);  // use this line for surf descriptor
 			refObjPoints.clear();
 			ref_keypoints.clear();
 			ref_keypoints = cur_keypoints;
@@ -1266,14 +1267,14 @@ void OpenglPanel::updateGL()
 
 		// 2. CALCULATE THE FREAK & SURF DESCRIPTOR 
 		tinit = cv::getTickCount();	
-		hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);	//FREAK descriptor 	
+		//hammingExtractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors);	//FREAK descriptor 	
+		l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors2);		// SURF descriptor		
 		double extration_time = (cv::getTickCount()-tinit)*freq;
 		if (n_frame>=start_record_frame && n_frame<=stop_record_frame)
 			extraction_time_record.push_back(extration_time);
 		qDebug()<<"Time to compute BINARY descriptor "<<extration_time;	// 
 		/*tinit = cv::getTickCount();*/
-		//l2Extractor->compute(currentGrayFrame,cur_keypoints,cur_descriptors2);		// SURF descriptor
-		//cur_descriptors.copyTo(cur_descriptors2);
+		
 		qDebug()<<"Number of current KeyPoints = "<<cur_keypoints.size()<<"Number of fist keypoints ="<<first_ref_KeyPoints.size();
 
 		
@@ -1281,12 +1282,14 @@ void OpenglPanel::updateGL()
 		// between current descriptor and previous frame descriptor
 		tinit = cv::getTickCount();	
 		double matching_time = tinit;
-		hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);
+		//hammingMatcher->match(cur_descriptors,ref_descriptors,freakMatches);
+		l2Matcher->match(cur_descriptors2,ref_descriptors,freakMatches);
 		qDebug()<<"Time to match current & previous descriptor"<<(cv::getTickCount()-tinit)*freq<<"(ms), nMatches ="<<freakMatches.size();
 			
 		// between current descriptor and first descriptor
 		tinit=cv::getTickCount();
-		hammingMatcher->match(cur_descriptors,first_ref_Descriptors,l2Matches);
+		//hammingMatcher->match(cur_descriptors,first_ref_Descriptors,l2Matches);
+		l2Matcher->match(cur_descriptors2,first_ref_Descriptors,l2Matches);
 		qDebug()<<"Time to match current & first descriptor"<<(cv::getTickCount()-tinit)*freq<<"(ms), nMatches ="<<l2Matches.size();
 		//qDebug()<<"Size of matches = "<<matches.size()<<"; number of best matches[0] = "<<matches[0].size();
 		matching_time = (cv::getTickCount()-matching_time)*freq;
