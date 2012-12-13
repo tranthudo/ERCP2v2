@@ -19,6 +19,8 @@ const int start_record_frame = 0;
 const int stop_record_frame = 500;
 const bool record = false;
 const double gray_threshold = 230;
+int start_ground_truth = 25;
+int stop_ground_truth = 60;
 
 //double Func::operator()( VecDoub &x )
 //{
@@ -31,7 +33,7 @@ const double gray_threshold = 230;
 
 
 OpenglPanel::OpenglPanel(QWidget *parent)
-	: QGLWidget(parent),surf_gpu(hessian_threshold,2,2,false,0.01)
+	: QGLWidget(parent),surf_gpu(hessian_threshold,2,2,false,0.01),current_self_frame(0),computeGroundTruth(false)
 {
 	surf_gpu.upright = true;
 	mse_max = 20.0;
@@ -1429,7 +1431,7 @@ void OpenglPanel::updateGL()
 				// Refine by robust estimator
 				tinit = cv::getTickCount();				
 				
-				cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				//cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
 				//n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,true,new_num_first_matches);
 				n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true,new_num_first_matches);
 				std::vector<cv::Point2f> new_projectPoints;
@@ -1895,6 +1897,165 @@ void OpenglPanel::toogleDrawWireFrame()
 void OpenglPanel::toggleDrawHiddenOrgan()
 {
 	model->toogleDrawHiddenOrgan();
+}
+
+void OpenglPanel::correctGroundTruth()
+{
+	if (!computeGroundTruth){
+		computeGroundTruth =true;
+		current_self_frame = start_ground_truth;
+		char duo_img_name[50];
+		sprintf(duo_img_name,"img/duo_img%.3d.png",current_self_frame);
+		currentFrame = cv::imread(duo_img_name);
+		// load the data
+		fr.open("data/output/data.yml",cv::FileStorage::READ);
+		fr["rvec"]>>rvec_GroundTruth;
+		fr["tvec"]>>tvec_GroundTruth;
+		fr["rvec_rodrigues"]>>rvec_Rodrigues_GroundTruth;
+		fr["tvec_rodrigues"]>>tvec_Rodrigues_GroundTruth;
+		fr.release();
+		
+		// update UI & openGL here
+		glm::vec3 camAng = glm::vec3(rvec_GroundTruth[3*current_self_frame],rvec_GroundTruth[3*current_self_frame+1],rvec_GroundTruth[3*current_self_frame+2]);
+		glm::vec3 camPos = glm::vec3(tvec_GroundTruth[3*current_self_frame],tvec_GroundTruth[3*current_self_frame+1],tvec_GroundTruth[3*current_self_frame+2]);
+
+		((ERCP2v2*)((this->parent())->parent()))->updateUICamPosition(camPos);  // should be correct here to update the camPos instead!!
+		((ERCP2v2*)((this->parent())->parent()))->updateUICamAngles(camAng);	
+		((ERCP2v2*)((this->parent())->parent()))->update();
+		model->nth_frame = current_self_frame;	
+		model->setViewMatrix(camAng,camPos);	
+		currentFrame.copyTo(model->textureImage);
+		updateGL();
+	}
+	else {
+		computeGroundTruth = false;
+		fr.open("data/output/groundtruth.yml",cv::FileStorage::WRITE);
+		fr<<"rvec_GroundTruth"<<rvec_GroundTruth;
+		fr<<"tvec_GroundTruth"<<tvec_GroundTruth;
+		fr<<"rvec_Rodrigues_GroundTruth"<<rvec_Rodrigues_GroundTruth;
+		fr<<"tvec_Rodrigues_GroundTruth"<<tvec_Rodrigues_GroundTruth;
+		fs.release();
+	}
+
+}
+
+void OpenglPanel::nextGroundTruth()
+{
+	if (current_self_frame<stop_ground_truth)
+	{
+		glm::vec3 camPos = model->getCameraPosition();
+		glm::vec3 camAng = model->getCameraAngles();
+		rvec_GroundTruth[3*current_self_frame]=camAng.x;
+		rvec_GroundTruth[3*current_self_frame+1]=camAng.y;
+		rvec_GroundTruth[3*current_self_frame+2]=camAng.z;
+
+		tvec_GroundTruth[3*current_self_frame]=camPos.x;
+		tvec_GroundTruth[3*current_self_frame+1]=camPos.y;
+		tvec_GroundTruth[3*current_self_frame+2]=camPos.z;
+
+		// Get the rodrigues of the camera matrix
+		glm::mat4 camera_extrinsic_matrix = model->getCameraModelViewMatrix();
+		glm::mat3 rot_matrix = glm::mat3(camera_extrinsic_matrix);
+		// correct the rot_matrix for opencv rodrigues
+		cv::Mat rMat(3,3,CV_64FC1);
+		double* _rMat = rMat.ptr<double>();
+		_rMat[0]=camera_extrinsic_matrix[0].x;
+		_rMat[1]=camera_extrinsic_matrix[1].x;
+		_rMat[2]=camera_extrinsic_matrix[2].x;
+		tvec_Rodrigues_GroundTruth[3*current_self_frame] = camera_extrinsic_matrix[3].x;
+
+		_rMat[3]=-camera_extrinsic_matrix[0].y;
+		_rMat[4]=-camera_extrinsic_matrix[1].y;
+		_rMat[5]=-camera_extrinsic_matrix[2].y;
+		tvec_Rodrigues_GroundTruth[3*current_self_frame+1] = -camera_extrinsic_matrix[3].y;
+
+		_rMat[6]=-camera_extrinsic_matrix[0].z;
+		_rMat[7]=-camera_extrinsic_matrix[1].z;
+		_rMat[8]=-camera_extrinsic_matrix[2].z;
+		tvec_Rodrigues_GroundTruth[3*current_self_frame+2] = -camera_extrinsic_matrix[3].z;
+		cv::Mat temp_rvec_rodrigues;
+		cv::Rodrigues(rMat,temp_rvec_rodrigues);
+		double* _rvec_Rodrigues = temp_rvec_rodrigues.ptr<double>();
+		rvec_Rodrigues_GroundTruth[3*current_self_frame] = _rvec_Rodrigues[0];
+		rvec_Rodrigues_GroundTruth[3*current_self_frame+1] = _rvec_Rodrigues[1];
+		rvec_Rodrigues_GroundTruth[3*current_self_frame+2] = _rvec_Rodrigues[2];
+
+		// move to next frame
+		current_self_frame ++;
+		char duo_img_name[50];
+		sprintf(duo_img_name,"img/duo_img%.3d.png",current_self_frame);
+		currentFrame = cv::imread(duo_img_name);
+		camAng = glm::vec3(rvec_GroundTruth[3*current_self_frame],rvec_GroundTruth[3*current_self_frame+1],rvec_GroundTruth[3*current_self_frame+2]);
+		camPos = glm::vec3(tvec_GroundTruth[3*current_self_frame],tvec_GroundTruth[3*current_self_frame+1],tvec_GroundTruth[3*current_self_frame+2]);
+
+		((ERCP2v2*)((this->parent())->parent()))->updateUICamPosition(camPos);  // should be correct here to update the camPos instead!!
+		((ERCP2v2*)((this->parent())->parent()))->updateUICamAngles(camAng);
+		((ERCP2v2*)((this->parent())->parent()))->update();
+		model->setViewMatrix(camAng,camPos);	
+		currentFrame.copyTo(model->textureImage);	
+		model->nth_frame = current_self_frame;	
+		updateGL();
+	}
+}
+
+
+void OpenglPanel::backGroundTruth()
+{
+	if (current_self_frame>start_ground_truth)
+	{
+		glm::vec3 camPos = model->getCameraPosition();
+		glm::vec3 camAng = model->getCameraAngles();
+		rvec_GroundTruth[3*current_self_frame]=camAng.x;
+		rvec_GroundTruth[3*current_self_frame+1]=camAng.y;
+		rvec_GroundTruth[3*current_self_frame+2]=camAng.z;
+
+		tvec_GroundTruth[3*current_self_frame]=camPos.x;
+		tvec_GroundTruth[3*current_self_frame+1]=camPos.y;
+		tvec_GroundTruth[3*current_self_frame+2]=camPos.z;
+
+		// Get the rodrigues of the camera matrix
+		glm::mat4 camera_extrinsic_matrix = model->getCameraModelViewMatrix();
+		glm::mat3 rot_matrix = glm::mat3(camera_extrinsic_matrix);
+		// correct the rot_matrix for opencv rodrigues
+		cv::Mat rMat(3,3,CV_64FC1);
+		double* _rMat = rMat.ptr<double>();
+		_rMat[0]=camera_extrinsic_matrix[0].x;
+		_rMat[1]=camera_extrinsic_matrix[1].x;
+		_rMat[2]=camera_extrinsic_matrix[2].x;
+		tvec_Rodrigues_GroundTruth[3*current_self_frame] = camera_extrinsic_matrix[3].x;
+
+		_rMat[3]=-camera_extrinsic_matrix[0].y;
+		_rMat[4]=-camera_extrinsic_matrix[1].y;
+		_rMat[5]=-camera_extrinsic_matrix[2].y;
+		tvec_Rodrigues_GroundTruth[3*current_self_frame+1] = -camera_extrinsic_matrix[3].y;
+
+		_rMat[6]=-camera_extrinsic_matrix[0].z;
+		_rMat[7]=-camera_extrinsic_matrix[1].z;
+		_rMat[8]=-camera_extrinsic_matrix[2].z;
+		tvec_Rodrigues_GroundTruth[3*current_self_frame+2] = -camera_extrinsic_matrix[3].z;
+		cv::Mat temp_rvec_rodrigues;
+		cv::Rodrigues(rMat,temp_rvec_rodrigues);
+		double* _rvec_Rodrigues = temp_rvec_rodrigues.ptr<double>();
+		rvec_Rodrigues_GroundTruth[3*current_self_frame] = _rvec_Rodrigues[0];
+		rvec_Rodrigues_GroundTruth[3*current_self_frame+1] = _rvec_Rodrigues[1];
+		rvec_Rodrigues_GroundTruth[3*current_self_frame+2] = _rvec_Rodrigues[2];
+
+		// Move to previous frame
+		current_self_frame --;
+		char duo_img_name[50];
+		sprintf(duo_img_name,"img/duo_img%.3d.png",current_self_frame);
+		currentFrame = cv::imread(duo_img_name);
+		camAng = glm::vec3(rvec_GroundTruth[3*current_self_frame],rvec_GroundTruth[3*current_self_frame+1],rvec_GroundTruth[3*current_self_frame+2]);
+		camPos = glm::vec3(tvec_GroundTruth[3*current_self_frame],tvec_GroundTruth[3*current_self_frame+1],tvec_GroundTruth[3*current_self_frame+2]);
+
+		((ERCP2v2*)((this->parent())->parent()))->updateUICamPosition(camPos);  // should be correct here to update the camPos instead!!
+		((ERCP2v2*)((this->parent())->parent()))->updateUICamAngles(camAng);
+		((ERCP2v2*)((this->parent())->parent()))->update();
+		model->setViewMatrix(camAng,camPos);	
+		currentFrame.copyTo(model->textureImage);	
+		model->nth_frame = current_self_frame;	
+		updateGL();
+	}
 }
 
 

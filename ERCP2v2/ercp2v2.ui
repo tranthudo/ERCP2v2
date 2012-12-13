@@ -58,6 +58,9 @@
      <property name="maximum">
       <double>10000.000000000000000</double>
      </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
     </widget>
     <widget class="QLabel" name="label">
      <property name="geometry">
@@ -89,6 +92,9 @@
      </property>
      <property name="maximum">
       <double>10000.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_2">
@@ -122,6 +128,9 @@
      <property name="maximum">
       <double>10000.000000000000000</double>
      </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
     </widget>
     <widget class="QLabel" name="label_3">
      <property name="geometry">
@@ -153,6 +162,9 @@
      </property>
      <property name="maximum">
       <double>10000.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_4">
@@ -199,6 +211,9 @@
      <property name="maximum">
       <double>10000.000000000000000</double>
      </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
     </widget>
     <widget class="QLabel" name="label_6">
      <property name="geometry">
@@ -230,6 +245,9 @@
      </property>
      <property name="maximum">
       <double>10000.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
      </property>
     </widget>
    </widget>
@@ -833,7 +851,7 @@
       <x>1020</x>
       <y>20</y>
       <width>211</width>
-      <height>231</height>
+      <height>81</height>
      </rect>
     </property>
    </widget>
@@ -950,6 +968,45 @@
      <bool>false</bool>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton_CorrectGroundTruth">
+    <property name="geometry">
+     <rect>
+      <x>1090</x>
+      <y>120</y>
+      <width>141</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Correct GroundTruth</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonNextGroundTruth">
+    <property name="geometry">
+     <rect>
+      <x>1150</x>
+      <y>150</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Next</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonBackGroundTruth">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>150</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Back</string>
+    </property>
+   </widget>
    <zorder>groupBox</zorder>
    <zorder>groupBox_2</zorder>
    <zorder>groupBox_3</zorder>
@@ -968,6 +1025,9 @@
    <zorder>widget</zorder>
    <zorder>checkBoxDrawHiddenOrgan</zorder>
    <zorder>checkBoxDrawWireFrame</zorder>
+   <zorder>pushButton_CorrectGroundTruth</zorder>
+   <zorder>pushButtonNextGroundTruth</zorder>
+   <zorder>pushButtonBackGroundTruth</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -1014,6 +1074,9 @@
     <slot>testFeatureDetection()</slot>
     <slot>toogleDrawWireFrame()</slot>
     <slot>toggleDrawHiddenOrgan()</slot>
+    <slot>correctGroundTruth()</slot>
+    <slot>nextGroundTruth()</slot>
+    <slot>backGroundTruth()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -1354,6 +1417,54 @@
     <hint type="destinationlabel">
      <x>131</x>
      <y>676</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_CorrectGroundTruth</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>correctGroundTruth()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1200</x>
+     <y>165</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>620</x>
+     <y>282</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonNextGroundTruth</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>nextGroundTruth()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1171</x>
+     <y>193</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>635</x>
+     <y>217</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonBackGroundTruth</sender>
+   <signal>clicked()</signal>
+   <receiver>widget</receiver>
+   <slot>backGroundTruth()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1103</x>
+     <y>198</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>647</x>
+     <y>160</y>
     </hint>
    </hints>
   </connection>

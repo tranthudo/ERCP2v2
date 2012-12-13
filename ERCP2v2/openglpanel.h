@@ -78,6 +78,8 @@ private:
 	int n_first_frame_success;
 	int64 n_frame_rate;
 	bool need_refine;
+	int current_self_frame;// hold the index of current frame for self calibration
+	bool computeGroundTruth;
 
 	int currentVirtualPoint;
 	int currentRealPoint;
@@ -91,7 +93,10 @@ private:
 	cv::FileStorage fr;				//record data to make report
 	std::vector<double> rvec_Record, tvec_Record;
 	std::vector<double> rvec_Record_Rodrigues, tvec_Record_Rodrigues;
+	std::vector<double> rvec_GroundTruth, tvec_GroundTruth;
+	std::vector<double> rvec_Rodrigues_GroundTruth, tvec_Rodrigues_GroundTruth;
 	std::vector<cv::Mat> rvecs_record,tvecs_record;
+
 	std::vector<float> fps_record;
 	std::vector<int> matches1_ransac_record;		
 	std::vector<int> matches1_record;
@@ -201,6 +206,9 @@ private slots:
 	void prepareTracking();
 	void startTracking();
 	void testFeatureDetection();
+	void nextGroundTruth();
+	void backGroundTruth();
+	void correctGroundTruth();
 	//************************************
 	// Method:    selfCalibration
 	// FullName:  OpenglPanel::selfCalibration

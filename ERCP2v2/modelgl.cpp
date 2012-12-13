@@ -848,7 +848,7 @@ void ModelGL::drawSub1()
 	//setUpDraw();	
 	vec3d color(.6,0.6,0.6);
 	m_Obj->DrawObject(false, color);
-	if (markerPoints.size()==4)
+	/*if (markerPoints.size()==4)
 	{
 		glPointSize(10.0);
 		glColor3f(1.0,0,0);
@@ -869,7 +869,7 @@ void ModelGL::drawSub1()
 			glVertex3f(keypoint2Draw[i].x,keypoint2Draw[i].y,keypoint2Draw[i].z);
 		}
 		glEnd();
-	}
+	}*/
 	glPopMatrix();
 	glPopAttrib();
 }

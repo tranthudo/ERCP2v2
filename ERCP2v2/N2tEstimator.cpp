@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-const int N_MIN = 8;
-const int N_MAX = 20;
-
+const int N_MIN = 7;
+const int N_MAX = 17;
+const double lambda = 0.7;
 N2tEstimator::N2tEstimator()
 {
 	double opts[LM_OPTS_SZ], info[LM_INFO_SZ]; 
@@ -139,14 +139,14 @@ void tukey( double *p, double *x, int m, int n, void*adata )
 	double w1;
 	if (n2tData->number_of_first_matches<N_MIN){
 		double dd = (N_MIN-n2tData->number_of_first_matches)/N_MAX;
-		w1 = 1.0-0.1*dd*dd;
+		w1 = lambda-0.1*dd*dd;
 	}	else if (n2tData->number_of_first_matches<N_MAX){
 		double dd = (n2tData->number_of_first_matches-N_MIN)/N_MAX;
-		w1 = 1.0+dd*dd;
+		w1 = lambda+dd*dd;
 	}
 	else {
 		double dd = (N_MAX-N_MIN)/N_MAX;
-		w1 = 1.0+dd*dd;
+		w1 = lambda+dd*dd;
 	}
 		
 
