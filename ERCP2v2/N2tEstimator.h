@@ -13,6 +13,8 @@
 #define N2T_TUKEY 1
 #define N2T_LEAST_SQUARE_JACOBIAN 2
 #define N2T_TUKEY_JACOBIAN 3	
+#define N2T_HUBER 4
+#define N2T_CAUCHY 5
 
 
 #define N2T_USE_JACOBIAN true
@@ -23,6 +25,12 @@ void tukey(double *p, double *x, int m, int n, void*adata);
 
 void jaLeastSquare(double *p, double *jac, int m, int n, void *adata);
 void jaTukey(double *p, double *jac, int m, int n, void* adata);
+
+void huber(double *p, double *x, int m, int n, void *adata);
+void jaHuber(double *p, double *jac, int m, int n, void* adata);
+
+void cauchy(double *p, double *x, int m, int n, void *adata);
+void jaCauchy(double *p, double *jac, int m, int n, void* adata);
 
 struct N2tEstimatorData 
 {

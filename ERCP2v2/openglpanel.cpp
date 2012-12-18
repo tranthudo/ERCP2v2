@@ -12,15 +12,17 @@ const int max_previous_matches = 30;
 const int max_first_matches = 100;
 const int min_num_first_matches  = 15;
 const double hessian_threshold = 60.0;
-const double pose_diff_max = 1.0;
+const double pose_diff_max = 8.0;
 const double first_pose_diff_max = 10.0;
 const int n_frame_to_skip = 1;
 const int start_record_frame = 0;
-const int stop_record_frame = 500;
+const int stop_record_frame = 250;
 const bool record = false;
 const double gray_threshold = 230;
 int start_ground_truth = 25;
 int stop_ground_truth = 60;
+
+int start_tracking_frame = 100;
 
 //double Func::operator()( VecDoub &x )
 //{
@@ -1096,8 +1098,8 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 
 void OpenglPanel::startTracking()
 {		
-	capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);
-	capturePosition+=captureDelay;
+	capturePosition+= captureDelay*start_tracking_frame;
+	capture.set(CV_CAP_PROP_POS_MSEC,capturePosition);	
 	// for all fames in video
 	capture.grab();
 	capture.retrieve(frame);
@@ -1431,9 +1433,10 @@ void OpenglPanel::updateGL()
 				// Refine by robust estimator
 				tinit = cv::getTickCount();				
 				
-				//cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
+				cv::solvePnP(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,true,CV_ITERATIVE);				
 				//n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_LEAST_SQUARE,true,new_num_first_matches);
 				n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true,new_num_first_matches);
+				//n2tEstimator.estimate(cv::Mat(refined_objPoints),cv::Mat(refined_imgPoints),camera_intrinsic,distCoeffs,rvec,tvec,N2T_TUKEY,true,new_num_first_matches);
 				std::vector<cv::Point2f> new_projectPoints;
 				cv::projectPoints(refined_objPoints,rvec,tvec,camera_intrinsic, distCoeffs,new_projectPoints);
 				double mse = cv::norm(new_projectPoints,refined_imgPoints); 
@@ -1546,7 +1549,7 @@ void OpenglPanel::updateGL()
 		/*char duo_img_name[50];
 		sprintf(duo_img_name,"img/duo_img%.3d.png",n_frame);
 		cv::imwrite(duo_img_name,croppedImage);*/
-		if (n_frame > 500)
+		if (n_frame > stop_record_frame)
 		{			
 			startTracking();
 		}
