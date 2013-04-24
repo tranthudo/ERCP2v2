@@ -42,16 +42,15 @@
     <Filter Include="Optimization\levmar">
       <UniqueIdentifier>{59838f5d-dc33-4556-b359-791629c265cc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Generated Files\Intel_SSA">
+      <UniqueIdentifier>{33759a15-1cb8-4932-a851-b1e36055b1cb}</UniqueIdentifier>
+      <Extensions>cpp;moc</Extensions>
+      <SourceControlFiles>False</SourceControlFiles>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ercp2v2.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_ercp2v2.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_ercp2v2.cpp">
-      <Filter>Generated Files\Release</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\qrc_ercp2v2.cpp">
       <Filter>Generated Files</Filter>
@@ -59,20 +58,8 @@
     <ClCompile Include="openglpanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_openglpanel.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_openglpanel.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="modelgl.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_modelgl.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_modelgl.cpp">
-      <Filter>Generated Files\Release</Filter>
     </ClCompile>
     <ClCompile Include="geometry.cpp">
       <Filter>Source Files</Filter>
@@ -115,6 +102,33 @@
     </ClCompile>
     <ClCompile Include="N2TFREAK.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_openglpanel.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_openglpanel.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Intel_SSA\moc_openglpanel.cpp">
+      <Filter>Generated Files\Intel_SSA</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_modelgl.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_modelgl.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Intel_SSA\moc_modelgl.cpp">
+      <Filter>Generated Files\Intel_SSA</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ercp2v2.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ercp2v2.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Intel_SSA\moc_ercp2v2.cpp">
+      <Filter>Generated Files\Intel_SSA</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -16,7 +16,7 @@ const double pose_diff_max = 8.0;
 const double first_pose_diff_max = 10.0;
 const int n_frame_to_skip = 1;
 const int start_record_frame = 0;
-const int stop_record_frame = 250;
+const int stop_record_frame = 200;
 const bool record = false;
 const double gray_threshold = 230;
 int start_ground_truth = 25;
@@ -997,6 +997,7 @@ void OpenglPanel::initializeWithFourPoints()  // similar to the function prepare
 		
 		for (int i = 0; i<4;i++)
 		{
+			//cv::circle(model->textureImage,realImagePoints[i],7,cv::Scalar(0,0,255),-1);
 			cv::circle(model->textureImage,realImagePoints[i],3,cv::Scalar(255,0,0),-1);
 			model->markerPoints.push_back(objPoints[i]);			
 		}
@@ -1015,7 +1016,7 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	cv::cvtColor(referenceFrame, referenceGrayImg,CV_RGB2GRAY);
 	cv::threshold(referenceGrayImg,mask,140,255,cv::THRESH_BINARY_INV);
 	cv::erode(mask,mask,cv::Mat());
-	/*cv::imshow("REF MASK",mask);*/
+	cv::imshow("REF MASK",mask);
 	
 	// Test SIFT Feature detection
 	//sift_cpu(referenceImg,cv::Mat(),keypoints,descriptors,false);//
@@ -1039,9 +1040,9 @@ void OpenglPanel::generateReferncePoints()  // extract reference keypoitns and d
 	//ref_descriptors.copyTo(first_ref_Descriptors);
 	
 	// draw reference keypoints
-	/*cv::Mat keypoint_ref_img;
+	cv::Mat keypoint_ref_img;
 	cv::drawKeypoints(currentFrame,ref_keypoints,keypoint_ref_img,cv::Scalar(255,0,0));
-	cv::imshow("REFERENCE KEYPOINTS", keypoint_ref_img);*/
+	cv::imshow("REFERENCE KEYPOINTS", keypoint_ref_img);
 	// end draw Reference keypoint
 	refObjPoints.clear();
 	refImagePoints.clear();	
@@ -1220,9 +1221,9 @@ void OpenglPanel::updateGL()
 
 		cv::cvtColor(currentFrame,currentGrayFrame,CV_RGB2GRAY);
 		cv::threshold(currentGrayFrame,mask,gray_threshold,255,cv::THRESH_BINARY_INV);	
-		cv::Mat element(3,3,1);
+		cv::Mat element(4,4,1);
 		cv::erode(mask,mask,element);
-		//cv::imshow("CUR MASK",mask);
+		cv::imshow("CUR MASK",mask);
 		//#ifdef _DEBUG
 		//	cv::imshow("CUR MASK",mask);
 		//#endif // _DEBUG			
@@ -1503,7 +1504,7 @@ void OpenglPanel::updateGL()
 		
 		
 		// Drawing the matches here
-		/*cv::Mat previousFrameKeypoint;
+		cv::Mat previousFrameKeypoint;
 		
 		cv::drawKeypoints(referenceFrame,ref_keypoints,previousFrameKeypoint,cv::Scalar(255,0,0));
 		cv::imshow("Previous frame keypoints",previousFrameKeypoint);
@@ -1516,7 +1517,8 @@ void OpenglPanel::updateGL()
 		cv::imshow("Matches between previous frame and current frame", match2);
 		cv::Mat keypoint_img;
 		cv::drawKeypoints(currentFrame,cur_keypoints,keypoint_img,cv::Scalar(255,0,0));
-		cv::imshow("Current frame keypoints", keypoint_img);*/
+		cv::imshow("Current frame keypoints", keypoint_img); // End drawing keypoints and matches
+
 		if (n_frame>=start_record_frame && n_frame<=stop_record_frame){			
 			rvec_Record_Rodrigues.push_back(rvec.at<double>(0,0));
 			rvec_Record_Rodrigues.push_back(rvec.at<double>(1,0));

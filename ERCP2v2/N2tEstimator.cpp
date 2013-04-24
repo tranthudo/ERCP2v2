@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-const int N_MIN = 15;
+const int N_MIN = 8;
 const int N_MAX = 30;
-const double lambda = 0.5;
+const double lambda = 5.0;
 const double lambda_max = 3.5;
 N2tEstimator::N2tEstimator()
 {

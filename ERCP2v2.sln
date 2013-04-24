@@ -8,11 +8,14 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		Intel_SSA|Win32 = Intel_SSA|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{9E80F1C6-0F72-405B-B270-DA13B1C2A196}.Debug|Win32.ActiveCfg = Debug|Win32
 		{9E80F1C6-0F72-405B-B270-DA13B1C2A196}.Debug|Win32.Build.0 = Debug|Win32
+		{9E80F1C6-0F72-405B-B270-DA13B1C2A196}.Intel_SSA|Win32.ActiveCfg = Intel_SSA|Win32
+		{9E80F1C6-0F72-405B-B270-DA13B1C2A196}.Intel_SSA|Win32.Build.0 = Intel_SSA|Win32
 		{9E80F1C6-0F72-405B-B270-DA13B1C2A196}.Release|Win32.ActiveCfg = Release|Win32
 		{9E80F1C6-0F72-405B-B270-DA13B1C2A196}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection

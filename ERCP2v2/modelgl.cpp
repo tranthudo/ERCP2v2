@@ -859,6 +859,7 @@ void ModelGL::drawSub1()
 		}
 		glEnd();
 	}
+	*/
 	if (keypoint2Draw.size()>0)
 	{
 		glPointSize(5.0);
@@ -869,7 +870,7 @@ void ModelGL::drawSub1()
 			glVertex3f(keypoint2Draw[i].x,keypoint2Draw[i].y,keypoint2Draw[i].z);
 		}
 		glEnd();
-	}*/
+	}
 	glPopMatrix();
 	glPopAttrib();
 }
@@ -891,6 +892,17 @@ void ModelGL::drawSub2()
 	if (draw_wire_frame) {
 		glColor3f(0,1.0,0.0);
 		m_Obj->DrawWireframe();	
+		if (markerPoints.size()==4)
+		{
+			glPointSize(10.0);
+			glColor3f(1.0,0,0);
+			glBegin(GL_POINTS);
+			for (int i = 0; i<4;i++)
+			{
+				glVertex3f(markerPoints[i].x,markerPoints[i].y,markerPoints[i].z);
+			}
+			glEnd();
+		}
 	}
 	if (draw_hidden_organ)
 	{
@@ -954,6 +966,8 @@ void ModelGL::drawSub3()
 		}
 		glEnd();
 	}
+	
+	
 	m_Obj->DrawObject(false, color);
 
 	if (draw_hidden_organ)
