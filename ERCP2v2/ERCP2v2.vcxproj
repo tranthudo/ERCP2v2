@@ -49,9 +49,9 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Intel_SSA|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">E:\OpenCV\opencv\build\include;G:\Back up\Libraries\glm-0.9.3.4;$(CUDA_INC_PATH);$(NVSDKCOMPUTE_ROOT)/c/common/inc;G:\Back up\Libraries\NumericalRecipes\NR_C301\code;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">libs;C:\opencv243\build\include;libs\glm-0.9.3.4;$(CUDA_INC_PATH);$(NVSDKCOMPUTE_ROOT)/c/common/inc;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Intel_SSA|Win32'">E:\OpenCV\opencv\build\include;G:\Back up\Libraries\glm-0.9.3.4;$(CUDA_INC_PATH);$(NVSDKCOMPUTE_ROOT)/c/common/inc;G:\Back up\Libraries\NumericalRecipes\NR_C301\code;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">E:\OpenCV\Builds2\lib\Debug;G:\Back up\Libraries\lapack-MT-release;$(CUDA_LIB_PATH);$(NVSDKCOMPUTE_ROOT)/c/common/lib/Win32;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\opencv243\build2\lib\Debug;libs\lapack-MT-release;$(CUDA_LIB_PATH);$(NVSDKCOMPUTE_ROOT)/c/common/lib/Win32;$(LibraryPath)</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Intel_SSA|Win32'">E:\OpenCV\Builds2\lib\Debug;G:\Back up\Libraries\lapack-MT-release;$(CUDA_LIB_PATH);$(NVSDKCOMPUTE_ROOT)/c/common/lib/Win32;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">E:\OpenCV\opencv\build\include;G:\Back up\Libraries\glm-0.9.3.4;$(CUDA_INC_PATH);$(NVSDKCOMPUTE_ROOT)/c/common/inc;G:\Back up\Libraries\NumericalRecipes\NR_C301\code;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">E:\OpenCV\Builds2\lib\Release;G:\Back up\Libraries\lapack-MT-release;C:\opencv243\build\x86\vc10\lib;$(CUDA_LIB_PATH);$(NVSDKCOMPUTE_ROOT)/c/common/lib/Win32;$(LibraryPath)</LibraryPath>
@@ -70,7 +70,7 @@
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_core242d.lib;opencv_video242d.lib;opencv_highgui242d.lib;opencv_imgproc242d.lib;opencv_nonfree242d.lib;opencv_features2d242d.lib;opencv_calib3d242d.lib;opencv_objdetect242d.lib;opencv_flann242d.lib;opencv_gpu242d.lib;lapack_win32_MT.lib;blas_win32_MT.lib;cudart.lib;cutil32D.lib;qtmaind.lib;QtCored4.lib;QtGuid4.lib;QtOpenGLd4.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core243d.lib;opencv_video243d.lib;opencv_highgui243d.lib;opencv_imgproc243d.lib;opencv_nonfree243d.lib;opencv_features2d243d.lib;opencv_calib3d243d.lib;opencv_objdetect243d.lib;opencv_flann243d.lib;opencv_gpu243d.lib;lapack_win32_MT.lib;blas_win32_MT.lib;cudart.lib;cutil32D.lib;qtmaind.lib;QtCored4.lib;QtGuid4.lib;QtOpenGLd4.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
@@ -175,6 +175,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mi.cpp" />
     <ClCompile Include="modelgl.cpp" />
+    <ClCompile Include="N2tEstimator.cpp" />
     <ClCompile Include="N2TFREAK.cpp" />
     <ClCompile Include="N2TMatcher.cpp" />
     <ClCompile Include="openglpanel.cpp" />

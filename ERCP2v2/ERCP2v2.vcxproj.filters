@@ -127,6 +127,9 @@
     <ClCompile Include="GeneratedFiles\Intel_SSA\moc_ercp2v2.cpp">
       <Filter>Generated Files\Intel_SSA</Filter>
     </ClCompile>
+    <ClCompile Include="N2tEstimator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="ercp2v2.h">
