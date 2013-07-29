@@ -6,7 +6,7 @@
 
 #include "DataStruct.h"
 #include <GL/gl.h>
-#include <GL/freeglut.h>
+#include <GL/glut.h>
 
 class CObj  
 {
