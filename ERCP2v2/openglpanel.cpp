@@ -1412,7 +1412,7 @@ void OpenglPanel::updateGL()
 			if (i > max_previous_matches) break;
 		} // End prepare data to solve the pose estimation
 		
-		if (imgPoints_selected.size()>=30){
+		if (imgPoints_selected.size()>=30){ // if number of matches >=30
 			// 4.2 RANSAC	
 			tinit = cv::getTickCount();
 			solvePnPRansac(cv::Mat(objPoints_selected),cv::Mat(imgPoints_selected),camera_intrinsic,distCoeffs,rvec,tvec,true,90,8.0f,50,inliers,cv::EPNP);
@@ -1472,7 +1472,8 @@ void OpenglPanel::updateGL()
 				}
 			}
 			
-		}// end solve the pose estimation	
+		}// // end if number of matches >=30
+		// End of solve pose estimation
 		else {// just for print  the mse
 			double mse = mse_max;
 			if (n_frame>=start_record_frame && n_frame<=stop_record_frame)

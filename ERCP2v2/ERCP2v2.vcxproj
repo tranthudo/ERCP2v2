@@ -175,7 +175,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mi.cpp" />
     <ClCompile Include="modelgl.cpp" />
-    <ClCompile Include="N2tEstimator.cpp" />
     <ClCompile Include="N2TFREAK.cpp" />
     <ClCompile Include="N2TMatcher.cpp" />
     <ClCompile Include="openglpanel.cpp" />

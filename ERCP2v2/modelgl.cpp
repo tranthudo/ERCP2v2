@@ -832,9 +832,9 @@ void ModelGL::drawGrabbedFrame( int x, int y, int m_WindowWidth, int m_WindowHei
 	glEnable(GL_DEPTH_TEST);
 }
 
-void ModelGL::drawSub1()
+void ModelGL::drawSub1() //top left 
 {
-	// set upper viewport
+	// set upper viewport 
 	setViewportSub(0, windowHeight/2+1, windowWidth/2-1, windowHeight/2-1);
 	// clear buffer
 	glClearColor(0.1f, 0.1f, 0.1f, 1);
@@ -875,7 +875,7 @@ void ModelGL::drawSub1()
 	glPopAttrib();
 }
 
-void ModelGL::drawSub2()
+void ModelGL::drawSub2() // bottom left
 {
 	// Draw the object overlapping the background image
 	setViewportSub(0, 0, windowWidth/2-1, windowHeight/2-1);
@@ -917,7 +917,7 @@ void ModelGL::drawSub2()
 	glPopAttrib();
 }
 
-void ModelGL::drawSub3()
+void ModelGL::drawSub3()  // bottom right
 {
 	// set bottom viewport
 	glViewport(windowWidth/2+1,0,windowWidth/2-1,windowHeight/2-1);
@@ -1001,7 +1001,7 @@ void ModelGL::drawSub3()
 	
 }
 
-void ModelGL::drawSub4()
+void ModelGL::drawSub4() // top right
 {
 	// clear color	
 	

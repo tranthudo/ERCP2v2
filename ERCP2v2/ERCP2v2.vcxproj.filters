@@ -76,9 +76,6 @@
     <ClCompile Include="N2TMatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="N2tEstimator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="optimizer\levmar\lmlec.c">
       <Filter>Optimization\levmar</Filter>
     </ClCompile>
